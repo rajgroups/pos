@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\admin\HomeController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\admin\UnitController;
-use App\Http\Controllers\admin\CategoryController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,7 +25,7 @@ Route::get('/admin',[HomeController::class,'index'])->name('home');
 // });
 
 Route::prefix('admin')->name('admin.')->group(function(){
-    
+
     // For Unit Management Routes
     Route::resource('unit',UnitController::class);
 

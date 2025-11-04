@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Enum\status;
 use App\Http\Controllers\Controller;
@@ -17,7 +17,7 @@ class UnitController extends Controller
      */
     public function index(Request $request)
     {
-        
+
         $units = Unit::select(['id', 'name', 'shortname', 'no_of_product', 'status', 'created_at'])->get();
         return view('admin.unit.list',compact('units')); // Return view for normal page load
     }
@@ -58,12 +58,12 @@ class UnitController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success','Unit Added Successfully');
-            
+
         }catch(Exception $e){
             DB::rollBack();
             return redirect()->back()->with('error','Sorry Unit Colud Not Add Issue:'.$e->getMessage());
         }
-       
+
     }
 
     /**
@@ -110,44 +110,44 @@ class UnitController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error','Unit could not Update'.$e->getMessage());
         }
-        
+
     }
-    
+
     public function destroy(Unit $unit)
     {
         try {
             DB::beginTransaction();
-    
+
             // Check if the unit exists before deletion
             if (!$unit) {
                 return redirect()->back()->with('error', 'Unit not found');
             }
-    
+
             $unit->delete();
-            
+
             DB::commit(); // Commit transaction if delete is successful
-    
+
             return redirect()->back()->with('success', 'Unit Deleted Successfully');
         } catch (Exception $e) {
             DB::rollBack(); // Rollback if an error occurs
             return redirect()->back()->with('error', 'Unit could not be deleted: ' . $e->getMessage());
         }
     }
-    
+
 
     public function destroyAll(Request $requests){
 
         $requests->validate([
             'unit_ids'  => 'required|array'
         ]);
-        
+
         try{
 
             DB::beginTransaction();
             unit::whereIn('id',$requests->unit_ids)->delete();
 
         }catch(Exception $e){
-            
+
             DB::rollBack();
             return redirect()->back()->with('fail',$e->getMessage());
         }
