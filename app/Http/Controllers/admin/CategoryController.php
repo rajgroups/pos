@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
+use App\Models\category;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,13 @@ class CategoryController extends Controller
     public function __construct(CategoryService $categoryService)
     {
         $this->categoryService = $categoryService;
+    }
+
+    public function create(){
+
+        // Create Category
+         $categories = category::all();
+        return view('admin.category.create',compact('categories'));
     }
 
     public function store(Request $request)
