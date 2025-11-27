@@ -5,7 +5,8 @@ use App\Http\Controllers\admin\HomeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\CategoryController;
-
+use App\Http\Controllers\admin\BrandController;
+use App\Http\Controllers\admin\VariantAttributeController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -35,6 +36,8 @@ Route::prefix('admin')->name('admin.')->group(function(){
 
     // For Unit Management Routes
     Route::resource('unit',UnitController::class);
+    Route::resource('brand', BrandController::class);
+    Route::resource('variant-attributes', VariantAttributeController::class);
 
 });
 
