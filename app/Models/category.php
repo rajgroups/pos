@@ -10,6 +10,11 @@ class category extends Model
     use HasFactory;
 
     protected $table = 'tbl_category';
+    protected $fillable = [
+        'name',
+        'slug',
+        'status'
+    ];
 
     protected $caste = [
         'created_at'    => 'datetime',

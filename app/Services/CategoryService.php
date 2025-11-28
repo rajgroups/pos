@@ -25,6 +25,7 @@ class CategoryService
                 $image->move(public_path('uploads/category'), $imageName);
                 $validated['image'] = $imageName;
             }
+            // dd($image);
 
             $this->categoryRepo->create($validated);
 

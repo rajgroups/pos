@@ -2,7 +2,7 @@
 
 namespace App\Interfaces;
 
-interface BaseRepositoryInterface
+interface BaseCrudRepositoryInterface
 {
     /**
      * Get all records.

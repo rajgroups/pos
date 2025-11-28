@@ -28,16 +28,18 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         // ✅ Validate request via Helper
-        $validated = ValidationHelper::validateCategory($request);
-
+        $validated = ValidationHelper::validateCategory($request->all());
+        // dd('come');
         // If validation failed → it will already redirect, so continue only if array
         if ($validated instanceof \Illuminate\Http\RedirectResponse) {
             return $validated;
         }
+        // dd($request->file('image'));
 
         // ✅ Proceed with service
         $response = $this->categoryService->storeCategory($validated, $request->file('image'));
 
+        // dd($response);
         if ($response['success']) {
             return redirect()->back()->with('success', $response['message']);
         }

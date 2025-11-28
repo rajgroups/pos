@@ -19,7 +19,10 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function create(array $data)
     {
+        // dd($data);
         return Category::create($data);
+        // dd($datas);
+        // return
     }
 
     public function update($id, array $data)

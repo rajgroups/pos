@@ -6,6 +6,22 @@ use Illuminate\Support\Facades\Validator;
 
 class ValidationHelper
 {
+        /**
+     * ----------------------------------
+     * GENERIC VALIDATION (Reusable)
+     * ----------------------------------
+     * Use this for other modules like Product, Blog, etc.
+     */
+    public static function validate($request, array $rules, array $messages = [])
+    {
+        $validator = Validator::make($request, $rules, $messages);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        return $validator->validated();
+    }
     /**
      * ----------------------------------
      * CATEGORY VALIDATION
@@ -53,22 +69,5 @@ class ValidationHelper
         ];
 
         return self::validate($request, $rules, $messages);
-    }
-
-    /**
-     * ----------------------------------
-     * GENERIC VALIDATION (Reusable)
-     * ----------------------------------
-     * Use this for other modules like Product, Blog, etc.
-     */
-    public static function validate($request, array $rules, array $messages = [])
-    {
-        $validator = Validator::make($request->all(), $rules, $messages);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        return $validator->validated();
     }
 }
