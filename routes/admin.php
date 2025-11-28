@@ -7,6 +7,10 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\admin\BrandController;
 use App\Http\Controllers\admin\VariantAttributeController;
+use App\Http\Controllers\admin\WarrantiesController;
+use App\Http\Controllers\admin\ProductController;
+use App\Http\Controllers\admin\WarehouseController;
+use App\Http\Controllers\admin\StoreController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,6 +42,11 @@ Route::prefix('admin')->name('admin.')->group(function(){
     Route::resource('unit',UnitController::class);
     Route::resource('brand', BrandController::class);
     Route::resource('variant-attributes', VariantAttributeController::class);
+    Route::resource('warranty', WarrantiesController::class);
+    Route::resource('products', ProductController::class);
+    Route::resource('warehouses', WarehouseController::class);
+    Route::resource('stores', StoreController::class);
+
 
 });
 
