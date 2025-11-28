@@ -43,3 +43,60 @@
 	<script src="../../cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="48a874d177e4539849dc73e2-|49" defer></script>
 
 	<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9185c5514c91178f","version":"2025.1.0","serverTiming":{"name":{"cfExtPri":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"token":"3ca157e612a14eccbb30cf6db6691c29","b":1}' crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#summernote').summernote({
+            placeholder: 'Enter description...',
+            tabsize: 2,
+            height: 200
+        });
+    });
+</script>
+<script>
+$(document).ready(function() {
+    $('#shortDescription').summernote({
+        placeholder: 'Enter short description...',
+        tabsize: 2,
+        height: 100, // smaller height for short description
+        callbacks: {
+            onKeyup: function(e) {
+                var content = $(this).summernote('code').replace(/<\/?[^>]+(>|$)/g, ""); // strip HTML
+                var words = content.split(/\s+/).filter(word => word.length > 0);
+                if(words.length > 60){
+                    alert('Maximum 60 words allowed!');
+                    $(this).summernote('code', words.slice(0, 60).join(' '));
+                }
+            }
+        }
+    });
+});
+</script>
+<script>
+$(document).ready(function() {
+
+    // Add new specification row
+    $('#specifications-container').on('click', '.add-spec', function() {
+        var newItem = `
+        <div class="specification-item row mb-3">
+            <div class="col-md-5">
+                <input type="text" name="spec_name[]" class="form-control" placeholder="Specification Name" required>
+            </div>
+            <div class="col-md-5">
+                <textarea name="spec_description[]" class="form-control" placeholder="Specification Description" rows="2" required></textarea>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger remove-spec">Remove</button>
+            </div>
+        </div>
+        `;
+        $('#specifications-container').append(newItem);
+    });
+
+    // Remove specification row
+    $('#specifications-container').on('click', '.remove-spec', function() {
+        $(this).closest('.specification-item').remove();
+    });
+
+});
+</script>

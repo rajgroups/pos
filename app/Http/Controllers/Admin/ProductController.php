@@ -5,7 +5,7 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class VariantAttributeController extends Controller
+class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -13,7 +13,7 @@ class VariantAttributeController extends Controller
     public function index()
     {
         //
-         return view('admin.variantattributes.list');
+         return view('admin.products.list');
     }
 
     /**
@@ -22,7 +22,7 @@ class VariantAttributeController extends Controller
     public function create()
     {
         //
-         return view('admin.variantattributes.create');
+         return view('admin.products.create');
     }
 
     /**
@@ -39,6 +39,7 @@ class VariantAttributeController extends Controller
     public function show(string $id)
     {
         //
+         return view('admin.products.view');
     }
 
     /**
