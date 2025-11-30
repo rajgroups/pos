@@ -2,14 +2,14 @@
 
 namespace App\Repositories;
 
-use App\Interfaces\CategoryRepositoryInterface;
+use App\Interfaces\CategoryInterface;
 use App\Models\Category;
 
-class CategoryRepository implements CategoryRepositoryInterface
+class CategoryRepository implements CategoryInterface
 {
     public function all()
     {
-        return Category::all();
+        return Category::orderBy('id', 'desc')->get();
     }
 
     public function find($id)
@@ -19,16 +19,12 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function create(array $data)
     {
-        // dd($data);
         return Category::create($data);
-        // dd($datas);
-        // return
     }
 
     public function update($id, array $data)
     {
-        $category = Category::findOrFail($id);
-        return $category->update($data);
+        return Category::where('id', $id)->update($data);
     }
 
     public function delete($id)
@@ -38,6 +34,6 @@ class CategoryRepository implements CategoryRepositoryInterface
 
     public function getActiveCategories()
     {
-        return Category::where('status', 'active')->get();
+        return Category::where('status', 1)->get();
     }
 }

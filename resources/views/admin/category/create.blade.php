@@ -129,7 +129,8 @@
                                 </div>
                             @endif
                         </div>
-
+                    </div>
+                    <div class="col-lg-6">
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
                                 Parent Category
@@ -171,27 +172,39 @@
                                 <div class="card-body py-3">
                                     <div
                                         class="status-toggle modal-status d-flex justify-content-between align-items-center">
+
                                         <div>
                                             <span class="status-label fw-semibold">Category Status</span>
                                             <p class="text-muted mb-0 small">Enable or disable this category</p>
                                         </div>
+
                                         <div class="form-check form-switch">
-                                            <input type="checkbox" name="status" id="status"
+
+                                            <!-- Hidden input for OFF (0) -->
+                                            <input type="hidden" name="status" value="0">
+
+                                            <!-- Checkbox for ON (1) -->
+                                            <input type="checkbox"
                                                 class="form-check-input @error('status') is-invalid @enderror"
-                                                value="active" {{ old('status', 'active') == 'active' ? 'checked' : '' }}>
+                                                name="status" id="status" value="1"
+                                                {{ old('status', 1) == 1 ? 'checked' : '' }}>
                                         </div>
                                     </div>
+
                                     @if ($errors->has('status'))
                                         <div class="invalid-feedback d-block mt-2">
                                             <i class="ti ti-info-circle me-1"></i>
                                             {{ $errors->first('status') }}
                                         </div>
                                     @endif
+
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-lg-6">
                         <!-- Category Icon Upload -->
                         <div class="card border-0 mb-4">
@@ -241,7 +254,8 @@
                                 @endif
                             </div>
                         </div>
-
+                    </div>
+                    <div class="col-lg-6">
                         <!-- Category Image Upload -->
                         <div class="card border-0">
                             <div class="card-header bg-light py-3">
@@ -284,6 +298,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 

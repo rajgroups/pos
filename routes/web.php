@@ -30,5 +30,8 @@ Route::get('/all-clear', function () {
 
 // language
 
-
+Route::get('/debug-notyf', function () {
+    notyf()->addSuccess('This should show now!');
+    return view('debug'); // a test view
+});
 

@@ -17,8 +17,8 @@
     <div class="page-header">
         <div class="add-item d-flex">
             <div class="page-title">
-                <h4 class="fw-bold">Units</h4>
-                <h6>Manage your units</h6>
+                <h4 class="fw-bold">Category</h4>
+                <h6>Manage your Category</h6>
             </div>
         </div>
         <ul class="table-top-head">
@@ -76,7 +76,7 @@
                 </button>
             </div>
         @endif
-        
+
         @if (session()->has('error'))
             <div class="alert alert-solid-danger rounded-pill alert-dismissible fade show">
                 {{ session()->get('error') }}
@@ -116,7 +116,7 @@
                             <td>{{ $category->slug }}</td>
                             <td>{{ \Carbon\Carbon::parse($category->created_at)->format('d M Y') }}</td>
                             <td>
-                                @if($category->status == 'active')
+                                @if($category->status == 1)
                                     <span class="badge table-badge bg-success fw-medium fs-10">Active</span>
                                 @else
                                     <span class="badge table-badge bg-danger fw-medium fs-10">Inactive</span>
@@ -132,8 +132,8 @@
                                         @method('DELETE')
                                         <input type="hidden" name="category_ids[]" value="{{ $category->id }}">
                                     </form>
-                                    
-                                    <a href="javascript:void(0);" class="p-2" id="delete_cate_single" 
+
+                                    <a href="javascript:void(0);" class="p-2" id="delete_cate_single"
                                        onclick="if(confirm('Are you sure you want to delete this unit?')) { document.getElementById('delete_unit_frm_{{ $category->id }}').submit(); }">
                                         <i data-feather="trash-2" class="feather-trash-2"></i>
                                     </a>
@@ -142,9 +142,9 @@
                             </td>
                         </tr>
                         @empty
-                            
+
                         @endforelse
-                       
+
                     </tbody>
                 </table>
             </div>
@@ -162,7 +162,7 @@
                             <div class="modal-footer-btn mt-3 d-flex justify-content-center">
                                 <button type="button" class="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-primary fs-13 fw-medium p-2 px-3">Yes Delete</button>
-                            </div>						
+                            </div>
                     </div>
                 </div>
             </div>

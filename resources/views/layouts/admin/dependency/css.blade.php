@@ -41,7 +41,7 @@
 	<!-- Color Picker Css -->
 	<link rel="stylesheet" href="{{ asset('resource/admin/assets/plugins/%40simonwep/pickr/themes/nano.min.css')}}">
 
-	<!-- Main CSS -->
-	<link rel="stylesheet" href="{{ asset('resource/admin/assets/css/style.css')}}">
-	
-<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('resource/admin/assets/css/style.css') }}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote-lite.min.css" rel="stylesheet">
+

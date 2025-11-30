@@ -1,3 +1,4 @@
+{{-- @dd($errors->all()); --}}
 @extends('layouts.admin.app')
 @push('meta')
     <!-- Meta Tags -->
@@ -16,8 +17,8 @@
     <div class="page-header">
         <div class="add-item d-flex">
             <div class="page-title">
-                <h4 class="fw-bold">Create New Category</h4>
-                <h6 class="text-muted">Add a new product category to organize your inventory</h6>
+                <h4 class="fw-bold">Edit Category</h4>
+                <h6 class="text-muted">Update category information and settings</h6>
             </div>
         </div>
         <ul class="table-top-head">
@@ -39,20 +40,20 @@
     <div class="card shadow-sm border-0">
         <div class="card-header bg-light py-3">
             <h5 class="card-title mb-0">
-                <i class="ti ti-category me-2 text-primary"></i>
-                Category Information
+                <i class="ti ti-edit me-2 text-primary"></i>
+                Edit Category Information
             </h5>
         </div>
 
-        <form action="{{ route('admin.category.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.category.update', $category->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('post')
+            @method('PUT')
             <div class="card-body">
                 @if ($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show rounded-3">
                         <div class="d-flex align-items-center">
                             <i class="ti ti-alert-circle me-2 fs-5"></i>
-                            <strong>There were some errors with your request:</strong>
+                            <strong>There were some issues with your submission:</strong>
                         </div>
                         <ul class="mb-0 mt-2">
                             @foreach ($errors->all() as $error)
@@ -96,9 +97,7 @@
                                 </span>
                                 <input type="text" name="name" id="name"
                                     class="form-control border-start-0 ps-0 @error('name') is-invalid @enderror"
-                                    value="{{ old('name') }}"
-                                    placeholder="Enter category name"
-                                    required>
+                                    value="{{ old('name', $category->name) }}" placeholder="Enter category name" required>
                             </div>
                             <div class="form-text">Enter a descriptive name for your category</div>
                             @if ($errors->has('name'))
@@ -120,9 +119,7 @@
                                 </span>
                                 <input type="text" name="slug" id="slug"
                                     class="form-control border-start-0 ps-0 @error('slug') is-invalid @enderror"
-                                    value="{{ old('slug') }}"
-                                    placeholder="category-slug"
-                                    required>
+                                    value="{{ old('slug', $category->slug) }}" placeholder="category-slug" required>
                             </div>
                             <div class="form-text">This will be used in URLs. Auto-generated from the name.</div>
                             @if ($errors->has('slug'))
@@ -132,27 +129,34 @@
                                 </div>
                             @endif
                         </div>
-
+                    </div>
+                    <div class="col-lg-6">
                         <div class="mb-4">
                             <label class="form-label fw-semibold">
                                 Parent Category
                             </label>
+
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0">
                                     <i class="ti ti-category-plus text-muted"></i>
                                 </span>
+
                                 <select name="parent_id" id="parent_id"
                                     class="form-select border-start-0 ps-0 @error('parent_id') is-invalid @enderror">
                                     <option value="">-- Select Parent Category --</option>
-                                    @foreach($categories as $category)
-                                        @include('admin.categories.partials.category-option', [
-                                            'category' => $category,
-                                            'level' => 0
-                                        ])
+                                    @foreach ($categories as $cat)
+                                        @if ($cat->id != $category->id) {{-- Prevent selecting self as parent --}}
+                                            <option value="{{ $cat->id }}"
+                                                {{ old('parent_id', $category->parent_id) == $cat->id ? 'selected' : '' }}>
+                                                {{ $cat->name }}
+                                            </option>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="form-text">Select a parent category to create a subcategory</div>
+
                             @if ($errors->has('parent_id'))
                                 <div class="invalid-feedback d-block">
                                     <i class="ti ti-info-circle me-1"></i>
@@ -164,29 +168,41 @@
                         <div class="mb-4">
                             <div class="card bg-light border-0">
                                 <div class="card-body py-3">
-                                    <div class="status-toggle modal-status d-flex justify-content-between align-items-center">
+                                    <div
+                                        class="status-toggle modal-status d-flex justify-content-between align-items-center">
+
                                         <div>
                                             <span class="status-label fw-semibold">Category Status</span>
                                             <p class="text-muted mb-0 small">Enable or disable this category</p>
                                         </div>
+
                                         <div class="form-check form-switch">
-                                            <input type="checkbox" name="status" id="status"
+
+                                            <!-- Hidden input for OFF (0) -->
+                                            <input type="hidden" name="status" value="0">
+
+                                            <!-- Checkbox for ON (1) -->
+                                            <input type="checkbox"
                                                 class="form-check-input @error('status') is-invalid @enderror"
-                                                value="active"
-                                                {{ old('status', 'active') == 'active' ? 'checked' : '' }}>
+                                                name="status" id="status" value="1"
+                                                {{ old('status', $category->status) == 1 ? 'checked' : '' }}>
                                         </div>
                                     </div>
+
                                     @if ($errors->has('status'))
                                         <div class="invalid-feedback d-block mt-2">
                                             <i class="ti ti-info-circle me-1"></i>
                                             {{ $errors->first('status') }}
                                         </div>
                                     @endif
+
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-lg-6">
                         <!-- Category Icon Upload -->
                         <div class="card border-0 mb-4">
@@ -200,22 +216,34 @@
                                 <div class="custom-file-container" data-upload-id="iconImage">
                                     <div class="text-center mb-3">
                                         <div class="icon-upload-preview mb-3 mx-auto">
-                                            <div class="icon-preview-placeholder">
-                                                <i class="ti ti-photo fs-1 text-muted"></i>
-                                                <p class="mt-2 mb-0 text-muted small">No icon selected</p>
-                                            </div>
-                                            <img src="" class="img-fluid rounded icon-preview d-none" alt="Icon preview" style="max-height: 80px;">
+                                            @if($category->icon)
+                                                <img src="{{ asset($category->icon) }}" class="img-fluid rounded icon-preview" alt="Icon preview" style="max-height: 80px;">
+                                                <div class="icon-preview-placeholder d-none">
+                                                    <i class="ti ti-photo fs-1 text-muted"></i>
+                                                    <p class="mt-2 mb-0 text-muted small">No icon selected</p>
+                                                </div>
+                                            @else
+                                                <div class="icon-preview-placeholder">
+                                                    <i class="ti ti-photo fs-1 text-muted"></i>
+                                                    <p class="mt-2 mb-0 text-muted small">No icon selected</p>
+                                                </div>
+                                                <img src="" class="img-fluid rounded icon-preview d-none" alt="Icon preview" style="max-height: 80px;">
+                                            @endif
                                         </div>
                                     </div>
 
                                     <label class="custom-file-container__custom-file btn btn-outline-secondary w-100">
-                                        <input type="file" name="icon" class="custom-file-container__custom-file__custom-file-input d-none" accept="image/*">
+                                        <input type="file" name="icon"
+                                            class="custom-file-container__custom-file__custom-file-input d-none"
+                                            accept="image/*">
                                         <span class="custom-file-container__custom-file__custom-file-control">
                                             <i class="ti ti-upload me-2"></i>Choose Icon
                                         </span>
                                     </label>
                                     <div class="text-center mt-2">
-                                        <a href="javascript:void(0)" class="custom-file-container__icon-clear text-danger small" title="Clear Icon">
+                                        <a href="javascript:void(0)"
+                                            class="custom-file-container__icon-clear text-danger small"
+                                            title="Clear Icon">
                                             <i class="ti ti-trash me-1"></i>Remove Icon
                                         </a>
                                     </div>
@@ -230,7 +258,8 @@
                                 @endif
                             </div>
                         </div>
-
+                    </div>
+                    <div class="col-lg-6">
                         <!-- Category Image Upload -->
                         <div class="card border-0">
                             <div class="card-header bg-light py-3">
@@ -243,22 +272,34 @@
                                 <div class="custom-file-container" data-upload-id="categoryImage">
                                     <div class="text-center mb-3">
                                         <div class="image-upload-preview mb-3 mx-auto">
-                                            <div class="image-preview-placeholder">
-                                                <i class="ti ti-cloud-upload fs-1 text-muted"></i>
-                                                <p class="mt-2 mb-0 text-muted">No image selected</p>
-                                            </div>
-                                            <img src="" class="img-fluid rounded image-preview d-none" alt="Category preview">
+                                            @if($category->image)
+                                                <img src="{{ asset($category->image) }}" class="img-fluid rounded image-preview" alt="Category preview">
+                                                <div class="image-preview-placeholder d-none">
+                                                    <i class="ti ti-cloud-upload fs-1 text-muted"></i>
+                                                    <p class="mt-2 mb-0 text-muted">No image selected</p>
+                                                </div>
+                                            @else
+                                                <div class="image-preview-placeholder">
+                                                    <i class="ti ti-cloud-upload fs-1 text-muted"></i>
+                                                    <p class="mt-2 mb-0 text-muted">No image selected</p>
+                                                </div>
+                                                <img src="" class="img-fluid rounded image-preview d-none" alt="Category preview">
+                                            @endif
                                         </div>
                                     </div>
 
                                     <label class="custom-file-container__custom-file btn btn-outline-primary w-100">
-                                        <input type="file" name="image" class="custom-file-container__custom-file__custom-file-input d-none" accept="image/*">
+                                        <input type="file" name="image"
+                                            class="custom-file-container__custom-file__custom-file-input d-none"
+                                            accept="image/*">
                                         <span class="custom-file-container__custom-file__custom-file-control">
                                             <i class="ti ti-upload me-2"></i>Choose Image
                                         </span>
                                     </label>
                                     <div class="text-center mt-2">
-                                        <a href="javascript:void(0)" class="custom-file-container__image-clear text-danger small" title="Clear Image">
+                                        <a href="javascript:void(0)"
+                                            class="custom-file-container__image-clear text-danger small"
+                                            title="Clear Image">
                                             <i class="ti ti-trash me-1"></i>Remove Image
                                         </a>
                                     </div>
@@ -268,6 +309,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -275,8 +317,8 @@
                 <a href="{{ route('admin.category.index') }}" class="btn btn-outline-secondary">
                     <i class="ti ti-x me-1"></i>Cancel
                 </a>
-                <button type="submit" id="add_unit_btn" class="btn btn-primary">
-                    <i class="ti ti-plus me-1"></i>Create Category
+                <button type="submit" id="update_category_btn" class="btn btn-primary">
+                    <i class="ti ti-check me-1"></i>Update Category
                 </button>
             </div>
         </form>
@@ -351,7 +393,8 @@
 
             // Form validation styling
             $('form').on('submit', function() {
-                $('#add_unit_btn').prop('disabled', true).html('<i class="ti ti-loader me-1"></i>Creating...');
+                $('#update_category_btn').prop('disabled', true).html(
+                    '<i class="ti ti-loader me-1"></i>Updating...');
             });
 
             // Enhanced select2 for parent category
@@ -374,10 +417,11 @@
         }
 
         .card-header {
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
             border-color: #86b7fe;
         }
@@ -493,12 +537,29 @@
             padding-left: calc(var(--level) * 20px);
         }
 
-        .category-option.level-0 { --level: 0; }
-        .category-option.level-1 { --level: 1; }
-        .category-option.level-2 { --level: 2; }
-        .category-option.level-3 { --level: 3; }
-        .category-option.level-4 { --level: 4; }
-        .category-option.level-5 { --level: 5; }
+        .category-option.level-0 {
+            --level: 0;
+        }
+
+        .category-option.level-1 {
+            --level: 1;
+        }
+
+        .category-option.level-2 {
+            --level: 2;
+        }
+
+        .category-option.level-3 {
+            --level: 3;
+        }
+
+        .category-option.level-4 {
+            --level: 4;
+        }
+
+        .category-option.level-5 {
+            --level: 5;
+        }
 
         .select2-results__option {
             position: relative;

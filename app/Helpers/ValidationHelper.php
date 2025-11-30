@@ -6,68 +6,88 @@ use Illuminate\Support\Facades\Validator;
 
 class ValidationHelper
 {
-        /**
-     * ----------------------------------
-     * GENERIC VALIDATION (Reusable)
-     * ----------------------------------
-     * Use this for other modules like Product, Blog, etc.
+    /**
+     * GENERIC VALIDATION
+     * Returns:
+     *  - status: success/error
+     *  - message: first error
+     *  - errors: all errors (optional)
      */
-    public static function validate($request, array $rules, array $messages = [])
+    public static function validate(array $data, array $rules, array $messages = [])
     {
-        $validator = Validator::make($request, $rules, $messages);
+        $validator = Validator::make($data, $rules, $messages);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return [
+                KeywordHelper::STATUS  => KeywordHelper::ERROR,
+                KeywordHelper::MESSAGE => $validator->errors()->first(),
+                KeywordHelper::ERRORS  => $validator->errors()->messages(),
+            ];
         }
 
-        return $validator->validated();
+        return [
+            KeywordHelper::STATUS => KeywordHelper::SUCCESS,
+            KeywordHelper::DATA   => $validator->validated(),
+        ];
     }
+
+
     /**
-     * ----------------------------------
-     * CATEGORY VALIDATION
-     * ----------------------------------
+     * CATEGORY CREATE/UPDATE VALIDATION
      */
-    public static function validateCategory($request, $isUpdate = false, $id = null)
+    public static function validateCategory(array $data, $isUpdate = false, $id = null)
     {
         $rules = [
-            'name'   => 'required|unique:tbl_category,name' . ($isUpdate && $id ? ',' . $id : ''),
-            'slug'   => 'required|unique:tbl_category,slug' . ($isUpdate && $id ? ',' . $id : ''),
-            'status' => 'required|in:active,inactive',
-            'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'name'   => 'required|unique:tbl_category,name' . ($isUpdate ? ',' . $id : ''),
+            'slug'   => 'required|unique:tbl_category,slug' . ($isUpdate ? ',' . $id : ''),
+            'status' => 'required|in:0,1',
+
+            'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'icon'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
 
         $messages = [
-            'name.required'   => 'Please enter category name.',
-            'slug.required'   => 'Please enter category slug.',
-            'status.required' => 'Please select a category status.',
-            'status.in'       => 'Invalid status selected.',
-            'image.image'     => 'The uploaded file must be an image.',
+            // Name
+            'name.required' => __('string.category.name_required'),
+            'name.unique'   => __('string.category.name_unique'),
+
+            // Slug
+            'slug.required' => __('string.category.slug_required'),
+            'slug.unique'   => __('string.category.slug_unique'),
+
+            // Status
+            'status.required' => __('string.category.status_required'),
+
+            // Image messages
+            'image.image'  => __('string.category.image_invalid'),
+            'image.mimes'  => __('string.category.image_extension'),
+            'image.max'    => __('string.category.max_file_size'),
+
+            // Icon messages
+            'icon.image'  => __('string.category.image_invalid'),
+            'icon.mimes'  => __('string.category.image_extension'),
+            'icon.max'    => __('string.category.max_file_size'),
         ];
 
-        return self::validate($request, $rules, $messages);
+        return self::validate($data, $rules, $messages);
     }
 
+
+
     /**
-     * ----------------------------------
-     * USER VALIDATION
-     * ----------------------------------
+     * CHECK CATEGORY EXIST
      */
-    public static function validateUser($request, $isUpdate = false, $id = null)
+    public static function validateCategoryExist($id)
     {
         $rules = [
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:tbl_users,email' . ($isUpdate && $id ? ',' . $id : ''),
-            'password' => $isUpdate ? 'nullable|min:6' : 'required|min:6',
+            'id' => 'required|exists:tbl_category,id',
         ];
 
         $messages = [
-            'name.required'     => 'User name is required.',
-            'email.required'    => 'Email address is required.',
-            'email.email'       => 'Please enter a valid email address.',
-            'password.required' => 'Password is required.',
-            'password.min'      => 'Password must be at least 6 characters.',
+            'id.required' => __('string.category.id_required'),
+            'id.exists'   => __('string.category.id_not_found'),
         ];
 
-        return self::validate($request, $rules, $messages);
+        return self::validate(['id' => $id], $rules, $messages);
     }
 }
