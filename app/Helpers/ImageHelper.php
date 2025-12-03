@@ -10,6 +10,7 @@ class ImageHelper
     public const CATEGORY = 'category/';
     public const USER     = 'user/';
     public const PRODUCT  = 'product/';
+    public const BRAND    = 'brand/';
 
     /**
      * Build full storage path

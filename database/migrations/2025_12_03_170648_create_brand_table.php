@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tbl_unit', function (Blueprint $table) {
+        Schema::create('brand', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('shortname');
-            $table->string('no_of_product');
-            $table->enum('status',['active','inactive']);
+            $table->string('name')->unique();
+            $table->string('image');
+            $table->string('icon')->nullable();
+            $table->enum('status',[0,1])->default(1);
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_unit');
+        Schema::dropIfExists('brand');
     }
 };

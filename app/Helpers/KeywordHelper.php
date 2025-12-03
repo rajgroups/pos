@@ -14,6 +14,8 @@ class KeywordHelper
     public const ERRORS  = 'errors';
     public const DATA    = 'data';
 
+    // Keyword
+    public const BOOLEAN = 'boolean';
     /**
      * Auto-translation from string.php (lang file)
      * Example: KeywordHelper::text('category.created_success')

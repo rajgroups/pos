@@ -38,8 +38,8 @@ class ValidationHelper
     public static function validateCategory(array $data, $isUpdate = false, $id = null)
     {
         $rules = [
-            'name'   => 'required|unique:tbl_category,name' . ($isUpdate ? ',' . $id : ''),
-            'slug'   => 'required|unique:tbl_category,slug' . ($isUpdate ? ',' . $id : ''),
+            'name'   => 'required|unique:category,name' . ($isUpdate ? ',' . $id : ''),
+            'slug'   => 'required|unique:category,slug' . ($isUpdate ? ',' . $id : ''),
             'status' => 'required|in:0,1',
 
             'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
@@ -80,7 +80,7 @@ class ValidationHelper
     public static function validateCategoryExist($id)
     {
         $rules = [
-            'id' => 'required|exists:tbl_category,id',
+            'id' => 'required|exists:category,id',
         ];
 
         $messages = [

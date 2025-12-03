@@ -3,18 +3,24 @@
 namespace App\Http\Controllers\admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\BrandService;
 use Illuminate\Http\Request;
 
 class BrandController extends Controller
 {
+    protected $service;
+
+    public function __construct(BrandService $brandService) {
+        $this->service = $brandService;
+    }
     /**
      * Display a listing of the resource.
      */
-        public function index()
-        {
-
-            return view('admin.brand.list');
-        }
+    public function index()
+    {
+        $brands = $this->service->all();
+        return view('admin.brand.list',compact('brands'));
+    }
 
     /**
      * Show the form for creating a new resource.
