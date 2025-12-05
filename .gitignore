@@ -1,27 +1,39 @@
+# Laravel
 /.phpunit.cache
-/node_modules
-/public/build
-/public/hot
-/public/storage
+/.phpunit.result.cache
 /vendor
-/public/*
+/node_modules
+/storage/
+public/storage
+
+# Environment
 .env
 .env.backup
 .env.production
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
 auth.json
-npm-debug.log
-yarn-error.log
-/.fleet
+
+# Laravel Mix / Vite
+/public/build
+/public/hot
+
+# Ignore everything in public, except these:
+public/*
+!public/index.php
+!public/.htaccess
+!public/favicon.ico
+
+# Ignore specific CSS file
+public/resource/admin/assets/css/style.css
+
+# IDE files
 /.idea
 /.vscode
-echo "/public/*
-!/public/index.php
-!/public/.htaccess
-!/public/favicon.ico
-/vendor/
-node_modules/
-.env
-/storage/
+/.fleet
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Homestead
+Homestead.json
+Homestead.yaml

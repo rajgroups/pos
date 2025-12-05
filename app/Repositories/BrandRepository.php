@@ -6,27 +6,37 @@ use App\Models\Brand;
 
 class BrandRepository implements BrandInterface{
 
+    protected $brand;
+
+    public function __construct(Brand $brand) {
+        $this->brand = $brand;
+    }
+
     public function all(){
-        return Brand::all();
+        return $this->brand->latest()->paginate(10);
     }
 
     public function find($id)
     {
-        throw new \Exception('Not implemented');
+        return $this->brand->find($id);
     }
 
     public function create(array $data)
     {
-        throw new \Exception('Not implemented');
+        $brand = $this->brand->newInstance();
+        $brand->fill($data);
+        $brand->save();
     }
 
     public function update($id, array $data)
     {
-        throw new \Exception('Not implemented');
+        $brand = $this->brand->find($id);
+        $brand->fill($data);
+        return $brand->save();
     }
 
     public function delete($id)
     {
-        throw new \Exception('Not implemented');
+        return $this->brand->where('id', $id)->delete();
     }
 }

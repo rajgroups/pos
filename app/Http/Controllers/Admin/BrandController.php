@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\admin;
 
+use App\Helpers\KeywordHelper;
+use App\Helpers\NotifyHelper;
+use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
 use App\Services\BrandService;
 use Illuminate\Http\Request;
@@ -27,8 +30,8 @@ class BrandController extends Controller
      */
     public function create()
     {
-        //
-            return view('admin.brand.create');
+        // create new Brand form
+        return view('admin.brand.create');
     }
 
     /**
@@ -36,7 +39,18 @@ class BrandController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // create new brand record
+        $validator = ValidationHelper::validateBrand($request->all());
+
+        if($validator['status'] == KeywordHelper::ERROR){
+            NotifyHelper::errorMessage($validator[KeywordHelper::MESSAGE]);
+            return back()->withInput();
+        };
+
+        $this->service->create($request->all());
+
+        NotifyHelper::successMessage('brand.created_success');
+        return back();
     }
 
     /**
@@ -52,7 +66,15 @@ class BrandController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $validate = ValidationHelper::validateBrandExist($id);
+
+        if($validate['status'] == KeywordHelper::ERROR){
+            NotifyHelper::errorMessage($validate['message']);
+            return redirect()->route('admin.category.index');
+        }
+
+        $brand = $this->service->getById($id);
+        return view('admin.brand.edit', compact('brand'));
     }
 
     /**
@@ -60,7 +82,31 @@ class BrandController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        // Check Brand Exists
+        $validate = ValidationHelper::validateBrandExist($id);
+
+        if ($validate['status'] == KeywordHelper::ERROR) {
+            NotifyHelper::errorMessage($validate['message']);
+            return redirect()->route('admin.brand.index');
+        }
+
+        // Validate Data
+        $validator = ValidationHelper::validateBrand(
+            $request->all(),
+            isUpdate: true,
+            id: $id
+        );
+
+        if ($validator['status'] == KeywordHelper::ERROR) {
+            NotifyHelper::errorMessage($validator[KeywordHelper::MESSAGE]);
+            return back()->withInput();
+        }
+
+        // Update Brand
+        $this->service->update($id, $request->all());
+
+        NotifyHelper::successMessage('brand.updated_success');
+        return back();
     }
 
     /**
@@ -68,6 +114,19 @@ class BrandController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // Check Brand Exists
+        $validate = ValidationHelper::validateBrandExist($id);
+
+        if ($validate['status'] == KeywordHelper::ERROR) {
+            NotifyHelper::errorMessage($validate['message']);
+            return redirect()->route('admin.brand.index');
+        }
+
+        // Delete Brand
+        $this->service->delete($id);
+
+        NotifyHelper::successMessage('brand.deleted_success');
+        return redirect()->route('admin.brand.index');
     }
+
 }

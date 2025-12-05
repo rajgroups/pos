@@ -14,12 +14,24 @@ return new class extends Migration
     {
         Schema::create('category', function (Blueprint $table) {
             $table->id();
+
             $table->string('name')->unique();
             $table->string('slug')->unique();
+
+            $table->unsignedBigInteger('parent_id')->nullable();
+
             $table->longText('image')->nullable();
             $table->longText('icon')->nullable();
-            $table->enum('status', array_column(status::cases(), 'value')); // Corrected
+
+            $table->enum('status', array_column(status::cases(), 'value'));
+
             $table->timestamps();
+
+            /** Self Relationship (parent → child category) */
+            $table->foreign('parent_id')
+                ->references('id')
+                ->on('category')
+                ->onDelete('set null');
         });
     }
 

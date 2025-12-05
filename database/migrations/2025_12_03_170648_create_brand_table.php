@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('brand', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->string('slug')->unique();
             $table->string('image');
             $table->string('icon')->nullable();
-            $table->enum('status',[0,1])->default(1);
             $table->boolean('status')->default(true);
             $table->timestamps();
         });

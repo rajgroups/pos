@@ -1,13 +1,18 @@
 <?php
 
 return [
-
     // -------------------------------------------------
-    // Common Word
+    // GENERAL WORDS (Common text)
     // -------------------------------------------------
-        'general' => [
-            'record_not_found' =>  'Record Found',
-        ],
+    'general' => [
+        'save'          => 'Save',
+        'update'        => 'Update',
+        'delete'        => 'Delete',
+        'status'        => 'Status',
+        'active'        => 'Active',
+        'inactive'      => 'Inactive',
+        'record_not_found' =>  'Record Found',
+    ],
     // -------------------------------------------------
     // CATEGORY MODULE
     // -------------------------------------------------
@@ -52,17 +57,36 @@ return [
         'logout_success' => 'Logged out successfully.',
     ],
 
+    // -------------------------------------------------
+    // Brand
+    // -------------------------------------------------
 
-    // -------------------------------------------------
-    // GENERAL WORDS (Common text)
-    // -------------------------------------------------
-    'general' => [
-        'save' => 'Save',
-        'update' => 'Update',
-        'delete' => 'Delete',
-        'status' => 'Status',
-        'active' => 'Active',
-        'inactive' => 'Inactive',
+    'brand' => [
+        'created_success' => 'Brand created successfully.',
+        'updated_success' => 'Brand updated successfully.',
+        'deleted_success' => 'Brand deleted successfully.',
+
+        'name_required' => 'Brand name is required.',
+        'name_unique'   => 'This brand name already exists.',
+
+        'slug_required' => 'Slug is required.',
+        'slug_unique'   => 'This slug already exists.',
+
+        'status_required' => 'Status is required.',
+
+        'image_required'  => 'Brand image is required.',
+        'image_invalid'   => 'Please upload a valid image.',
+        'image_extension' => 'Only JPG, JPEG, PNG, and WEBP formats are allowed.',
+        'image_max'       => 'Image size must not exceed 5MB.',
+
+        'icon_required'  => 'Brand icon is required.',
+        'icon_invalid'   => 'Please upload a valid icon.',
+        'icon_extension' => 'Only JPG, JPEG, PNG, and WEBP formats are allowed.',
+        'icon_max'       => 'Icon size must not exceed 5MB.',
+
+        'id_required' => 'Brand ID is required.',
+        'id_not_found' => 'Brand not found.',
     ],
+
 
 ];

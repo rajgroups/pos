@@ -14,6 +14,15 @@ class Brand extends Model
 
     protected $table = 'brand';
 
+    protected $fillable = [
+        'name',
+        'slug',
+        'parent_id',
+        'status',
+        'icon',
+        'image',
+    ];
+
     protected $casts = [
         KeywordHelper::STATUS => KeywordHelper::BOOLEAN,
     ];
@@ -27,10 +36,10 @@ class Brand extends Model
     }
 
     public function getImageUrlAttribute(){
-        return $this->image ? asset(ImageHelper::BRAND.$this->image) : null;
+        return $this->image ? asset($this->image) : null;
     }
 
     public function getIconUrlAttribute(){
-        return $this->icon ? asset(ImageHelper::BRAND.$this->icon) : null;
+        return $this->icon ? asset($this->icon) : null;
     }
 }

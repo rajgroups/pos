@@ -12,6 +12,7 @@ class Category extends Model
     protected $table = 'category';
 
     protected $fillable = [
+        'parent_id',
         'name',
         'slug',
         'image',
@@ -23,4 +24,18 @@ class Category extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function parent(){
+        return $this->belongsTo(Category::class,'parent_id');
+    }
+
+    public function children(){
+        return $this->hasMany(Category::class,'parent_id');
+    }
+
+    // Recursive Self Children (Unlimited Level)
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
 }
