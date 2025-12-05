@@ -22,8 +22,8 @@ public/*
 !public/.htaccess
 !public/favicon.ico
 
-# Ignore specific CSS file
-public/resource/admin/assets/css/style.css
+# Allow this specific CSS file
+!public/resource/admin/assets/css/style.css
 
 # IDE files
 /.idea
