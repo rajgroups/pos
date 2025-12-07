@@ -2,155 +2,120 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enum\status;
 use App\Http\Controllers\Controller;
-use App\Models\unit;
-use Exception;
+use App\Services\UnitService;
+use App\Helpers\ValidationHelper;
+use App\Helpers\NotifyHelper;
+use App\Models\Unit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rules\Enum;
 
 class UnitController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
-    {
+    protected $service;
 
-        $units = Unit::select(['id', 'name', 'shortname', 'no_of_product', 'status', 'created_at'])->get();
-        return view('admin.unit.list',compact('units')); // Return view for normal page load
+    public function __construct(UnitService $service)
+    {
+        $this->service = $service;
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display list of units
+     */
+    public function index()
+    {
+        $units = $this->service->all();
+        return view('admin.unit.index', compact('units'));
+    }
+
+    /**
+     * Show create form
      */
     public function create()
     {
-        //
         return view('admin.unit.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new Unit
      */
     public function store(Request $request)
     {
+        $validate = ValidationHelper::validate($request->all(), Unit::validationRules());
 
-        $request->validate([
-            'name'          =>'required|max:255',
-            'shortname'     =>'required|max:255',
-            'no_of_product' =>'required|numeric|max:15',
-            'status'        =>[new Enum(status::class)],
-        ]);
-
-        try{
-
-            DB::beginTransaction();
-            // If validation passes, save data
-            Unit::create([
-                'name'          => $request->name,
-                'shortname'     => $request->shortname,
-                'status'        => $request->status,
-                'no_of_product' => $request->no_of_product,
-            ]);
-
-            DB::commit();
-
-            return redirect()->back()->with('success','Unit Added Successfully');
-
-        }catch(Exception $e){
-            DB::rollBack();
-            return redirect()->back()->with('error','Sorry Unit Colud Not Add Issue:'.$e->getMessage());
+        if ($validate['status'] === 'error') {
+            return back()->withErrors($validate['errors'])->withInput();
         }
 
+        $this->service->store($validate['data']);
+
+        NotifyHelper::success('unit.created_success');
+
+        return redirect()->route('admin.unit.index');
     }
 
     /**
-     * Display the specified resource.
+     * Show edit form
      */
-    public function show(unit $unit)
+    public function edit($id)
     {
-        //
-        return view('admin.unit.show');
+        $unit = $this->service->find($id);
+
+        if (!$unit) {
+            NotifyHelper::error('unit.not_found');
+            return redirect()->route('admin.unit.index');
+        }
+
+        return view('admin.unit.edit', compact('unit'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update Unit
      */
-    public function edit(unit $unit)
+    public function update(Request $request, $id)
     {
-        //
-        return view('admin.unit.edit',compact('unit'));
+        $validate = ValidationHelper::validate(
+            $request->all(),
+            Unit::validationRules($id)
+        );
+
+        if ($validate['status'] === 'error') {
+            return back()->withErrors($validate['errors'])->withInput();
+        }
+
+        $this->service->update($id, $validate['data']);
+
+        NotifyHelper::success('unit.updated_success');
+
+        return redirect()->route('admin.unit.index');
     }
 
     /**
-     * Update the specified resource in storage.
+     * Delete Unit
      */
-    public function update(Request $request, unit $unit)
+    public function destroy($id)
     {
-        $request->validate([
-            'name'          =>'required|max:255',
-            'shortname'     =>'required|max:255',
-            'no_of_product' =>'required|numeric|max:15',
-            'status'        =>[new Enum(status::class)],
-        ]);
-
-        try{
-            DB::beginTransaction();
-
-            $unit->name             = $request->name;
-            $unit->shortname        = $request->shortname;
-            $unit->no_of_product    = $request->no_of_product;
-            $unit->status           = $request->status;
-            $unit->save();
-            DB::commit(); // Commit transaction if delete is successful
-            return redirect()->back()->with('success','Unit Updated Successfully');
-        }catch(Exception $e){
-            DB::rollBack();
-            return redirect()->back()->with('error','Unit could not Update'.$e->getMessage());
+        if (!$this->service->delete($id)) {
+            NotifyHelper::error('unit.not_found');
+            return back();
         }
 
+        NotifyHelper::success('unit.deleted_success');
+
+        return back();
     }
 
-    public function destroy(Unit $unit)
+    /**
+     * Show Unit Details
+     */
+    public function show($id)
     {
-        try {
-            DB::beginTransaction();
+        $unit = $this->service->find($id);
 
-            // Check if the unit exists before deletion
-            if (!$unit) {
-                return redirect()->back()->with('error', 'Unit not found');
-            }
-
-            $unit->delete();
-
-            DB::commit(); // Commit transaction if delete is successful
-
-            return redirect()->back()->with('success', 'Unit Deleted Successfully');
-        } catch (Exception $e) {
-            DB::rollBack(); // Rollback if an error occurs
-            return redirect()->back()->with('error', 'Unit could not be deleted: ' . $e->getMessage());
-        }
-    }
-
-
-    public function destroyAll(Request $requests){
-
-        $requests->validate([
-            'unit_ids'  => 'required|array'
-        ]);
-
-        try{
-
-            DB::beginTransaction();
-            unit::whereIn('id',$requests->unit_ids)->delete();
-
-        }catch(Exception $e){
-
-            DB::rollBack();
-            return redirect()->back()->with('fail',$e->getMessage());
+        if (!$unit) {
+            NotifyHelper::error('unit.not_found');
+            return redirect()->route('admin.unit.index');
         }
 
+        return view('admin.unit.show', compact('unit'));
     }
 }

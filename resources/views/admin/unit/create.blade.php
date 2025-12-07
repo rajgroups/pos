@@ -1,140 +1,240 @@
 @extends('layouts.admin.app')
+
 @push('meta')
-    <!-- Meta Tags -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Lion POS is a powerful Bootstrap based Inventory Management Admin Template designed for businesses, offering seamless invoicing, project tracking, and estimates.">
-    <meta name="keywords"
-        content="inventory management, admin dashboard, bootstrap template, invoicing, estimates, business management, responsive admin, POS system">
-    <meta name="author" content="Dreams Technologies">
-    <meta name="robots" content="index, follow">
-    <title>Lion POS - Inventory Management & Admin Dashboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Variant Attribute - Lion POS</title>
 @endpush
+
 @section('content')
+<div class="content">
+
+    <!-- PAGE HEADER -->
     <div class="page-header">
-        <div class="add-item d-flex">
-            <div class="page-title">
-                <h4 class="fw-bold">Units</h4>
-                <h6>Manage your units</h6>
-            </div>
+        <div class="page-title">
+            <h4 class="fw-bold">Add Variant Attribute</h4>
+            <h6>Create variant types (like size, color, material) for products</h6>
         </div>
-        <ul class="table-top-head">
-            <li>
-                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh"><i class="ti ti-refresh"></i></a>
-            </li>
-            <li>
-                <a data-bs-toggle="tooltip" data-bs-placement="top" title="Collapse" id="collapse-header"><i
-                        class="ti ti-chevron-up"></i></a>
-            </li>
-        </ul>
+
         <div class="page-btn">
-            <a href="{{ route('admin.unit.index') }}" class="btn btn-primary"><i
-                    class="ti ti-arrow-left me-1"></i>Back</a>
+            <a href="{{ route('admin.variant-attributes.index') }}" class="btn btn-primary">
+                <i class="ti ti-list me-1"></i> Variant List
+            </a>
         </div>
     </div>
 
-    <div class="card">
+    <div class="card shadow-sm">
 
-            <form action="{{ route('admin.unit.store') }}" method="POST">
-                @csrf
-                @method('post')
-                <div class="card-body">
-                    <div class="mb-3">
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                There were some errors with your request.
-                                <ul>
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-                        @if (session()->has('success'))
-                            <div class="alert alert-solid-success rounded-pill alert-dismissible fade show">
-                               {{ session()->get('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><i class="fas fa-xmark"></i></button>
-                            </div>
-                        @endif
-                        @if (session()->has('fail'))
-                            <div class="alert alert-solid-danger rounded-pill alert-dismissible fade show">
-                                {{ session()->get('fail') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><i class="fas fa-xmark"></i></button>
-                            </div>
-                        @endif
-                        
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Unit<span class="text-danger ms-1">*</span></label>
-                        <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required>
-                         <div class="valid-feedback">Looks good!</div>
-                         @if ($errors->has('name'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('name') }}
-                            </div>
-                         @endif
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Short Name<span class="text-danger ms-1">*</span></label>
-                        <input type="text" name="shortname" id="shortname" class="form-control @error('shortname') is-invalid @enderror" value="{{ old('shortname') }}" required>
-                        @if ($errors->has('shortname'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('shortname') }}
-                            </div>
-                        @endif
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">No of Product<span class="text-danger ms-1">*</span></label>
-                        <input type="text" name="no_of_product" id="no_of_product" class="form-control @error('no_of_product') is-invalid @enderror" value="{{ old('no_of_product') }}" required>
-                        @if ($errors->has('no_of_product'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('no_of_product') }}
-                            </div>
-                        @endif
-                    </div>
-                    <div class="mb-0">
-                        <div class="status-toggle modal-status d-flex justify-content-between align-items-center">
-                            <span class="status-label">Status</span>
-                            <input type="checkbox" name="status" id="status" name="status" class="check @error('status') is-invalid @enderror" value="active" checked required>
-                            @if($errors->has('status'))
-                            <div class="invalid-feedback d-block">
-                                {{ $errors->first('status') }}
-                            </div>
-                            @endif
-                            <label for="user2" class="checktoggle"></label>
+        {{-- GLOBAL ERROR ALERT --}}
+        @if ($errors->any())
+            <div class="alert alert-danger rounded-3 m-3">
+                <strong>Please fix the following errors:</strong>
+                <ul class="mt-2 mb-1">
+                    @foreach ($errors->all() as $e)
+                        <li>{{ $e }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('admin.variant-attributes.store') }}" method="POST">
+            @csrf
+
+            <div class="card-body">
+                <div class="row">
+
+                    <!-- Variant Name -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold">
+                            Variant Name <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="ti ti-tag"></i></span>
+                            <input type="text"
+                                   name="name"
+                                   class="form-control @error('name') is-invalid @enderror"
+                                   placeholder="Size, Color, Material"
+                                   value="{{ old('name') }}"
+                                   required>
                         </div>
+
+                        @error('name')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
+
+                    <!-- Slug -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold">
+                            Slug <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="ti ti-link"></i></span>
+                            <input type="text"
+                                   name="slug"
+                                   class="form-control @error('slug') is-invalid @enderror"
+                                   placeholder="auto-generated"
+                                   value="{{ old('slug') }}"
+                                   required>
+                        </div>
+
+                        @error('slug')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Variant Type -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold">
+                            Variant Type <span class="text-danger">*</span>
+                        </label>
+
+                        <select name="type"
+                                class="form-select @error('type') is-invalid @enderror"
+                                required>
+                            <option value="">-- Select Type --</option>
+                            <option value="text"    {{ old('type') === 'text' ? 'selected' : '' }}>Text</option>
+                            <option value="color"   {{ old('type') === 'color' ? 'selected' : '' }}>Color</option>
+                            <option value="size"    {{ old('type') === 'size' ? 'selected' : '' }}>Size</option>
+                            <option value="material"{{ old('type') === 'material' ? 'selected' : '' }}>Material</option>
+                        </select>
+
+                        @error('type')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Sort Order -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-semibold">Sort Order</label>
+                        <input type="number"
+                               name="sort_order"
+                               class="form-control"
+                               placeholder="1, 2, 3..."
+                               value="{{ old('sort_order') }}">
+                    </div>
+
+                    <!-- Variant Values -->
+                    <div class="col-md-12 mb-4">
+                        <label class="form-label fw-semibold">
+                            Variant Values <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="text"
+                               id="variant_values"
+                               class="form-control @error('values') is-invalid @enderror"
+                               name="values"
+                               placeholder="Enter values and press Enter (e.g. Red, Blue, Green)"
+                               value="{{ old('values') }}">
+
+                        <span class="text-muted small">Values will appear as tags below</span>
+
+                        <div id="tag-container" class="d-flex flex-wrap gap-2 mt-2"></div>
+
+                        @error('values')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- COLOR PICKER (IF TYPE=COLOR) -->
+                    <div class="col-md-12 mb-4 d-none" id="color-picker-section">
+                        <label class="form-label fw-semibold">Color Preview</label>
+                        <input type="color" class="form-control form-control-color">
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-md-12 mb-4">
+                        <label class="form-label fw-semibold">Description (optional)</label>
+
+                        <textarea name="description"
+                                  rows="3"
+                                  class="form-control">{{ old('description') }}</textarea>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-12 mb-4">
+                        <div class="status-toggle d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <span class="fw-semibold">Status</span>
+
+                            <input type="hidden" name="status" value="0">
+                            <input type="checkbox" name="status" value="1"
+                                   class="check"
+                                   id="variantStatus"
+                                   {{ old('status', 1) == 1 ? 'checked' : '' }}>
+
+                            <label for="variantStatus" class="checktoggle"></label>
+                        </div>
+
+                        @error('status')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
-                <div class="card-footer">
-                    <button type="button" class="btn me-2 btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" id="add_unit_btn" class="btn btn-primary">Add Unit</button>
-                </div>
-            </form>
+            </div>
+
+            <!-- SUBMIT FOOTER -->
+            <div class="card-footer d-flex justify-content-end">
+                <a href="{{ route('admin.variant-attributes.index') }}" class="btn btn-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Variant</button>
+            </div>
+
+        </form>
+
     </div>
-    <!-- /product list -->
-    </div>
+
+</div>
 @endsection
+
 @push('scripts')
 <script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
-(() => {
-  'use strict'
+// Auto slug generation
+document.querySelector('input[name="name"]').addEventListener('keyup', function () {
+    document.querySelector('input[name="slug"]').value =
+        this.value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+});
 
-  // Fetch all the forms we want to apply custom Bootstrap validation styles to
-  const forms = document.querySelectorAll('.needs-validation')
+// Show color picker only if "color" type is selected
+document.querySelector('select[name="type"]').addEventListener('change', function () {
+    document.getElementById('color-picker-section').classList.toggle('d-none', this.value !== 'color');
+});
 
-  // Loop over them and prevent submission
-  Array.from(forms).forEach(form => {
-    form.addEventListener('submit', event => {
-      if (!form.checkValidity()) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
+// Tag Input System
+const input = document.getElementById("variant_values");
+const tagContainer = document.getElementById("tag-container");
 
-      form.classList.add('was-validated')
-    }, false)
-  })
-})()
+input.addEventListener("keyup", function (e) {
+    if (e.key === "Enter" && this.value.trim() !== "") {
+        let val = this.value.trim();
+        createTag(val);
+        this.value = "";
+        updateHiddenValues();
+    }
+});
+
+// Create a tag component
+function createTag(value) {
+    let tag = document.createElement("span");
+    tag.className = "badge bg-primary p-2";
+    tag.innerHTML = value + ' <span class="ms-2 text-white remove-tag" style="cursor:pointer;">×</span>';
+    tagContainer.appendChild(tag);
+}
+
+// Remove tag
+document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("remove-tag")) {
+        e.target.parentElement.remove();
+        updateHiddenValues();
+    }
+});
+
+// Save tags into input field
+function updateHiddenValues() {
+    let tags = [...document.querySelectorAll("#tag-container span")]
+        .map(tag => tag.textContent.trim().slice(0, -1));
+    input.value = tags.join(",");
+}
 </script>
+@endpush

@@ -1,67 +1,120 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
+use App\Helpers\KeywordHelper;
 use App\Http\Controllers\Controller;
+use App\Models\VariantAttribute;
+use App\Services\VariantAttributeService;
+use App\Helpers\ValidationHelper;
+use App\Helpers\NotifyHelper;
 use Illuminate\Http\Request;
 
 class VariantAttributeController extends Controller
 {
+    protected $service;
+
+    public function __construct(VariantAttributeService $service)
+    {
+        $this->service = $service;
+    }
+
     /**
-     * Display a listing of the resource.
+     * List all variant attributes
      */
     public function index()
     {
-        //
-         return view('admin.variantattributes.list');
+        $variants = $this->service->all();
+        return view('admin.variantattributes.index', compact('variants'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating
      */
     public function create()
     {
-        //
-         return view('admin.variantattributes.create');
+        return view('admin.variantattributes.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new variant
      */
     public function store(Request $request)
     {
-        //
+        $validate = ValidationHelper::validate(
+            $request->all(),
+            VariantAttribute::validationRules()
+        );
+
+        if ($validate['status'] === KeywordHelper::ERROR) {
+
+            // Toast for the first validation message
+            NotifyHelper::errorMessage($validate['message']);
+
+            return back()->withErrors($validate['errors'])->withInput();
+        }
+
+        $this->service->store($validate['data']);
+
+        NotifyHelper::success('variant_attribute.created_success');
+
+        return redirect()->route('admin.variant-attributes.index');
+    }
+
+
+    /**
+     * Edit
+     */
+    public function edit($id)
+    {
+        $variant = $this->service->find($id);
+
+        if (!$variant) {
+            NotifyHelper::errorMessage("Variant Attribute not found!");
+            return back();
+        }
+
+        return view('admin.variantattributes.edit', compact('variant'));
     }
 
     /**
-     * Display the specified resource.
+     * Update
      */
-    public function show(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $validate = ValidationHelper::validate(
+            $request->all(),
+            VariantAttribute::validationRules($id)
+        );
+
+        if ($validate['status'] === KeywordHelper::ERROR) {
+
+            // 🔥 Toast for first validation error
+            NotifyHelper::errorMessage($validate['message']);
+
+            return back()->withErrors($validate['errors'])->withInput();
+        }
+
+        $this->service->update($id, $validate['data']);
+
+        // 🔥 Success toast (localized)
+        NotifyHelper::success('variant_attribute.updated_success');
+
+        return redirect()->route('admin.variant-attributes.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
     /**
-     * Update the specified resource in storage.
+     * Delete
      */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        if (!$this->service->delete($id)) {
+            NotifyHelper::errorMessage("Failed to delete Variant Attribute!");
+            return back();
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        NotifyHelper::successMessage("Variant Attribute deleted successfully!");
+        return back();
     }
 }

@@ -49,7 +49,7 @@ class BrandController extends Controller
 
         $this->service->create($request->all());
 
-        NotifyHelper::successMessage('brand.created_success');
+        NotifyHelper::success('brand.created_success');
         return back();
     }
 
@@ -105,7 +105,7 @@ class BrandController extends Controller
         // Update Brand
         $this->service->update($id, $request->all());
 
-        NotifyHelper::successMessage('brand.updated_success');
+        NotifyHelper::success('brand.updated_success');
         return back();
     }
 

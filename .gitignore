@@ -16,7 +16,7 @@ auth.json
 /public/build
 /public/hot
 
-# Ignore everything in public, except these:
+# Ignore everything in public
 public/*
 !public/index.php
 !public/.htaccess

@@ -32,7 +32,7 @@
         </ul>
         <div class="page-btn">
             <a href="{{ route('admin.category.index') }}" class="btn btn-outline-primary">
-                <i class="ti ti-arrow-left me-1"></i>Back to Categories
+                <i class="ti ti-arrow-left me-1"></i>Back to Brand
             </a>
         </div>
     </div>
@@ -41,7 +41,7 @@
         <div class="card-header bg-light py-3">
             <h5 class="card-title mb-0">
                 <i class="ti ti-category me-2 text-primary"></i>
-                Category Information
+                Brand Information
             </h5>
         </div>
 

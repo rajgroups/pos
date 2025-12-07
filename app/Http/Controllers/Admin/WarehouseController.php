@@ -1,67 +1,93 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\WarehouseService;
 use Illuminate\Http\Request;
+use App\Models\Warehouse;
+use App\Helpers\ValidationHelper;
+use App\Helpers\NotifyHelper;
 
 class WarehouseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    protected $service;
+
+    public function __construct(WarehouseService $service)
     {
-        //
-         return view('admin.warehouses.list');
+        $this->service = $service;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    public function index(Request $request)
+    {
+        // simple filters (optional): search by name/code, status, type
+        $limit = 20;
+        $warranties = $this->service->list($limit);
+        // If you need filtering, you can update the repository to accept filters
+        return view('admin.warehouses.index', ['warehouses' => $warranties]);
+    }
+
     public function create()
     {
-        //
-         return view('admin.warehouses.create');
+        return view('admin.warehouses.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        // Validate using ValidationHelper
+        $validate = ValidationHelper::validate($request->all(), Warehouse::rules());
+
+        if ($validate['status'] === 'error') {
+            return back()
+                ->withErrors($validate['errors'])
+                ->withInput();
+        }
+
+        $result = $this->service->create($validate['data']);
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return back()->withErrors($result['errors'] ?? [ $result['message'] ?? 'Validation error' ])->withInput();
+        }
+
+        return redirect()->route('admin.warehouses.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit($id)
     {
-        //
+        $warehouse = $this->service->find($id);
+        if (!$warehouse) {
+            NotifyHelper::error('warehouse.not_found');
+            return redirect()->route('admin.warehouses.index');
+        }
+        return view('admin.warehouses.edit', compact('warehouse'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $validate = ValidationHelper::validate($request->all(), Warehouse::rules($id));
+
+        if ($validate['status'] === 'error') {
+            return back()->withErrors($validate['errors'])->withInput();
+        }
+
+        $result = $this->service->update($id, $validate['data']);
+
+        if (isset($result['status']) && $result['status'] === 'error') {
+            return back()->withErrors($result['errors'] ?? [ $result['message'] ?? 'Validation error' ])->withInput();
+        }
+
+        return redirect()->route('admin.warehouses.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy($id)
     {
-        //
-    }
+        $deleted = $this->service->delete($id);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        if (!$deleted) {
+            NotifyHelper::error('warehouse.delete_failed');
+            return back();
+        }
+
+        return redirect()->route('admin.warehouses.index');
     }
 }

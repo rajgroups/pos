@@ -42,7 +42,7 @@ class ValidationHelper
             'name'      => 'required|unique:category,name' . ($isUpdate ? ',' . $id : ''),
             'slug'      => 'required|unique:category,slug' . ($isUpdate ? ',' . $id : ''),
             'status'    => 'required|in:0,1',
-            'parent_id' => 'required'
+            'parent_id' => 'nullable',
 
             'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'icon'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
@@ -105,8 +105,8 @@ class ValidationHelper
 
             'status'    => 'required|in:0,1',
 
-            'image'     => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
-            'icon'      => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'image'     => ($isUpdate ? 'nullable' : 'required') . '|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'icon'      => ($isUpdate ? 'nullable' : 'required') .'|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
 
         $messages = [

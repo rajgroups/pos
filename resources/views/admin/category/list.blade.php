@@ -17,8 +17,8 @@
     <div class="page-header">
         <div class="add-item d-flex">
             <div class="page-title">
-                <h4 class="fw-bold">Category</h4>
-                <h6>Manage your Category</h6>
+                <h4 class="fw-bold">Create new Category</h4>
+                <h6>Add a new product category to organize your inventory</h6>
             </div>
         </div>
         <ul class="table-top-head">
@@ -147,24 +147,6 @@
 
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-    <!-- delete modal -->
-    <div class="modal fade" id="delete-modal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="page-wrapper-new p-0">
-                    <div class="p-5 px-3 text-center">
-                            <span class="rounded-circle d-inline-flex p-2 bg-danger-transparent mb-2"><i class="ti ti-trash fs-24 text-danger"></i></span>
-                            <h4 class="fs-20 fw-bold mb-2 mt-1">Delete Unit</h4>
-                            <p class="mb-0 fs-16">Are you sure you want to delete unit?</p>
-                            <div class="modal-footer-btn mt-3 d-flex justify-content-center">
-                                <button type="button" class="btn me-2 btn-secondary fs-13 fw-medium p-2 px-3 shadow-none" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary fs-13 fw-medium p-2 px-3">Yes Delete</button>
-                            </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
