@@ -3,14 +3,8 @@
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\admin\HomeController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\admin\BrandController;
-use App\Http\Controllers\admin\VariantAttributeController;
-use App\Http\Controllers\admin\WarrantyController;
-use App\Http\Controllers\admin\ProductController;
-use App\Http\Controllers\admin\WarehouseController;
-use App\Http\Controllers\admin\StoreController;
+use App\Http\Controllers\Admin\UserController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -38,10 +32,7 @@ Route::prefix('admin')->name('admin.')->group(function(){
     // For Category Managment Routes
     Route::resource('category',CategoryController::class);
 
+    // For User Management Routes
+    Route::resource('users', UserController::class);
+
 });
-
-
-
-
-
-

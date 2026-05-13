@@ -12,7 +12,7 @@ class UserAuthController extends Controller
     {
         $validated = $request->validate([
             'email' => ['nullable', 'email'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'mobile' => ['nullable', 'string', 'max:20'],
             'password' => ['required', 'string'],
         ]);
 
@@ -21,7 +21,7 @@ class UserAuthController extends Controller
             'message' => 'User login route is working.',
             'data' => [
                 'login_type' => 'user',
-                'identifier' => $validated['email'] ?? $validated['phone'] ?? null,
+                'identifier' => $validated['email'] ?? $validated['mobile'] ?? null,
             ],
         ]);
     }
