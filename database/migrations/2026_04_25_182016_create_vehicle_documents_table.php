@@ -16,16 +16,16 @@ return new class extends Migration
 
             $table->foreignId('vehicle_id')->constrained()->cascadeOnDelete();
 
-$table->foreignId('document_type_id')
-    ->constrained('document_types')
-    ->cascadeOnDelete();
+            $table->foreignId('document_type_id')
+                ->constrained('document_types')
+                ->cascadeOnDelete();
             /*
-        rc
-        insurance
-        permit
-        pollution
-        fitness
-    */
+                rc
+                insurance
+                permit
+                pollution
+                fitness
+            */
 
             $table->string('document_number')->nullable();
             $table->string('file_path');

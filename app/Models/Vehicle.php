@@ -14,7 +14,7 @@ class Vehicle extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'vehicle_type_id',
+        'vehicle_category_id',
         'brand',
         'model',
         'vehicle_number',
@@ -42,7 +42,7 @@ class Vehicle extends Model
 
     public function vehicleType(): BelongsTo
     {
-        return $this->belongsTo(VehicleType::class);
+        return $this->belongsTo(VehicleType::class, 'vehicle_category_id');
     }
 
     public function documents(): HasMany

@@ -153,4 +153,69 @@ class ValidationHelper
 
         return self::validate(['id' => $id], $rules, $messages);
     }
+
+    /**
+     * Check Mobile number Validation
+     **/
+
+    public static function ValidateMobile($mobile)
+    {
+        $rules = [
+            'mobile' => [
+                'required',
+                'regex:/^(\+91|91)?[6-9][0-9]{9}$/'
+            ]
+        ];
+
+        $message = [
+            'mobile.required' => 'Please enter the mobile number',
+            'mobile.regex'    => 'Please enter valid mobile number',
+        ];
+
+        return self::validate(
+            ['mobile' => $mobile],
+            $rules,
+            $message
+        );
+    }
+
+    /**
+     * Validate OTP Request
+     *
+     * Validate mobile number and OTP.
+     *
+     * @param object $request
+     *
+     * @return array
+     */
+    public static function ValidateOtp($request)
+    {
+        $rules = [
+            'mobile' => [
+                'required',
+                'regex:/^(\+91|91)?[6-9][0-9]{9}$/'
+            ],
+            'otp' => [
+                'required',
+                'digits:4'
+            ]
+        ];
+
+        $message = [
+            'mobile.required' => 'Please enter mobile number',
+            'mobile.regex'    => 'Please enter valid mobile number',
+
+            'otp.required'    => 'Please enter OTP',
+            'otp.digits'      => 'OTP must be 4 digits',
+        ];
+
+        return self::validate(
+            [
+                'mobile' => $request->mobile,
+                'otp'    => $request->otp,
+            ],
+            $rules,
+            $message
+        );
+    }
 }

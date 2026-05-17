@@ -87,15 +87,15 @@
 
                     <ul>
 
-                        <li><a href="category-list.html"><i class="ti ti-list-details fs-16 me-2"></i><span>Category</span></a></li>
+                        {{-- <li><a href="category-list.html"><i class="ti ti-list-details fs-16 me-2"></i><span>Category</span></a></li>
                         <li><a href="sub-categories.html"><i class="ti ti-carousel-vertical fs-16 me-2"></i><span>Sub Category</span></a></li>
                         <li><a href="{{route('admin.brand.index')}}"><i class="ti ti-triangles fs-16 me-2"></i><span>Brands</span></a></li>
-                        <li><a href="{{route('admin.unit.index')}}"><i class="ti ti-brand-unity fs-16 me-2"></i><span>Units</span></a></li>
+                        <li><a href="{{route('admin.unit.index')}}"><i class="ti ti-brand-unity fs-16 me-2"></i><span>Units</span></a></li> --}}
                          {{-- <li><a href="storage-settings.html"><i class="ti ti-certificate fs-16 me-2"></i><span>Storage</span></a></li> --}}
-                        <li><a href="{{route('admin.variant-attributes.index')}}"><i class="ti ti-checklist fs-16 me-2"></i><span>Variant Attributes</span></a></li>
+                        {{-- <li><a href="{{route('admin.variant-attributes.index')}}"><i class="ti ti-checklist fs-16 me-2"></i><span>Variant Attributes</span></a></li>
                         <li><a href="{{route('admin.warranty.index')}}"><i class="ti ti-certificate fs-16 me-2"></i><span>Warranties</span></a></li>
                         <li><a href="{{route('admin.products.index')}}"><i data-feather="box"></i><span>Products</span></a></li>
-                        <li><a href="{{route('admin.products.create')}}"><i class="ti ti-table-plus fs-16 me-2"></i><span>Create Product</span></a></li>
+                        <li><a href="{{route('admin.products.create')}}"><i class="ti ti-table-plus fs-16 me-2"></i><span>Create Product</span></a></li> --}}
 
                         {{-- <li><a href="barcode.html"><i class="ti ti-barcode fs-16 me-2"></i><span>Print Barcode</span></a></li> --}}
                         <li><a href="qrcode.html"><i class="ti ti-qrcode fs-16 me-2"></i><span>Print QR Code</span></a></li>
@@ -900,12 +900,12 @@
                         <li class="submenu">
                             <a href="javascript:void(0);"><span>People</span><span class="menu-arrow"></span></a>
                             <ul>
-                                <li><a href="customers.html"><span>Customers</span></a></li>
+                                {{-- <li><a href="customers.html"><span>Customers</span></a></li>
                                 <li><a href="billers.html"><span>Billers</span></a></li>
                                 <li><a href="suppliers.html"><span>Suppliers</span></a></li>
                                 <li><a href="{{route('admin.stores.index')}}"><span>Stores</span></a></li>
                                 <li><a href="{{route('admin.warehouses.index')}}"><span>Warehouses</span></a>
-                                </li>
+                                </li> --}}
                             </ul>
                         </li>
                         <li class="submenu">

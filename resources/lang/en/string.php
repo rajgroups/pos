@@ -38,6 +38,11 @@ return [
         'id_not_found' => 'Category not found.',
     ],
 
+    'common' => [
+        'not_found' => 'Record not found',
+        'user_found' => 'User found',
+        'no_user_found' => 'No user found with this mobile number'
+    ],
 
     // -------------------------------------------------
     // PRODUCT MODULE

@@ -1,4 +1,4 @@
-@extends('layouts.admin.skeleton')
+@extends('layouts.admin.app')
 @section('content')
 			<div class="account-content">
 				<div class="login-wrapper login-new">
@@ -11,7 +11,7 @@
                                         <img src="{{ asset('resource/admin/assets/img/logo-white.svg') }}"  alt="Img">
                                     </a>
                                 </div>
-                                <form action="{{ }}">
+                                <form action="">
                                     <div class="card">
                                         <div class="card-body p-5">
                                             <div class="login-userheading">

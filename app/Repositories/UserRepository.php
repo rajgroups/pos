@@ -11,6 +11,11 @@ class UserRepository
         return User::latest()->paginate($perPage);
     }
 
+    public function findByMobile($mobile)
+    {
+        return User::select('mobile','id','name','mobile','otp')->where('mobile', $mobile)->first();
+    }
+
     public function findById($id)
     {
         return User::findOrFail($id);
@@ -21,10 +26,23 @@ class UserRepository
         return User::create($data);
     }
 
-    public function update($id, array $data)
+    /**
+     * Update user data
+     *
+     * @param int $id
+     * @param object $data
+     *
+     * @return \App\Models\User
+     */
+    public function update($id, object $data)
     {
         $user = $this->findById($id);
-        $user->update($data);
+
+        foreach ($data as $key => $value) {
+            $user->$key = $value;
+        }
+
+        $user->save();
 
         return $user;
     }

@@ -26,7 +26,7 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
             $table->string('uuid')->nullable()->unique();
-
+            $table->string('otp')->nullable();
             $table->string('name')->nullable();
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
@@ -222,6 +222,7 @@ return new class extends Migration
             | Security
             |--------------------------------------------------------------------------
             */
+            $table->timestamp('otp_expired_at')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->string('last_login_ip')->nullable();
 

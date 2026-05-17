@@ -15,16 +15,16 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('driver_id')->constrained()->cascadeOnDelete();
-$table->foreignId('document_type_id')
-    ->constrained('document_types')
-    ->cascadeOnDelete();
+            $table->foreignId('document_type_id')
+                ->constrained('document_types')
+                ->cascadeOnDelete();
             /*
-        aadhaar
-        pan
-        license
-        police_verification
-        medical_certificate
-    */
+                aadhaar
+                pan
+                license
+                police_verification
+                medical_certificate
+            */
 
             $table->string('document_number')->nullable();
             $table->string('file_path');

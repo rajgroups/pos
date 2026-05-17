@@ -15,6 +15,11 @@ class UserService
         $this->userRepository = $userRepository;
     }
 
+    public function findByMobile($mobile)
+    {
+        return $this->userRepository->findByMobile($mobile);
+    }
+
     public function getAllUsers(int $perPage = 10)
     {
         return $this->userRepository->getAll($perPage);
@@ -45,7 +50,7 @@ class UserService
         } else {
             unset($data['password']);
         }
-        return $this->userRepository->update($id, $data);
+        return $this->userRepository->update($id, (object)$data);
     }
 
     public function deleteUser($id)

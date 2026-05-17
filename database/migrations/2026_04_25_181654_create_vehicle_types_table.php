@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('vehicle_categories', function (Blueprint $table) {
-
             $table->id();
 
             /*
@@ -37,10 +36,11 @@ return new class extends Migration
             | Basic Details
             |--------------------------------------------------------------------------
             */
-            $table->string('name')->unique();
+            $table->string('type_key')->nullable()->index();
+            $table->string('name');
             $table->string('slug')->unique();
-
             $table->text('description')->nullable();
+            $table->string('tagline')->nullable();
 
             /*
             |--------------------------------------------------------------------------
@@ -49,6 +49,9 @@ return new class extends Migration
             */
             $table->string('image')->nullable();
             $table->string('icon')->nullable();
+            $table->string('accent_color')->nullable();
+            $table->string('gradient_start')->nullable();
+            $table->string('gradient_end')->nullable();
 
             /*
             |--------------------------------------------------------------------------
@@ -57,6 +60,9 @@ return new class extends Migration
             */
             $table->decimal('base_fare', 10, 2)->nullable();
             $table->decimal('per_km_rate', 10, 2)->nullable();
+            $table->string('price_label')->nullable();
+            $table->string('starting_fare')->nullable();
+            $table->string('eta')->nullable();
 
             /*
             |--------------------------------------------------------------------------
@@ -64,6 +70,7 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
             $table->integer('max_capacity')->nullable();
+            $table->unsignedInteger('sort_order')->default(0);
 
             /*
             |--------------------------------------------------------------------------
