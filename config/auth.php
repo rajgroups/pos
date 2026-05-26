@@ -47,6 +47,10 @@ return [
         'driver_api' =>[
             'driver' => 'santum',
             'provider' => 'driver',
+        ],
+         'admin' =>[
+            'driver' => 'session',
+            'provider' => 'admin',
         ]
     ],
 
@@ -74,7 +78,11 @@ return [
         ],
         'driver' => [
             'driver' => 'eloquent',
-            'table' => App\Models\Driver::class,
+            'model' => App\Models\Driver::class,
+        ],
+        'admin' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
         ],
     ],
 

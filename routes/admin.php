@@ -29,10 +29,16 @@ Route::prefix('admin')->name('admin.')->group(function(){
     Route::get('login',[AuthController::class,'adminLoginForm'])->name('login.form');
     Route::get('verify-otp',[AuthController::class,'adminVerifyOtpForm'])->name('login.otp.form');
 
-    // For Category Managment Routes
-    Route::resource('category',CategoryController::class);
+    Route::middleware(['admin'])->group( function () {
 
-    // For User Management Routes
-    Route::resource('users', UserController::class);
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        });
+        // For Category Managment Routes
+        Route::resource('category',CategoryController::class);
+
+        // For User Management Routes
+        Route::resource('users', UserController::class);
+    });
 
 });
