@@ -16,12 +16,11 @@
                             <form action="https://dreamspos.dreamstechnologies.com/html/template/index.html">
                                 <div class="login-userset">
                                     <div class="login-logo logo-normal">
-                                    <img src="assets/img/logo.svg" alt="img">
+                                    <img src="{{ asset('resource/admin/assets/img/logo.svg')}}" alt="img">
                                 </div>
                                 <a href="/" class="login-logo logo-white">
-                                    <img src="{{ asset('') }}"  alt="Img">
-                                    <img src="assets/img/logo-white.svg"  alt="Img">
-                                </a> ok
+                                    <img src="{{ asset('resource/admin/assets/img/logo-white.svg') }}"  alt="Img">
+                                </a>
                                 <div class="login-userheading">
                                     <h3>Sign In</h3>
                                     <h4>Access the Dreamspos panel using your email and passcode.</h4>
@@ -71,24 +70,24 @@
                                         <div class="text-center me-2 flex-fill">
                                             <a href="javascript:void(0);"
                                                 class="br-10 p-2 btn btn-info d-flex align-items-center justify-content-center">
-                                                <img class="img-fluid m-1" src="assets/img/icons/facebook-logo.svg" alt="Facebook">
+                                                <img class="img-fluid m-1" src="{{ asset('resource/admin/assets/img/icons/facebook-logo.svg') }}" alt="Facebook">
                                             </a>
                                         </div>
                                         <div class="text-center me-2 flex-fill">
                                             <a href="javascript:void(0);"
                                                 class="btn btn-white br-10 p-2  border d-flex align-items-center justify-content-center">
-                                                <img class="img-fluid m-1" src="assets/img/icons/google-logo.svg" alt="Facebook">
+                                                <img class="img-fluid m-1" src="{{ asset('resource/admin/assets/img/icons/google-logo.svg')}}" alt="Facebook">
                                             </a>
                                         </div>
                                         <div class="text-center flex-fill">
                                             <a href="javascript:void(0);"
                                                 class="bg-dark br-10 p-2 btn btn-dark d-flex align-items-center justify-content-center">
-                                                <img class="img-fluid m-1" src="assets/img/icons/apple-logo.svg" alt="Apple">
+                                                <img class="img-fluid m-1" src="{{ asset('resource/admin/assets/img/icons/apple-logo.svg')}}" alt="Apple">
                                             </a>
                                         </div>
                                     </div>
                                     <div class="my-4 d-flex justify-content-center align-items-center copyright-text">
-                                        <p>Copyright &copy; 2025 DreamsPOS</p>
+                                        <a href="{{ route('home') }}"><p>Copyright &copy; 2025 DreamsPOS</p></a>
                                     </div>
                                 </div>
                             </div>
@@ -97,7 +96,7 @@
                     </div>
                     <div class="col-lg-6 p-0">
                         <div class="login-img">
-                            <img src="assets/img/authentication/authentication-01.svg" alt="img">
+                            <img src="{{ asset('resource/admin/assets/img/authentication/authentication-01.svg') }}" alt="img">
                         </div>
                     </div>
                 </div>
