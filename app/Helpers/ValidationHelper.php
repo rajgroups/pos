@@ -218,4 +218,26 @@ class ValidationHelper
             $message
         );
     }
+
+    /**
+     * Validate vehicle listing filters.
+     */
+    public static function validateVehicleIndex(array $data)
+    {
+        $rules = [
+            'vehicle_category_id' => 'required|integer|exists:vehicle_categories,id',
+            'status' => 'nullable|in:active,inactive,maintenance,retired',
+            'verified_only' => 'nullable|boolean',
+        ];
+
+        $messages = [
+            'vehicle_category_id.required' => 'Vehicle category id is required.',
+            'vehicle_category_id.integer' => 'Vehicle category id must be a valid integer.',
+            'vehicle_category_id.exists' => 'Selected vehicle category was not found.',
+            'status.in' => 'Status must be active, inactive, maintenance, or retired.',
+            'verified_only.boolean' => 'Verified only must be true or false.',
+        ];
+
+        return self::validate($data, $rules, $messages);
+    }
 }

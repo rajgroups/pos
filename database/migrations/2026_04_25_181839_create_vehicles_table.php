@@ -24,7 +24,7 @@ return new class extends Migration
             // Driver / Owner
             $table->foreignId('driver_id')
                 ->nullable()
-                ->constrained('users')
+                ->constrained('drivers')
                 ->nullOnDelete();
 
             // Sedan, SUV, Bike, Auto, Tractor etc
