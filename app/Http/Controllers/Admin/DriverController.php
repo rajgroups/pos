@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 
-class UserController extends Controller
+class DriverController extends Controller
 {
-    protected $userService;
+   protected $userService;
 
     public function __construct(UserService $userService)
     {
@@ -18,12 +18,12 @@ class UserController extends Controller
     public function index()
     {
         $users = $this->userService->getAllUsers();
-        return view('admin.user.index', compact('users'));
+        return view('admin.driver.index', compact('users'));
     }
 
     public function create()
     {
-        return view('admin.user.create');
+        return view('admin.driver.create');
     }
 
     public function store(Request $request)
@@ -44,13 +44,13 @@ class UserController extends Controller
     public function show($id)
     {
         $user = $this->userService->getUserById($id);
-        return view('admin.user.show', compact('user'));
+        return view('admin.driver.show', compact('user'));
     }
 
     public function edit($id)
     {
         $user = $this->userService->getUserById($id);
-        return view('admin.user.edit', compact('user'));
+        return view('admin.driver.edit', compact('user'));
     }
 
     public function update(Request $request, $id)

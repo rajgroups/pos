@@ -3,7 +3,7 @@
     <div class="page-header">
         <div class="add-item d-flex">
             <div class="page-title">
-                <h4 class="fw-bold">User Show</h4>
+                <h4 class="fw-bold">Cancel list</h4>
                 <h6>Manage your barcodes</h6>
             </div>
         </div>
@@ -28,11 +28,11 @@
                 </li>
                  <li>
                     <a data-bs-toggle="tooltip" data-bs-placement="top" id="collapse-header" aria-label="Collapse"
-                        data-bs-original-title="Collapse" href="{{ route('admin.users.create') }}"><i class="ti ti-plus"></i></a>
+                        data-bs-original-title="Collapse" href="{{ route('admin.ride.complete') }}"><i class="ti ti-plus"></i></a>
                 </li>
                  <li>
                     <a data-bs-toggle="tooltip" data-bs-placement="top" id="collapse-header" aria-label="Collapse"
-                        data-bs-original-title="Collapse" href="{{ route('admin.users.edit',1) }}"><i class="ti ti-pencil"></i></a>
+                        data-bs-original-title="Collapse" href="{{ route('admin.ride.complete') }}"><i class="ti ti-pencil"></i></a>
                 </li>
             </ul>
         </div>

@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\admin\HomeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\RideController;
 use App\Http\Controllers\Admin\UserController;
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +40,23 @@ Route::prefix('admin')->name('admin.')->group(function(){
 
         // For User Management Routes
         Route::resource('users', UserController::class);
+
+        // For Drivers Management Routes
+        Route::resource('drivers', DriverController::class);
+
+
+        // For Admin Management Routes
+        Route::resource('admin', AdminController::class);
+
+
+        // For Admin Management Routes
+        // Route::resource('ride', AdminController::class);
+        Route::prefix('ride')->name('ride.')->group(function () {
+            Route::get('active', [RideController::class, 'active'])->name('active');
+            Route::get('completed', [RideController::class, 'completed'])->name('complete');
+            Route::get('cancelled', [RideController::class, 'cancelled'])->name('cancelled');
+
+        });
     // });
 
 });

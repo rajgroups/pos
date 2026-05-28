@@ -83,6 +83,17 @@
                     </ul>
                 </li>
                  <li class="submenu-open">
+                    <h6 class="submenu-hdr">User managemnts</h6>
+                    <ul>
+                        <li><a href="{{ route('admin.users.index') }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Users</span></a></li>
+                        <li><a href="{{ route('admin.drivers.index') }}"><i class="ti ti-user-up fs-16 me-2"></i><span>Drivers</span></a></li>
+                        <li><a href="{{ route('admin.admin.index') }}"><i class="ti ti-user-dollar fs-16 me-2"></i><span>Admins</span></a></li>
+                        <li><a href="{{ route('admin.ride.active') }}"><i class="ti ti-home-bolt fs-16 me-2"></i><span>Ride</span></a></li>
+                        {{-- <li><a href="warehouse.html"><i class="ti ti-archive fs-16 me-2"></i><span>Warehouses</span></a> --}}
+                        </li>
+                    </ul>
+                </li>
+                <li class="submenu-open">
                     <h6 class="submenu-hdr">Peoples</h6>
                     <ul>
                         <li><a href="{{ route('admin.users.index') }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Customers</span></a></li>
@@ -182,7 +193,7 @@
 
                     </ul>
                 </li>
-               
+
                 <li class="submenu-open">
                     <h6 class="submenu-hdr">Reports</h6>
                     <ul>
