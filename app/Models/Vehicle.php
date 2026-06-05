@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicle extends Model
@@ -62,6 +63,11 @@ class Vehicle extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(VehicleDocument::class);
+    }
+
+    public function location(): HasOne
+    {
+        return $this->hasOne(VehicleLocation::class)->latestOfMany('location_updated_at');
     }
 
     public function driverAssignments(): HasMany

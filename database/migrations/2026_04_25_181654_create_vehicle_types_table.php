@@ -52,18 +52,6 @@ return new class extends Migration
             $table->string('accent_color')->nullable();
             $table->string('gradient_start')->nullable();
             $table->string('gradient_end')->nullable();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Pricing
-            |--------------------------------------------------------------------------
-            */
-            $table->decimal('base_fare', 10, 2)->nullable();
-            $table->decimal('per_km_rate', 10, 2)->nullable();
-            $table->string('price_label')->nullable();
-            $table->string('starting_fare')->nullable();
-            $table->string('eta')->nullable();
-
             /*
             |--------------------------------------------------------------------------
             | Vehicle Information

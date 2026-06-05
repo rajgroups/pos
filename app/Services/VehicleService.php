@@ -11,15 +11,16 @@ class VehicleService
     {
     }
 
-    public function getVehiclesByCategory(int $vehicleCategoryId, ?string $status = null, bool $verifiedOnly = false): Collection
+    public function getVehicles(array $filters = []): Collection
     {
         return $this->vehicleRepository
-            ->getByCategory($vehicleCategoryId, $status, $verifiedOnly)
+            ->getByFilters($filters)
             ->map(function ($vehicle) {
                 return [
                     'id' => $vehicle->id,
                     'vehicle_category_id' => $vehicle->vehicle_category_id,
                     'vehicle_category' => $vehicle->vehicleType?->name,
+                    'type' => $vehicle->vehicleType?->slug,
                     'vehicle_number' => $vehicle->vehicle_number,
                     'brand' => $vehicle->brand,
                     'model' => $vehicle->model,
@@ -29,11 +30,21 @@ class VehicleService
                     'load_capacity' => $vehicle->load_capacity,
                     'status' => $vehicle->status,
                     'is_verified' => $vehicle->is_verified,
+                    'distance' => $vehicle->getAttribute('distance') !== null ? round((float) $vehicle->getAttribute('distance'), 2) : null,
                     'images' => array_filter([
                         'front' => $vehicle->front_image,
                         'back' => $vehicle->back_image,
                         'side' => $vehicle->side_image,
                     ]),
+                    'location' => $vehicle->location ? [
+                        'latitude' => (float) $vehicle->location->latitude,
+                        'longitude' => (float) $vehicle->location->longitude,
+                        'speed' => $vehicle->location->speed !== null ? (float) $vehicle->location->speed : null,
+                        'heading' => $vehicle->location->heading !== null ? (float) $vehicle->location->heading : null,
+                        'accuracy' => $vehicle->location->accuracy !== null ? (float) $vehicle->location->accuracy : null,
+                        'is_online' => $vehicle->location->is_online,
+                        'updated_at' => $vehicle->location->location_updated_at?->toIso8601String(),
+                    ] : null,
                     'driver' => $vehicle->driver ? [
                         'id' => $vehicle->driver->id,
                         'name' => $vehicle->driver->name,

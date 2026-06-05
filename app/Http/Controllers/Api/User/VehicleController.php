@@ -27,11 +27,7 @@ class VehicleController extends Controller
             );
         }
 
-        $vehicles = $this->vehicleService->getVehiclesByCategory(
-            (int) $validated[KeywordHelper::DATA]['vehicle_category_id'],
-            $validated[KeywordHelper::DATA]['status'] ?? null,
-            (bool) ($validated[KeywordHelper::DATA]['verified_only'] ?? false)
-        );
+        $vehicles = $this->vehicleService->getVehicles($validated[KeywordHelper::DATA]);
 
         return ApiResponseHelper::success(
             'Vehicles fetched successfully.',

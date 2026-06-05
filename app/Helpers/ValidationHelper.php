@@ -224,16 +224,35 @@ class ValidationHelper
      */
     public static function validateVehicleIndex(array $data)
     {
+        if (
+            !array_key_exists('vehicle_category_id', $data)
+            && array_key_exists('category', $data)
+        ) {
+            $data['vehicle_category_id'] = $data['category'];
+        }
+
         $rules = [
-            'vehicle_category_id' => 'required|integer|exists:vehicle_categories,id',
+            'vehicle_category_id' => 'nullable|integer|exists:vehicle_categories,id',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|numeric|min:0',
+            'type' => 'nullable|string|max:100',
+            'search' => 'nullable|string|max:100',
             'status' => 'nullable|in:active,inactive,maintenance,retired',
             'verified_only' => 'nullable|boolean',
         ];
 
         $messages = [
-            'vehicle_category_id.required' => 'Vehicle category id is required.',
             'vehicle_category_id.integer' => 'Vehicle category id must be a valid integer.',
             'vehicle_category_id.exists' => 'Selected vehicle category was not found.',
+            'lat.numeric' => 'Latitude must be a valid number.',
+            'lat.between' => 'Latitude must be between -90 and 90.',
+            'lng.numeric' => 'Longitude must be a valid number.',
+            'lng.between' => 'Longitude must be between -180 and 180.',
+            'radius.numeric' => 'Radius must be a valid number.',
+            'radius.min' => 'Radius must be zero or greater.',
+            'type.string' => 'Type must be a valid string.',
+            'search.string' => 'Search must be a valid string.',
             'status.in' => 'Status must be active, inactive, maintenance, or retired.',
             'verified_only.boolean' => 'Verified only must be true or false.',
         ];
