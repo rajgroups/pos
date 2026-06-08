@@ -15,18 +15,11 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('vehicle_category_id')
-                ->constrained()
+                ->constrained('vehicle_categories')
                 ->cascadeOnDelete();
 
             // Pricing Mode
-            $table->enum('pricing_type', [
-                'fixed',
-                'distance',
-                'hourly',
-                'daily',
-                'acre',
-                'weight'
-            ]);
+            $table->string('pricing_type', 30)->index();
 
             // Common Charges
             $table->decimal('base_fare', 12, 2)->default(0);
@@ -47,6 +40,9 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
 
             $table->timestamps();
+
+            $table->unique(['vehicle_category_id']);
+            $table->index(['pricing_type', 'is_active']);
         });
     }
 

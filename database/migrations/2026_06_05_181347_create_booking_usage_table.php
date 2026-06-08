@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->foreignId('booking_id')
                 ->unique()
-                ->constrained()
+                ->constrained('bookings')
                 ->cascadeOnDelete();
 
             // Ride

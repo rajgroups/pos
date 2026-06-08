@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->foreignId('booking_id')
                 ->unique()
-                ->constrained()
+                ->constrained('bookings')
                 ->cascadeOnDelete();
 
             $table->string('pricing_type');
@@ -38,7 +38,7 @@ return new class extends Migration
 
             $table->decimal('total_amount', 12, 2)->default(0);
 
-            $table->json('calculation_snapshot')->nullable();
+            $table->json('snapshot')->nullable();
 
             $table->timestamps();
         });

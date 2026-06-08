@@ -50,9 +50,14 @@ class Vehicle extends Model
         'is_verified' => 'boolean',
     ];
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(VehicleCategory::class, 'vehicle_category_id');
+    }
+
     public function vehicleType(): BelongsTo
     {
-        return $this->belongsTo(VehicleType::class, 'vehicle_category_id');
+        return $this->category();
     }
 
     public function driver(): BelongsTo

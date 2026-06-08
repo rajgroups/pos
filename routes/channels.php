@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use App\Models\Booking;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,4 +16,13 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
+});
+
+Broadcast::channel('bookings.{bookingNo}', function ($user, string $bookingNo) {
+    $booking = Booking::query()
+        ->select(['id', 'booking_no', 'user_id'])
+        ->where('booking_no', $bookingNo)
+        ->first();
+
+    return $booking && (int) $booking->user_id === (int) $user->id;
 });

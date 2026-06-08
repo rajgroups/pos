@@ -6,14 +6,18 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "ccinn/geohash": "^1.0",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
+        "laravel/octane": "^2.17",
         "laravel/sanctum": "^3.3",
+        "laravel/telescope": "^5.20",
         "laravel/tinker": "^2.8",
         "livewire/livewire": "^3.6",
         "php-flasher/flasher-notyf-laravel": "^1.15",
         "php-flasher/flasher-notyf-symfony": "^1.15",
-        "php-flasher/flasher-sweetalert-symfony": "^1.15"
+        "php-flasher/flasher-sweetalert-symfony": "^1.15",
+        "predis/predis": "^3.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

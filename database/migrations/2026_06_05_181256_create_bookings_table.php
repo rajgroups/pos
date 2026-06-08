@@ -15,35 +15,34 @@ return new class extends Migration
 
             $table->id();
 
-            $table->uuid('booking_no')->unique();
+            $table->ulid('booking_no')->unique();
 
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
             $table->foreignId('driver_id')
                 ->nullable()
-                ->constrained()
+                ->constrained('drivers')
                 ->nullOnDelete();
 
             $table->foreignId('vehicle_id')
                 ->nullable()
-                ->constrained()
+                ->constrained('vehicles')
                 ->nullOnDelete();
 
             $table->foreignId('vehicle_category_id')
-                ->constrained();
+                ->constrained('vehicle_categories')
+                ->restrictOnDelete();
+
+            // Service Mode & Scheduling
+            $table->string('service_mode', 30)->default('instant')->index();
+            $table->timestamp('scheduled_at')->nullable()->index();
 
             // OTP
-            $table->string('start_otp', 6)->nullable();
+            $table->string('start_otp', 10)->nullable();
             $table->timestamp('otp_verified_at')->nullable();
 
             // Status
-            $table->enum('status', [
-                'pending',
-                'accepted',
-                'started',
-                'completed',
-                'cancelled'
-            ])->default('pending');
+            $table->string('status', 30)->default('pending')->index();
 
             // Estimated
             $table->decimal('estimated_amount', 12, 2)->default(0);
@@ -52,18 +51,9 @@ return new class extends Migration
             $table->decimal('final_amount', 12, 2)->default(0);
 
             // Payment
-            $table->enum('payment_status', [
-                'pending',
-                'paid',
-                'failed',
-                'refunded'
-            ])->default('pending');
+            $table->string('payment_status', 30)->default('pending')->index();
 
-            $table->enum('payment_method', [
-                'cash',
-                'online',
-                'wallet'
-            ])->nullable();
+            $table->string('payment_method', 30)->nullable();
 
             $table->timestamp('accepted_at')->nullable();
             $table->timestamp('started_at')->nullable();
@@ -73,10 +63,11 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index([
-                'status',
-                'vehicle_category_id'
-            ]);
+            $table->index(['status', 'vehicle_category_id']);
+            $table->index(['user_id', 'status']);
+            $table->index(['driver_id', 'status']);
+            $table->index(['vehicle_category_id', 'status']);
+            $table->index(['service_mode', 'scheduled_at']);
         });
     }
 

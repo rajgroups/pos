@@ -16,29 +16,22 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('booking_id')
-                ->constrained()
+                ->constrained('bookings')
                 ->cascadeOnDelete();
 
-            $table->enum('location_type', [
-                'pickup',
-                'drop',
-                'stop',
-                'worksite'
-            ]);
+            $table->string('location_type', 30)->index();
 
             $table->decimal('latitude', 11, 8);
             $table->decimal('longitude', 11, 8);
 
-            $table->string('address')->nullable();
+            $table->text('address')->nullable();
 
             $table->integer('sequence')->default(1);
 
             $table->timestamps();
 
-            $table->index([
-                'booking_id',
-                'sequence'
-            ]);
+            $table->index(['booking_id', 'sequence']);
+            $table->index(['booking_id', 'location_type']);
         });
     }
 
