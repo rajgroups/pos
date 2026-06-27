@@ -21,29 +21,17 @@ class DriverLocationHandler
         // Generate GeoHash for the location (precision 7 = ~76m)
         $geoHash = $this->generateGeoHash($latitude, $longitude);
 
-        // Find nearby drivers before updating current driver's location
-        $nearbyDrivers = $this->findNearbyDrivers(
-            $longitude,
-            $latitude,
-            $payload['radius'] ?? self::NEARBY_RADIUS_KM
-        );
-
         // Store driver location with GeoHash
         $this->storeDriverLocation($driverId, $latitude, $longitude, $geoHash);
 
         // Also store for quick lookup by GeoHash prefix
         $this->storeDriverGeoHashIndex($driverId, $geoHash);
 
-        // Update driver status timestamp
-        $this->updateDriverHeartbeat($driverId);
+        // Check for and send any pending booking requests
+        $this->checkForPendingBookings($server, $frame->fd, $driverId);
 
         // Broadcast location to all connected clients
         $this->broadcastLocation($server, $payload);
-
-        // If there are nearby drivers, notify them
-        if (!empty($nearbyDrivers)) {
-            $this->notifyNearbyDrivers($server, $driverId, $nearbyDrivers);
-        }
     }
 
     /**
@@ -98,26 +86,43 @@ class DriverLocationHandler
      */
     private function findNearbyDrivers(float $longitude, float $latitude, float $radiusKm = 5): array
     {
-        // Convert km to meters for Redis GEORADIUS
-        $radiusMeters = $radiusKm * 1000;
-
         $nearbyDriverIds = Redis::georadius(
             'drivers:online',
             $longitude,
             $latitude,
-            $radiusMeters,
+            $radiusKm,
             'km',
             ['WITHDIST', 'ASC']
         );
 
         $nearbyDrivers = [];
-        foreach ($nearbyDriverIds as $driverData) {
-            // Skip if not an array (sometimes Redis returns simple array)
-            if (is_array($driverData)) {
+        if (empty($nearbyDriverIds)) {
+            return $nearbyDrivers;
+        }
+
+        foreach ($nearbyDriverIds as $key => $driverData) {
+            if (is_object($driverData)) {
                 $nearbyDrivers[] = [
-                    'driver_id' => $driverData[0],
-                    'distance_km' => round($driverData[1], 2)
+                    'driver_id' => $driverData->member ?? $driverData->name ?? $key,
+                    'distance_km' => round((float) ($driverData->distance ?? 0), 2)
                 ];
+            } elseif (is_array($driverData)) {
+                if (count($driverData) >= 2 && isset($driverData[1])) {
+                    $nearbyDrivers[] = [
+                        'driver_id' => $driverData[0],
+                        'distance_km' => round((float) $driverData[1], 2)
+                    ];
+                } elseif (isset($driverData['distance'])) {
+                    $nearbyDrivers[] = [
+                        'driver_id' => $key,
+                        'distance_km' => round((float) $driverData['distance'], 2)
+                    ];
+                } else {
+                    $nearbyDrivers[] = [
+                        'driver_id' => $driverData[0] ?? $key,
+                        'distance_km' => 0
+                    ];
+                }
             } elseif (is_string($driverData)) {
                 $nearbyDrivers[] = [
                     'driver_id' => $driverData,
@@ -134,6 +139,7 @@ class DriverLocationHandler
      */
     private function storeDriverLocation(string $driverId, float $latitude, float $longitude, string $geoHash): void
     {
+        echo "Driver Id: {$driverId}, GeoHash: {$geoHash}\n";
         // Store in Redis GEO for proximity queries
         Redis::geoadd('drivers:online', $longitude, $latitude, $driverId);
 
@@ -166,6 +172,21 @@ class DriverLocationHandler
     }
 
     /**
+     * Check for pending bookings in the driver's queue and push them.
+     */
+    private function checkForPendingBookings($server, int $fd, string $driverId): void
+    {
+        // Non-blockingly pop a message from the driver's queue
+        $bookingRequest = Redis::lpop("driver_queue:{$driverId}");
+
+        if ($bookingRequest) {
+            echo "Found booking for driver {$driverId}. Pushing to FD {$fd}.\n";
+            // If a request exists, push it to the driver
+            $server->push($fd, $bookingRequest);
+        }
+    }
+
+    /**
      * Update driver heartbeat timestamp
      */
     private function updateDriverHeartbeat(string $driverId): void
@@ -187,7 +208,9 @@ class DriverLocationHandler
         ]);
 
         foreach ($server->connections as $fd) {
-            $server->push($fd, $message);
+            if ($server->isEstablished($fd)) {
+                $server->push($fd, $message);
+            }
         }
     }
 
@@ -197,14 +220,19 @@ class DriverLocationHandler
     private function notifyNearbyDrivers($server, string $newDriverId, array $nearbyDrivers): void
     {
         foreach ($nearbyDrivers as $driver) {
-            $message = json_encode([
-                'type' => 'nearby_driver',
-                'driver_id' => $newDriverId,
-                'distance_km' => $driver['distance_km'],
-                'message' => "Driver {$newDriverId} is nearby ({$driver['distance_km']}km away)"
-            ]);
+            // Lookup the driver's actual socket File Descriptor from Redis
+            $fd = Redis::get("driver:fd:{$driver['driver_id']}");
 
-            $server->push($driver['driver_id'], $message);
+            if ($fd && $server->isEstablished((int) $fd)) {
+                $message = json_encode([
+                    'type' => 'nearby_driver',
+                    'driver_id' => $newDriverId,
+                    'distance_km' => $driver['distance_km'],
+                    'message' => "Driver {$newDriverId} is nearby ({$driver['distance_km']}km away)"
+                ]);
+
+                $server->push((int) $fd, $message);
+            }
         }
     }
 
@@ -218,7 +246,7 @@ class DriverLocationHandler
     public function markDriverOffline(int $driverId): void
     {
         // Remove from online drivers
-        Redis::zrem('drivers:online', $driverId);
+        Redis::zrem('drivers:online', (string)$driverId);
         Redis::del("driver:location:{$driverId}");
         Redis::del("driver:status:{$driverId}");
     }

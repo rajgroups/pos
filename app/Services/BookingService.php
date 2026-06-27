@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Events\BookingStatusUpdated;
+use App\Events\BookingRequested;
+use App\Helpers\ApiResponseHelper;
 use App\Models\Booking;
 use App\Models\BookingFare;
 use App\Models\BookingLocation;
@@ -11,16 +13,20 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleCategory;
 use App\Repositories\BookingRepository;
+use App\Services\Socket\DriverSearchService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Http;
 
 class BookingService
 {
-    public function __construct(protected BookingRepository $bookingRepository)
-    {
-    }
+    public function __construct(
+        protected BookingRepository $bookingRepository,
+        protected DriverSearchService $driverSearchService
+    ) {}
 
     public function createBooking(array $payload): Booking
     {
@@ -29,6 +35,7 @@ class BookingService
                 ->with('pricing')
                 ->whereKey($payload['vehicle_category_id'])
                 ->firstOrFail();
+
 
             if (! $category->pricing) {
                 throw ValidationException::withMessages([
@@ -87,6 +94,10 @@ class BookingService
                 'user',
             ]);
         });
+
+        if ($booking->service_mode === 'instant') {
+            $this->notifyNearbyDrivers($booking);
+        }
 
         $this->broadcastBookingUpdate($booking);
 
@@ -152,71 +163,102 @@ class BookingService
         return $booking;
     }
 
-    public function acceptBooking(Booking $booking, int $driverId, int $vehicleId): Booking
-    {
-        $booking = DB::transaction(function () use ($booking, $driverId, $vehicleId) {
-            $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
+    public function acceptBooking(
+        int $bookingId,
+        int $driverId,
+        int $vehicleId
+    ) {
 
-            $validAcceptStates = $booking->service_mode === 'scheduled' ? ['requested', 'scheduled'] : ['pending'];
+        $booking = Booking::find($bookingId);
 
-            if (! in_array($booking->status, $validAcceptStates, true)) {
-                throw ValidationException::withMessages([
-                    'booking_no' => 'This booking is not in a valid state to be accepted.',
+        if (! $booking) {
+            return ApiResponseHelper::error('Booking not found.', null, 404);
+        }
+
+        $lockKey = "booking_lock:{$booking->id}";
+        $lock = Redis::set($lockKey, $driverId, 'EX', 10, 'NX');
+
+        if (! $lock) {
+            return ApiResponseHelper::error(
+                'This booking has already been accepted by another driver.'
+            );
+        }
+
+        try {
+
+            $booking = DB::transaction(function () use ($booking, $driverId, $vehicleId) {
+
+                $booking = Booking::whereKey($booking->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                $validAcceptStates = $booking->service_mode === 'scheduled'
+                    ? ['requested', 'scheduled']
+                    : ['pending'];
+
+                if (! in_array($booking->status, $validAcceptStates, true)) {
+                    throw new \Exception('This booking is not in a valid state.');
+                }
+
+                if ($booking->driver_id) {
+                    throw new \Exception('This booking has already been assigned.');
+                }
+
+                $driver = Driver::lockForUpdate()->findOrFail($driverId);
+                $vehicle = Vehicle::lockForUpdate()->findOrFail($vehicleId);
+
+                if ($driver->status !== 'active') {
+                    throw new \Exception('Driver is inactive.');
+                }
+
+                if ($vehicle->status !== 'active') {
+                    throw new \Exception('Vehicle is inactive.');
+                }
+
+                if ($this->bookingRepository->hasActiveDriverBooking($driverId, $booking->id)) {
+                    throw new \Exception('Driver already has an active booking.');
+                }
+
+                if ($this->bookingRepository->hasActiveVehicleBooking($vehicleId, $booking->id)) {
+                    throw new \Exception('Vehicle already has an active booking.');
+                }
+
+                $booking->update([
+                    'driver_id'   => $driverId,
+                    'vehicle_id'  => $vehicleId,
+                    'status'      => 'accepted',
+                    'accepted_at' => now(),
                 ]);
-            }
 
-            $driver = Driver::query()->whereKey($driverId)->lockForUpdate()->firstOrFail();
-            $vehicle = Vehicle::query()->whereKey($vehicleId)->lockForUpdate()->firstOrFail();
-
-            if ($driver->status !== 'active') {
-                throw ValidationException::withMessages([
-                    'driver_id' => 'This driver is not active.',
+                return $booking->fresh()->load([
+                    'category.pricing',
+                    'locations',
+                    'pickupLocation',
+                    'dropLocation',
+                    'usage',
+                    'fare',
+                    'driver',
+                    'vehicle',
+                    'user',
                 ]);
-            }
+            });
 
-            if ($vehicle->status !== 'active') {
-                throw ValidationException::withMessages([
-                    'vehicle_id' => 'This vehicle is not active.',
-                ]);
-            }
+            $this->broadcastBookingUpdate($booking);
 
-            if ($this->bookingRepository->hasActiveDriverBooking($driverId, $booking->id)) {
-                throw ValidationException::withMessages([
-                    'driver_id' => 'This driver already has an active booking.',
-                ]);
-            }
+            return ApiResponseHelper::success(
+                'Booking accepted successfully.',
+                $booking
+            );
+        } catch (\Throwable $e) {
 
-            if ($this->bookingRepository->hasActiveVehicleBooking($vehicleId, $booking->id)) {
-                throw ValidationException::withMessages([
-                    'vehicle_id' => 'This vehicle already has an active booking.',
-                ]);
-            }
+            return ApiResponseHelper::error(
+                $e->getMessage()
+            );
+        } finally {
 
-            $booking->update([
-                'driver_id' => $driverId,
-                'vehicle_id' => $vehicleId,
-                'status' => 'accepted',
-                'accepted_at' => now(),
-            ]);
-
-            return $booking->fresh()->load([
-                'category.pricing',
-                'locations',
-                'pickupLocation',
-                'dropLocation',
-                'usage',
-                'fare',
-                'driver',
-                'vehicle',
-                'user',
-            ]);
-        });
-
-        $this->broadcastBookingUpdate($booking);
-
-        return $booking;
+            Redis::del($lockKey);
+        }
     }
-
     public function startBooking(Booking $booking, string $otp): Booking
     {
         $booking = DB::transaction(function () use ($booking, $otp) {
@@ -382,6 +424,92 @@ class BookingService
     protected function broadcastBookingUpdate(Booking $booking): void
     {
         event(new BookingStatusUpdated($booking));
+
+        if ($booking->driver_id) {
+            Redis::publish('swoole_driver_notifications', json_encode([
+                'driver_id' => $booking->driver_id,
+                'payload' => [
+                    'type' => 'booking_status',
+                    'booking' => [
+                        'id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'status' => $booking->status,
+                    ],
+                ],
+            ]));
+        }
+
+        if ($booking->user_id) {
+            Redis::publish('swoole_user_notifications', json_encode([
+                'user_id' => $booking->user_id,
+                'payload' => [
+                    'type' => 'booking_status',
+                    'booking' => [
+                        'id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'status' => $booking->status,
+                    ],
+                ],
+            ]));
+        }
+    }
+
+    protected function notifyNearbyDrivers(Booking $booking): void
+    {
+
+        $pickupLocation = $booking->pickupLocation;
+
+        if (! $pickupLocation) {
+            return;
+        }
+
+        // 1. Find drivers within 5km radius using Redis Geo
+        $nearbyDrivers = $this->driverSearchService->findNearbyDrivers(
+            $pickupLocation->longitude,
+            $pickupLocation->latitude,
+            5
+        );
+        // dd($nearbyDrivers);
+        // dd('jhi');
+        if (empty($nearbyDrivers)) {
+            return;
+        }
+        // dd($nearbyDrivers);
+
+
+
+        $driverIds = array_column($nearbyDrivers, 'driver_id');
+        // dd($driverIds);
+        // 2. Filter drivers by checking if they own an active vehicle matching the requested category
+        $eligibleDriverIds = Vehicle::query()
+            ->whereIn('driver_id', $driverIds)
+            ->where('vehicle_category_id', $booking->vehicle_category_id)
+            ->where('status', 'active')
+            ->pluck('driver_id')
+            ->toArray();
+        // dd($eligibleDriverIds);
+        // 3. Publish a booking_request payload to Redis for the SocketServer
+        $payload = [
+            'type' => 'booking_request',
+            'booking' => [
+                'id' => $booking->id,
+                'booking_no' => $booking->booking_no,
+                'service_mode' => $booking->service_mode,
+                'estimated_amount' => $booking->estimated_amount,
+                'pickup_address' => $booking->pickup_address,
+                'drop_address' => $booking->drop_address,
+            ],
+        ];
+
+        foreach ($eligibleDriverIds as $driverId) {
+            Http::post(
+                'http://127.0.0.1:9502/send-booking',
+                [
+                    'driver_id' => $driverId,
+                    'payload' => $payload,
+                ]
+            );
+        }
     }
 
     protected function calculateFare(VehicleCategory $category, array $usage): array

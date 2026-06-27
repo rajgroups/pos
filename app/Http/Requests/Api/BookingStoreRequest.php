@@ -35,4 +35,34 @@ class BookingStoreRequest extends FormRequest
             'usage.weight_ton' => ['nullable', 'numeric', 'min:0'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'vehicle_category_id.required' => 'Vehicle category is required.',
+            'vehicle_category_id.exists' => 'Selected vehicle category not found.',
+
+            'booking_mode.in' => 'Booking mode must be instant or scheduled.',
+
+            'scheduled_at.required_if' => 'Scheduled date and time is required for scheduled bookings.',
+
+            'driver_id.exists' => 'Selected driver not found.',
+            'vehicle_id.exists' => 'Selected vehicle not found.',
+
+            'locations.required' => 'At least one location is required.',
+            'locations.array' => 'Locations must be an array.',
+
+            'locations.*.location_type.required' => 'Location type is required.',
+            'locations.*.latitude.required' => 'Latitude is required.',
+            'locations.*.longitude.required' => 'Longitude is required.',
+
+            'locations.*.latitude.between' => 'Latitude must be between -90 and 90.',
+            'locations.*.longitude.between' => 'Longitude must be between -180 and 180.',
+
+            'usage.distance_km.numeric' => 'Distance must be numeric.',
+            'usage.hours_used.numeric' => 'Hours used must be numeric.',
+            'usage.acre_used.numeric' => 'Acre used must be numeric.',
+            'usage.weight_ton.numeric' => 'Weight must be numeric.',
+        ];
+    }
 }

@@ -15,38 +15,64 @@ class DriverSearchService
         float $radiusKm = 5,
         array $excludeDrivers = []
     ): array {
-        $radiusMeters = $radiusKm * 1000;
-
         $drivers = Redis::georadius(
             'drivers:online',
             $longitude,
             $latitude,
-            $radiusMeters,
+            $radiusKm,
             'km',
             ['WITHDIST', 'WITHCOORD', 'ASC']
         );
 
         $result = [];
-        foreach ($drivers as $driver) {
-            if (is_array($driver) && count($driver) >= 3) {
-                $driverId = $driver[0];
-
-                // Skip excluded drivers
-                if (in_array($driverId, $excludeDrivers)) {
-                    continue;
-                }
-
-                $result[] = [
-                    'driver_id' => $driverId,
-                    'distance_km' => round($driver[1], 2),
-                    'coordinates' => [
-                        'longitude' => $driver[2][0],
-                        'latitude' => $driver[2][1]
-                    ]
-                ];
-            }
+        if (empty($drivers)) {
+            return $result;
         }
+        // dd('i');
+        // dd($result);
+        foreach ($drivers as $key => $driver) {
+            $driverId = null;
+            $distance = 0;
+            $coords = [$longitude, $latitude];
 
+            if (is_object($driver)) {
+                $driverId = $driver->member ?? $driver->name ?? $key;
+                $distance = $driver->distance ?? 0;
+                $coords = $driver->coordinates ?? $coords;
+            } elseif (is_array($driver)) {
+                if (count($driver) >= 3) {
+                    $driverId = $driver[0];
+                    $distance = $driver[1];
+                    $coords = $driver[2];
+                } elseif (isset($driver['distance'])) {
+                    $driverId = $key;
+                    $distance = $driver['distance'];
+                    $coords = $driver['coordinates'] ?? $coords;
+                } else {
+                    $driverId = $driver[0] ?? $key;
+                    $distance = $driver[1] ?? 0;
+                }
+            } elseif (is_string($driver)) {
+                $driverId = $driver;
+            } else {
+                $driverId = $key;
+            }
+
+            // Skip excluded drivers
+            if (!$driverId || in_array($driverId, $excludeDrivers)) {
+                continue;
+            }
+
+            $result[] = [
+                'driver_id' => $driverId,
+                'distance_km' => round((float) $distance, 2),
+                'coordinates' => [
+                    'longitude' => $coords[0] ?? $longitude,
+                    'latitude' => $coords[1] ?? $latitude
+                ]
+            ];
+        }
+        // dd($result);
         return $result;
     }
 

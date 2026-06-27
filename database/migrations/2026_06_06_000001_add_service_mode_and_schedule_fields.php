@@ -14,12 +14,12 @@ return new class extends Migration
         });
 
         Schema::table('bookings', function (Blueprint $table) {
-            $table->string('service_mode', 30)->default('instant')->after('vehicle_category_id');
-            $table->timestamp('scheduled_at')->nullable()->after('service_mode');
+            // $table->string('service_mode', 30)->default('instant')->after('vehicle_category_id');
+            // $table->timestamp('scheduled_at')->nullable()->after('service_mode');
             $table->decimal('duration_hours', 10, 2)->nullable()->after('scheduled_at');
 
-            $table->index(['service_mode', 'status']);
-            $table->index(['scheduled_at', 'status']);
+            // $table->index(['service_mode', 'status']);
+            // $table->index(['scheduled_at', 'status']);
         });
     }
 

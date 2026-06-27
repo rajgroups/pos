@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Api\User;
 
+use App\Helpers\ApiResponseHelper;
+use App\Helpers\KeywordHelper;
+use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\BookingAcceptRequest;
 use App\Http\Requests\Api\BookingCancelRequest;
-use App\Http\Requests\Api\BookingCompleteRequest;
 use App\Http\Requests\Api\BookingFareSummaryRequest;
-use App\Http\Requests\Api\BookingStartRequest;
-use App\Http\Requests\Api\BookingStoreRequest;
 use App\Http\Resources\BookingFareResource;
 use App\Http\Resources\BookingFareQuoteResource;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
 {
@@ -22,17 +23,30 @@ class BookingController extends Controller
     {
     }
 
-    public function store(BookingStoreRequest $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
-        $booking = $this->bookingService->createBooking($request->validated() + [
-            'user_id' => $request->user()?->id,
-        ]);
+        $validated = ValidationHelper::validateBookingStore($request->all());
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Booking created successfully.',
-            'data' => new BookingResource($booking),
-        ], 201);
+        if ($validated[KeywordHelper::STATUS] === KeywordHelper::ERROR) {
+            return ApiResponseHelper::error(
+                $validated[KeywordHelper::MESSAGE],
+                $validated[KeywordHelper::ERRORS]
+            );
+        }
+
+        try {
+            $booking = $this->bookingService->createBooking($validated[KeywordHelper::DATA] + [
+                'user_id' => $request->user()?->id,
+            ]);
+
+            return ApiResponseHelper::success(
+                'Booking created successfully.',
+                new BookingResource($booking),
+                201
+            );
+        } catch (ValidationException $e) {
+            return ApiResponseHelper::error($e->getMessage(), $e->errors());
+        }
     }
 
     public function show(Booking $booking): JsonResponse
@@ -64,46 +78,6 @@ class BookingController extends Controller
             'status' => true,
             'message' => 'Fare summary generated successfully.',
             'data' => new BookingFareQuoteResource($summary),
-        ]);
-    }
-
-    public function accept(BookingAcceptRequest $request, Booking $booking): JsonResponse
-    {
-        $booking = $this->bookingService->acceptBooking(
-            $booking,
-            (int) $request->validated('driver_id'),
-            (int) $request->validated('vehicle_id')
-        );
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Booking accepted successfully.',
-            'data' => new BookingResource($booking),
-        ]);
-    }
-
-    public function start(BookingStartRequest $request, Booking $booking): JsonResponse
-    {
-        $booking = $this->bookingService->startBooking(
-            $booking,
-            $request->validated('start_otp')
-        );
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Booking started successfully.',
-            'data' => new BookingResource($booking),
-        ]);
-    }
-
-    public function complete(BookingCompleteRequest $request, Booking $booking): JsonResponse
-    {
-        $booking = $this->bookingService->completeBooking($booking, $request->validated());
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Booking completed successfully.',
-            'data' => new BookingResource($booking),
         ]);
     }
 

@@ -6,7 +6,8 @@ use OpenSwoole\WebSocket\Server;
 use Laravel\Sanctum\PersonalAccessToken;
 use App\Models\User;
 use App\Models\Driver;
-
+use Illuminate\Support\Facades\Redis;
+use OpenSwoole\Core\Coroutine\go;
 class SocketServer
 {
     protected DriverLocationHandler $driverHandler;
@@ -40,21 +41,43 @@ class SocketServer
         $this->server->on('Open', function ($server, $request) {
             echo "Connection opened: {$request->fd}\n";
 
-            // Store initial connection without authentication
-            $this->connections[$request->fd] = [
-                'fd' => $request->fd,
-                'authenticated' => false,
-                'type' => null,
-                'id' => null
-            ];
+            $token = isset($request->get['token']) ? $request->get['token'] : null;
 
-            $server->push(
-                $request->fd,
-                json_encode([
+                echo "OPEN EVENT\n";
+
+                print_r($request->get ?? []);
+
+                echo "\n";
+
+            if ($token) {
+                if ($this->authenticateConnection($request->fd, $token)) {
+                    $server->push($request->fd, json_encode([
+                        'type' => 'connected',
+                        'message' => 'Welcome to Indicab',
+                        'authenticated' => true
+                    ]));
+                } else {
+                    $server->push($request->fd, json_encode([
+                        'type' => 'auth_error',
+                        'message' => 'Invalid token'
+                    ]));
+                    $server->disconnect($request->fd);
+                }
+            } else {
+                // Store initial connection without authentication
+                $this->connections[$request->fd] = [
+                    'fd' => $request->fd,
+                    'authenticated' => false,
+                    'type' => null,
+                    'id' => null
+                ];
+
+                $server->push($request->fd, json_encode([
                     'type' => 'connected',
-                    'message' => 'Welcome to Indicab'
-                ])
-            );
+                    'message' => 'Welcome to Indicab',
+                    'authenticated' => false
+                ]));
+            }
         });
 
         $this->server->on('Message', function ($server, $frame) {
@@ -66,9 +89,42 @@ class SocketServer
             $this->handleDisconnect($fd);
         });
 
+        $this->server->on('Request', function ($request, $response) {
+
+            $data = json_decode(
+                $request->rawContent(),
+                true
+            );
+
+            if (($request->server['request_uri'] ?? '') === '/send-booking') {
+
+                $driverId = $data['driver_id'];
+
+                $fd = Redis::get(
+                    "driver:fd:{$driverId}"
+                );
+
+                if (
+                    $fd &&
+                    $this->server->isEstablished((int)$fd)
+                ) {
+
+                    $this->server->push(
+                        (int)$fd,
+                        json_encode($data['payload'])
+                    );
+
+                    $response->end('success');
+                    return;
+                }
+
+                $response->status(404);
+                $response->end('driver offline');
+                return;
+            }
+        });
         $this->server->start();
     }
-
     protected function handleMessage($server, $frame): void
     {
         $payload = json_decode($frame->data, true);
@@ -78,21 +134,36 @@ class SocketServer
             return;
         }
 
-        // Handle authentication first
-        if ($payload['type'] === 'authenticate') {
-            $this->handleAuthentication($server, $frame, $payload);
-            return;
-        }
-
-        // Check if connection is authenticated
-        if (!isset($this->connections[$frame->fd]['authenticated']) ||
-            !$this->connections[$frame->fd]['authenticated']) {
+        // Authenticate via token if provided in payload, or require existing auth
+        if (isset($payload['token'])) {
+            if (!$this->authenticateConnection($frame->fd, $payload['token'])) {
+                $server->push($frame->fd, json_encode([
+                    'type' => 'auth_error',
+                    'message' => 'Invalid token'
+                ]));
+                $server->disconnect($frame->fd);
+                return;
+            }
+        } elseif (!isset($this->connections[$frame->fd]['authenticated']) || !$this->connections[$frame->fd]['authenticated']) {
+            $server->push($frame->fd, json_encode([
+                'type' => 'auth_error',
+                'message' => 'Token required'
+            ]));
             $server->disconnect($frame->fd);
             return;
         }
 
         // Route to appropriate handler based on user type
         switch ($payload['type']) {
+            case 'authenticate':
+                $server->push($frame->fd, json_encode([
+                    'type' => 'authenticated',
+                    'user_type' => $this->connections[$frame->fd]['type'],
+                    'user_id' => $this->connections[$frame->fd]['id'],
+                    'message' => "Authenticated as {$this->connections[$frame->fd]['type']}"
+                ]));
+                break;
+
             case 'driver_location':
                 if ($this->connections[$frame->fd]['type'] === 'driver') {
                     $this->driverHandler->handle($server, $frame, $payload);
@@ -114,27 +185,21 @@ class SocketServer
         }
     }
 
-    protected function handleAuthentication($server, $frame, array $payload): void
+    protected function authenticateConnection(int $fd, string $token): bool
     {
-        if (!isset($payload['token'])) {
-            $server->push($frame->fd, json_encode([
-                'type' => 'auth_error',
-                'message' => 'Token required'
-            ]));
-            $server->disconnect($frame->fd);
-            return;
+        // If already authenticated with the same token, no need to re-verify DB
+        if (isset($this->connections[$fd]['authenticated']) &&
+            $this->connections[$fd]['authenticated'] &&
+            isset($this->connections[$fd]['token']) &&
+            $this->connections[$fd]['token'] === $token) {
+            return true;
         }
 
         // Find the token
-        $accessToken = PersonalAccessToken::findToken($payload['token']);
+        $accessToken = PersonalAccessToken::findToken($token);
 
-        if (!$accessToken) {
-            $server->push($frame->fd, json_encode([
-                'type' => 'auth_error',
-                'message' => 'Invalid token'
-            ]));
-            $server->disconnect($frame->fd);
-            return;
+        if (!$accessToken || !$accessToken->tokenable) {
+            return false;
         }
 
         // Get the tokenable model (User or Driver)
@@ -145,34 +210,35 @@ class SocketServer
         $userType = $isDriver ? 'driver' : 'user';
 
         // Store connection info
-        $this->connections[$frame->fd] = [
-            'fd' => $frame->fd,
+        $this->connections[$fd] = [
+            'fd' => $fd,
             'authenticated' => true,
             'type' => $userType,
             'id' => $tokenable->id,
             'token_id' => $accessToken->id,
+            'token' => $token,
             'connected_at' => time()
         ];
 
         // Store in appropriate array for quick lookup
         if ($isDriver) {
-            $this->drivers[$tokenable->id] = $frame->fd;
+            $this->drivers[$tokenable->id] = $fd;
+
+            // Store FD in Redis so the Pub/Sub subscriber process can find it
+            Redis::set("driver:fd:{$tokenable->id}", $fd);
 
             // Initialize driver data
             $this->driverHandler->initializeDriver($tokenable->id);
         } else {
-            $this->users[$tokenable->id] = $frame->fd;
+            $this->users[$tokenable->id] = $fd;
+
+            // Store FD in Redis so the Pub/Sub subscriber process can find it
+            Redis::set("user:fd:{$tokenable->id}", $fd);
         }
 
-        // Send success response
-        $server->push($frame->fd, json_encode([
-            'type' => 'authenticated',
-            'user_type' => $userType,
-            'user_id' => $tokenable->id,
-            'message' => "Authenticated as {$userType}"
-        ]));
+        echo "Authenticated: {$userType} {$tokenable->id} on FD {$fd}\n";
 
-        echo "Authenticated: {$userType} {$tokenable->id} on FD {$frame->fd}\n";
+        return true;
     }
 
     protected function handleDisconnect(int $fd): void
@@ -191,10 +257,14 @@ class SocketServer
             if ($userType === 'driver') {
                 unset($this->drivers[$userId]);
 
+                Redis::del("driver:fd:{$userId}");
+
                 // Mark driver as offline
                 $this->driverHandler->markDriverOffline($userId);
             } else {
                 unset($this->users[$userId]);
+
+                Redis::del("user:fd:{$userId}");
             }
 
             echo "Disconnected: {$userType} {$userId}\n";

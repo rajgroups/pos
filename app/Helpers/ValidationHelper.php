@@ -259,4 +259,81 @@ class ValidationHelper
 
         return self::validate($data, $rules, $messages);
     }
+
+    /**
+     * Validate the request for storing a booking.
+     *
+     * @param array $data
+     * @return array
+     */
+    public static function validateBookingStore(array $data)
+    {
+        $rules = [
+            // Core booking details
+            'vehicle_category_id' => 'required|exists:vehicle_categories,id',
+            'booking_mode' => 'required|in:instant,scheduled',
+            'payment_method' => 'required|in:cash,online,wallet',
+
+            // Conditional fields for different booking modes
+            // 'driver_id' => 'nullable|required_if:booking_mode,instant|exists:drivers,id',
+            // 'vehicle_id' => 'nullable|required_if:booking_mode,instant|exists:vehicles,id',
+            'scheduled_at' => 'nullable|required_if:booking_mode,scheduled|date_format:Y-m-d H:i:s|after_or_equal:now',
+            'duration_hours' => 'nullable|numeric|min:1',
+
+            // Locations array validation
+            'locations' => 'required|array|min:1',
+            'locations.*.location_type' => 'required|string|max:50',
+            'locations.*.latitude' => 'required|numeric|between:-90,90',
+            'locations.*.longitude' => 'required|numeric|between:-180,180',
+            'locations.*.address' => 'required|string|max:255',
+            'locations.*.sequence' => 'required|integer|min:1',
+
+            // Usage object validation (fields are optional within the object)
+            'usage' => 'nullable|array',
+            'usage.distance_km' => 'nullable|numeric|min:0',
+            'usage.hours_used' => 'nullable|numeric|min:0',
+            'usage.weight_ton' => 'nullable|numeric|min:0',
+            'usage.acre_used' => 'nullable|numeric|min:0',
+        ];
+
+        $messages = [
+            'vehicle_category_id.required' => 'The vehicle category is required.',
+            'vehicle_category_id.exists' => 'The selected vehicle category does not exist.',
+            'booking_mode.required' => 'The booking mode (instant or scheduled) is required.',
+            'scheduled_at.required_if' => 'The scheduled date and time is required for scheduled bookings.',
+            'scheduled_at.after_or_equal' => 'The scheduled time must be in the future.',
+            'locations.required' => 'At least one location (pickup) is required.',
+            'locations.*.address.required' => 'An address is required for all locations.',
+        ];
+
+        return self::validate($data, $rules, $messages);
+    }
+
+    public static function ValidateAcceptBooking(array $data)
+    {
+        $rules = [
+            'driver_id' => [
+                'required',
+                'integer',
+                'exists:drivers,id',
+            ],
+            'vehicle_id' => [
+                'required',
+                'integer',
+                'exists:vehicles,id',
+            ],
+        ];
+
+        $messages = [
+            'driver_id.required' => 'Driver ID is required.',
+            'driver_id.integer'  => 'Driver ID must be an integer.',
+            'driver_id.exists'   => 'Driver not found.',
+
+            'vehicle_id.required' => 'Vehicle ID is required.',
+            'vehicle_id.integer'  => 'Vehicle ID must be an integer.',
+            'vehicle_id.exists'   => 'Vehicle not found.',
+        ];
+
+        return self::validate($data, $rules, $messages);
+    }
 }

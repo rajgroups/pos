@@ -41,11 +41,11 @@ return [
             'provider' => 'users',
         ],
         'user_api' =>[
-            'driver' => 'santum',
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
         'driver_api' =>[
-            'driver' => 'santum',
+            'driver' => 'sanctum',
             'provider' => 'driver',
         ],
          'admin' =>[

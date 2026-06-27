@@ -29,9 +29,6 @@ Route::name('api.user.')->group(function () {
             Route::post('/fare-summary', [BookingController::class, 'fareSummary'])->name('fareSummary');
             Route::post('/', [BookingController::class, 'store'])->name('store');
             Route::get('/{booking}', [BookingController::class, 'show'])->name('show');
-            Route::post('/{booking}/accept', [BookingController::class, 'accept'])->name('accept');
-            Route::post('/{booking}/start', [BookingController::class, 'start'])->name('start');
-            Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
             Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
             Route::get('/{booking}/fare', [BookingController::class, 'fare'])->name('fare');
         });

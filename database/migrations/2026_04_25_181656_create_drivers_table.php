@@ -13,6 +13,7 @@ return new class extends Migration
             // Basic Info
             $table->string('name');
             $table->string('phone', 20)->unique();
+            $table->string('otp')->nullable();
             $table->string('email')->nullable();
             $table->date('dob')->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable();

@@ -28,11 +28,7 @@ return new class extends Migration
 
             $table->decimal('usage_amount', 12, 2)->default(0);
 
-            $table->decimal('waiting_charge', 12, 2)->default(0);
-
-            $table->decimal('night_charge', 12, 2)->default(0);
-
-            $table->decimal('surge_charge', 12, 2)->default(0);
+            $table->decimal('extra_charge', 12, 2)->default(0);
 
             $table->decimal('discount', 12, 2)->default(0);
 
