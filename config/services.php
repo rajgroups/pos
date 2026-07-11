@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'socket' => [
+        'url' => env('SOCKET_SERVER_URL', 'http://127.0.0.1:9502'),
+    ],
+
 ];

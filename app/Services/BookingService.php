@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Events\BookingStatusUpdated;
-use App\Events\BookingRequested;
 use App\Helpers\ApiResponseHelper;
 use App\Models\Booking;
 use App\Models\BookingFare;
@@ -13,7 +12,7 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleCategory;
 use App\Repositories\BookingRepository;
-use App\Services\Socket\DriverSearchService;
+use App\Services\Socket\SocketDispatchService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
@@ -25,11 +24,12 @@ class BookingService
 {
     public function __construct(
         protected BookingRepository $bookingRepository,
-        protected DriverSearchService $driverSearchService
+        protected SocketDispatchService $socketDispatchService
     ) {}
 
     public function createBooking(array $payload): Booking
     {
+
         $booking = DB::transaction(function () use ($payload) {
             $category = VehicleCategory::query()
                 ->with('pricing')
@@ -96,10 +96,8 @@ class BookingService
         });
 
         if ($booking->service_mode === 'instant') {
-            $this->notifyNearbyDrivers($booking);
+            $this->socketDispatchService->dispatchBooking($booking);
         }
-
-        $this->broadcastBookingUpdate($booking);
 
         return $booking;
     }
@@ -425,91 +423,58 @@ class BookingService
     {
         event(new BookingStatusUpdated($booking));
 
-        if ($booking->driver_id) {
-            Redis::publish('swoole_driver_notifications', json_encode([
-                'driver_id' => $booking->driver_id,
-                'payload' => [
-                    'type' => 'booking_status',
-                    'booking' => [
-                        'id' => $booking->id,
-                        'booking_no' => $booking->booking_no,
-                        'status' => $booking->status,
-                    ],
-                ],
-            ]));
-        }
+        // Use an HTTP call to the Swoole server to broadcast the update.
+        $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
-        if ($booking->user_id) {
-            Redis::publish('swoole_user_notifications', json_encode([
-                'user_id' => $booking->user_id,
-                'payload' => [
-                    'type' => 'booking_status',
-                    'booking' => [
-                        'id' => $booking->id,
-                        'booking_no' => $booking->booking_no,
-                        'status' => $booking->status,
-                    ],
-                ],
-            ]));
-        }
-    }
-
-    protected function notifyNearbyDrivers(Booking $booking): void
-    {
-
-        $pickupLocation = $booking->pickupLocation;
-
-        if (! $pickupLocation) {
-            return;
-        }
-
-        // 1. Find drivers within 5km radius using Redis Geo
-        $nearbyDrivers = $this->driverSearchService->findNearbyDrivers(
-            $pickupLocation->longitude,
-            $pickupLocation->latitude,
-            5
-        );
-        // dd($nearbyDrivers);
-        // dd('jhi');
-        if (empty($nearbyDrivers)) {
-            return;
-        }
-        // dd($nearbyDrivers);
-
-
-
-        $driverIds = array_column($nearbyDrivers, 'driver_id');
-        // dd($driverIds);
-        // 2. Filter drivers by checking if they own an active vehicle matching the requested category
-        $eligibleDriverIds = Vehicle::query()
-            ->whereIn('driver_id', $driverIds)
-            ->where('vehicle_category_id', $booking->vehicle_category_id)
-            ->where('status', 'active')
-            ->pluck('driver_id')
-            ->toArray();
-        // dd($eligibleDriverIds);
-        // 3. Publish a booking_request payload to Redis for the SocketServer
-        $payload = [
-            'type' => 'booking_request',
+        $response = Http::asJson()->post($socketUrl . '/broadcast-booking-update', [
+            'type' => 'booking_status',
             'booking' => [
                 'id' => $booking->id,
                 'booking_no' => $booking->booking_no,
-                'service_mode' => $booking->service_mode,
-                'estimated_amount' => $booking->estimated_amount,
-                'pickup_address' => $booking->pickup_address,
-                'drop_address' => $booking->drop_address,
+                'status' => $booking->status,
+                'driver_id' => $booking->driver_id,
+                'user_id' => $booking->user_id,
             ],
-        ];
+        ]);
 
-        foreach ($eligibleDriverIds as $driverId) {
-            Http::post(
-                'http://127.0.0.1:9502/send-booking',
-                [
-                    'driver_id' => $driverId,
-                    'payload' => $payload,
-                ]
-            );
+        if (! $response->successful()) {
+            logger()->warning('Failed to broadcast booking update to socket server.', [
+                'booking_id' => $booking->id,
+                'booking_no' => $booking->booking_no,
+                'url' => $socketUrl . '/broadcast-booking-update',
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
         }
+    }
+
+    protected function notifyNearbyDrivers(Booking $booking)
+    {
+        $this->socketDispatchService->dispatchBooking($booking);
+    }
+
+    public function resolveDispatchCategoryIds(int $vehicleCategoryId): array
+    {
+        $category = VehicleCategory::query()
+            ->whereKey($vehicleCategoryId)
+            ->with([
+                'children.children',
+            ])
+            ->firstOrFail()
+            ;
+
+        return $this->collectCategoryIds($category);
+    }
+
+    protected function collectCategoryIds(VehicleCategory $category): array
+    {
+        $ids = [$category->id];
+
+        foreach ($category->children ?? [] as $child) {
+            $ids = array_merge($ids, $this->collectCategoryIds($child));
+        }
+
+        return array_values(array_unique($ids));
     }
 
     protected function calculateFare(VehicleCategory $category, array $usage): array

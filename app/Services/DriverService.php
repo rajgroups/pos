@@ -6,7 +6,9 @@ use App\Helpers\GeneralHelper;
 use App\Models\Driver;
 use App\Repositories\DriverRepository;
 use Exception;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Redis;
 
 class DriverService
 {
@@ -86,5 +88,39 @@ class DriverService
         $this->updateDriver($driver->id, ['otp' => null]);
 
         return $driver;
+    }
+
+    public function findNearbyDrivers(
+        float $longitude,
+        float $latitude,
+        int $radiusKm = 5
+    ): array {
+
+            $client = Redis::connection()->client();
+
+            $result = $client->executeRaw([
+                'GEOSEARCH',
+                'driver_locations',
+                'FROMLONLAT',
+                (string) $longitude,
+                (string) $latitude,
+                'BYRADIUS',
+                (string) $radiusKm,
+                'km',
+                'WITHDIST',
+                'ASC',
+            ]);
+
+            dd($result);
+        $results = [];
+
+        foreach ($drivers as $driver) {
+            $results[] = [
+                'driver_id' => (int) $driver[0],
+                'distance'  => (float) $driver[1],
+            ];
+        }
+
+        return $results;
     }
 }

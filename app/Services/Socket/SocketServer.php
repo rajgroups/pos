@@ -2,348 +2,458 @@
 
 namespace App\Services\Socket;
 
-use OpenSwoole\WebSocket\Server;
-use Laravel\Sanctum\PersonalAccessToken;
-use App\Models\User;
 use App\Models\Driver;
-use Illuminate\Support\Facades\Redis;
-use OpenSwoole\Core\Coroutine\go;
+use Laravel\Sanctum\PersonalAccessToken;
+use OpenSwoole\WebSocket\Server;
+
 class SocketServer
 {
-    protected DriverLocationHandler $driverHandler;
-    protected BookingHandler $bookingHandler;
-    // protected ChatHandler $chatHandler;
+    protected Server $server;
+    protected DriverPresenceStore $presenceStore;
 
+    public array $connections = [];
     public array $drivers = [];
     public array $users = [];
-    public array $connections = [];
+    Protected array $driverLocations = [];  // driver_id => lat/lng
 
-    protected ?Server $server = null;
-
-    public function __construct(
-        DriverLocationHandler $driverHandler,
-        BookingHandler $bookingHandler
-        // ChatHandler $chatHandler
-    ) {
-        $this->driverHandler = $driverHandler;
-        $this->bookingHandler = $bookingHandler;
-        // $this->chatHandler = $chatHandler;
+    public function __construct()
+    {
+        $this->presenceStore = app(DriverPresenceStore::class);
     }
+
 
     public function start(): void
     {
         $this->server = new Server('0.0.0.0', 9502);
 
         $this->server->on('Start', function () {
-            echo "Indicab WebSocket Started\n";
+            echo "Socket Server Started\n";
         });
 
         $this->server->on('Open', function ($server, $request) {
-            echo "Connection opened: {$request->fd}\n";
 
-            $token = isset($request->get['token']) ? $request->get['token'] : null;
+            echo "Client Connected : {$request->fd}\n";
 
-                echo "OPEN EVENT\n";
+            $token = $request->get['token'] ?? null;
 
-                print_r($request->get ?? []);
-
-                echo "\n";
-
-            if ($token) {
-                if ($this->authenticateConnection($request->fd, $token)) {
-                    $server->push($request->fd, json_encode([
-                        'type' => 'connected',
-                        'message' => 'Welcome to Indicab',
-                        'authenticated' => true
-                    ]));
-                } else {
-                    $server->push($request->fd, json_encode([
-                        'type' => 'auth_error',
-                        'message' => 'Invalid token'
-                    ]));
-                    $server->disconnect($request->fd);
-                }
-            } else {
-                // Store initial connection without authentication
-                $this->connections[$request->fd] = [
-                    'fd' => $request->fd,
-                    'authenticated' => false,
-                    'type' => null,
-                    'id' => null
-                ];
-
+            if (!$token) {
                 $server->push($request->fd, json_encode([
-                    'type' => 'connected',
-                    'message' => 'Welcome to Indicab',
-                    'authenticated' => false
+                    'type' => 'auth_error',
+                    'message' => 'Token missing'
                 ]));
-            }
-        });
 
-        $this->server->on('Message', function ($server, $frame) {
-            $this->handleMessage($server, $frame);
-        });
-
-        $this->server->on('Close', function ($server, $fd) {
-            echo "Connection closed: {$fd}\n";
-            $this->handleDisconnect($fd);
-        });
-
-        $this->server->on('Request', function ($request, $response) {
-
-            $data = json_decode(
-                $request->rawContent(),
-                true
-            );
-
-            if (($request->server['request_uri'] ?? '') === '/send-booking') {
-
-                $driverId = $data['driver_id'];
-
-                $fd = Redis::get(
-                    "driver:fd:{$driverId}"
-                );
-
-                if (
-                    $fd &&
-                    $this->server->isEstablished((int)$fd)
-                ) {
-
-                    $this->server->push(
-                        (int)$fd,
-                        json_encode($data['payload'])
-                    );
-
-                    $response->end('success');
-                    return;
-                }
-
-                $response->status(404);
-                $response->end('driver offline');
+                $server->disconnect($request->fd);
                 return;
             }
-        });
-        $this->server->start();
-    }
-    protected function handleMessage($server, $frame): void
-    {
-        $payload = json_decode($frame->data, true);
 
-        if (!isset($payload['type'])) {
-            $server->disconnect($frame->fd);
-            return;
-        }
+            if (!$this->authenticate($request->fd, $token)) {
 
-        // Authenticate via token if provided in payload, or require existing auth
-        if (isset($payload['token'])) {
-            if (!$this->authenticateConnection($frame->fd, $payload['token'])) {
-                $server->push($frame->fd, json_encode([
+                $server->push($request->fd, json_encode([
                     'type' => 'auth_error',
                     'message' => 'Invalid token'
                 ]));
-                $server->disconnect($frame->fd);
+
+                $server->disconnect($request->fd);
                 return;
             }
-        } elseif (!isset($this->connections[$frame->fd]['authenticated']) || !$this->connections[$frame->fd]['authenticated']) {
-            $server->push($frame->fd, json_encode([
-                'type' => 'auth_error',
-                'message' => 'Token required'
+
+            $server->push($request->fd, json_encode([
+                'type' => 'connected',
+                'message' => 'Authenticated'
             ]));
-            $server->disconnect($frame->fd);
-            return;
-        }
+        });
 
-        // Route to appropriate handler based on user type
-        switch ($payload['type']) {
-            case 'authenticate':
-                $server->push($frame->fd, json_encode([
-                    'type' => 'authenticated',
-                    'user_type' => $this->connections[$frame->fd]['type'],
-                    'user_id' => $this->connections[$frame->fd]['id'],
-                    'message' => "Authenticated as {$this->connections[$frame->fd]['type']}"
+        $this->server->on('Request', function ($request, $response) {
+            $path = trim($request->server['request_uri'] ?? '/', '/');
+            $payload = json_decode($request->rawContent() ?: '', true);
+
+            if (! is_array($payload)) {
+                $payload = $request->post ?? [];
+            }
+
+            $response->header('Content-Type', 'application/json');
+
+            if (! is_array($payload)) {
+                $response->status(400);
+                $response->end(json_encode([
+                    'type' => 'error',
+                    'message' => 'Invalid request payload',
                 ]));
-                break;
 
-            case 'driver_location':
-                if ($this->connections[$frame->fd]['type'] === 'driver') {
-                    $this->driverHandler->handle($server, $frame, $payload);
+                return;
+            }
+
+            if (in_array($path, ['send_booking', 'send-booking'], true)) {
+                $driverIds = $this->normalizeDriverIds(
+                    $payload['driver_ids'] ?? ($payload['driver_id'] ?? [])
+                );
+
+                if (empty($driverIds)) {
+                    $response->status(422);
+                    $response->end(json_encode([
+                        'type' => 'error',
+                        'message' => 'No driver ids were provided',
+                    ]));
+
+                    return;
                 }
-                break;
 
-            case 'book_ride':
-            case 'accept_booking':
-            case 'cancel_booking':
-                $this->bookingHandler->handle($server, $frame, $payload);
-                break;
+                if (
+                    isset($payload['latitude'], $payload['longitude'])
+                    && is_numeric($payload['latitude'])
+                    && is_numeric($payload['longitude'])
+                ) {
+                    $nearbyDriverIds = $this->presenceStore->findNearbyDriverIds(
+                        (float) $payload['latitude'],
+                        (float) $payload['longitude'],
+                        (float) ($payload['radius'] ?? 5)
+                    );
 
-            default:
+                    if (! empty($nearbyDriverIds)) {
+                        $driverIds = array_values(array_intersect($driverIds, $nearbyDriverIds));
+                    }
+                }
+
+                if (empty($driverIds)) {
+                    $response->status(404);
+                    $response->end(json_encode([
+                        'type' => 'error',
+                        'message' => 'No online drivers matched the booking request',
+                    ]));
+
+                    return;
+                }
+
+                $bookingPayload = [
+                    'type' => 'booking_request',
+                    'booking' => $payload['booking'] ?? [],
+                ];
+
+                $sent = 0;
+
+                foreach ($driverIds as $driverId) {
+                    $driverFd = $this->presenceStore->getDriverFd($driverId);
+
+                    if (! $driverFd) {
+                        continue;
+                    }
+
+                    $this->server->push($driverFd, json_encode($bookingPayload));
+                    $sent++;
+                }
+
+                if ($sent === 0) {
+                    $response->status(404);
+                    $response->end(json_encode([
+                        'type' => 'error',
+                        'message' => 'All matching drivers are offline',
+                    ]));
+
+                    return;
+                }
+
+                $response->end(json_encode([
+                    'type' => 'success',
+                    'message' => 'Booking sent',
+                    'driver_ids' => $driverIds,
+                    'sent' => $sent,
+                ]));
+
+                return;
+            }
+
+            if ($path === 'broadcast-booking-update') {
+                $booking = $payload['booking'] ?? [];
+                $message = [
+                    'type' => 'booking_status',
+                    'booking' => $booking,
+                ];
+
+                $targets = [];
+
+                if (isset($booking['driver_id'])) {
+                    $driverFd = $this->presenceStore->getDriverFd((int) $booking['driver_id']);
+                    if ($driverFd) {
+                        $targets['driver:' . (int) $booking['driver_id']] = $driverFd;
+                    }
+                }
+
+                if (isset($booking['user_id'])) {
+                    $userFd = $this->presenceStore->getUserFd((int) $booking['user_id']);
+                    if ($userFd) {
+                        $targets['user:' . (int) $booking['user_id']] = $userFd;
+                    }
+                }
+
+                foreach ($targets as $fd) {
+                    $this->server->push($fd, json_encode($message));
+                }
+
+                $response->end(json_encode([
+                    'type' => 'success',
+                    'message' => 'Booking update broadcast',
+                    'targets' => count($targets),
+                ]));
+
+                return;
+            }
+
+            $response->status(404);
+            $response->end(json_encode([
+                'type' => 'error',
+                'message' => 'Unknown route',
+            ]));
+        });
+
+        $this->server->on('Message', function ($server, $frame) {
+
+            echo "---------------------------------\n";
+            echo "FD : {$frame->fd}\n";
+            echo "Message : {$frame->data}\n";
+            echo "---------------------------------\n";
+
+            $payload = json_decode($frame->data, true);
+
+            if (!is_array($payload)) {
                 $server->push($frame->fd, json_encode([
                     'type' => 'error',
-                    'message' => 'Unknown message type'
+                    'message' => 'Invalid JSON',
                 ]));
-                break;
-        }
+                return;
+            }
+
+            switch ($payload['type'] ?? '') {
+
+                case 'driver_location':
+
+                    if (!isset($this->connections[$frame->fd])) {
+                        break;
+                    }
+
+                    $connection = $this->connections[$frame->fd];
+
+                    if ($connection['type'] !== 'driver') {
+                        break;
+                    }
+
+                    $driverId = $connection['id'];
+
+                    $this->driverLocations[$driverId] = [
+                        'latitude'  => (float) $payload['latitude'],
+                        'longitude' => (float) $payload['longitude'],
+                        'updated_at' => time(),
+                    ];
+
+                    $this->presenceStore->updateDriverLocation(
+                        $driverId,
+                        (float) $payload['latitude'],
+                        (float) $payload['longitude']
+                    );
+
+                    $server->push($frame->fd, json_encode([
+                        'type' => 'location_updated',
+                    ]));
+
+                    break;
+
+                case 'accept_booking':
+
+                    echo "Driver accepted booking\n";
+
+                    break;
+
+                case 'reject_booking':
+
+                    echo "Driver rejected booking\n";
+
+                    break;
+                case 'send_booking':
+                    $driverId = (int) ($payload['driver_id'] ?? 0);
+
+                    if (!isset($this->drivers[$driverId])) {
+
+                        $server->push($frame->fd, json_encode([
+                            'type' => 'error',
+                            'message' => 'Driver is offline',
+                        ]));
+
+                        break;
+                    }
+
+                    $driverFd = $this->drivers[$driverId];
+
+                    $server->push($driverFd, json_encode([
+                        'type' => 'booking_request',
+                        'booking' => $payload['booking'],
+                    ]));
+
+                    $server->push($frame->fd, json_encode([
+                        'type' => 'success',
+                        'message' => 'Booking sent',
+                    ]));
+
+                    break;
+
+                case 'ping':
+
+                    $server->push($frame->fd, json_encode([
+                        'type' => 'pong',
+                    ]));
+
+                    break;
+
+                default:
+
+                    $server->push($frame->fd, json_encode([
+                        'type' => 'error',
+                        'message' => 'Unknown event',
+                    ]));
+            }
+        });
+
+        $this->server->on('Close', function ($server, $fd) {
+
+            if (! isset($this->connections[$fd])) {
+                return;
+            }
+
+            $connection = $this->connections[$fd];
+
+            if ($connection['type'] === 'driver') {
+
+                unset($this->drivers[$connection['id']]);
+                unset($this->driverLocations[$connection['id']]);
+                $this->presenceStore->forgetDriver($connection['id']);
+
+            } else {
+
+                unset($this->users[$connection['id']]);
+                $this->presenceStore->forgetUser($connection['id']);
+            }
+
+            unset($this->connections[$fd]);
+            echo "Disconnected: {$fd}\n";
+        });
+
+        $this->server->start();
     }
 
-    protected function authenticateConnection(int $fd, string $token): bool
+    protected function authenticate(int $fd, string $token): bool
     {
-        // If already authenticated with the same token, no need to re-verify DB
-        if (isset($this->connections[$fd]['authenticated']) &&
-            $this->connections[$fd]['authenticated'] &&
-            isset($this->connections[$fd]['token']) &&
-            $this->connections[$fd]['token'] === $token) {
-            return true;
-        }
-
-        // Find the token
         $accessToken = PersonalAccessToken::findToken($token);
 
-        if (!$accessToken || !$accessToken->tokenable) {
+        if (!$accessToken) {
             return false;
         }
 
-        // Get the tokenable model (User or Driver)
-        $tokenable = $accessToken->tokenable;
+        $user = $accessToken->tokenable;
 
-        // Determine if it's a driver or user
-        $isDriver = ($tokenable instanceof Driver);
-        $userType = $isDriver ? 'driver' : 'user';
-
-        // Store connection info
         $this->connections[$fd] = [
             'fd' => $fd,
-            'authenticated' => true,
-            'type' => $userType,
-            'id' => $tokenable->id,
-            'token_id' => $accessToken->id,
-            'token' => $token,
-            'connected_at' => time()
+            'id' => $user->id,
+            'type' => $user instanceof Driver ? 'driver' : 'user',
         ];
 
-        // Store in appropriate array for quick lookup
-        if ($isDriver) {
-            $this->drivers[$tokenable->id] = $fd;
+        $type = $user instanceof Driver ? 'driver' : 'user';
 
-            // Store FD in Redis so the Pub/Sub subscriber process can find it
-            Redis::set("driver:fd:{$tokenable->id}", $fd);
-
-            // Initialize driver data
-            $this->driverHandler->initializeDriver($tokenable->id);
+        if ($type === 'driver') {
+            $this->drivers[$user->id] = $fd;
+            $this->presenceStore->setDriverConnection($user->id, $fd);
         } else {
-            $this->users[$tokenable->id] = $fd;
-
-            // Store FD in Redis so the Pub/Sub subscriber process can find it
-            Redis::set("user:fd:{$tokenable->id}", $fd);
+            $this->users[$user->id] = $fd;
+            $this->presenceStore->setUserConnection($user->id, $fd);
         }
 
-        echo "Authenticated: {$userType} {$tokenable->id} on FD {$fd}\n";
+        print_r($this->connections);
+        print_r($this->users);
+        print_r($this->drivers);
+        echo "Authenticated {$this->connections[$fd]['type']} : {$user->id}\n";
 
         return true;
     }
 
-    protected function handleDisconnect(int $fd): void
-    {
-        if (!isset($this->connections[$fd])) {
-            return;
-        }
+    public function findNearbyDrivers(
+        float $latitude,
+        float $longitude,
+        float $radiusKm = 5
+    ): array {
 
-        $connection = $this->connections[$fd];
+        $nearby = [];
 
-        if ($connection['authenticated']) {
-            $userType = $connection['type'];
-            $userId = $connection['id'];
+        foreach ($this->driverLocations as $driverId => $location) {
 
-            // Remove from tracking arrays
-            if ($userType === 'driver') {
-                unset($this->drivers[$userId]);
-
-                Redis::del("driver:fd:{$userId}");
-
-                // Mark driver as offline
-                $this->driverHandler->markDriverOffline($userId);
-            } else {
-                unset($this->users[$userId]);
-
-                Redis::del("user:fd:{$userId}");
+            if (time() - $location['updated_at'] > 20) {
+                continue;
             }
 
-            echo "Disconnected: {$userType} {$userId}\n";
-        }
+            $distance = $this->distance(
+                $latitude,
+                $longitude,
+                $location['latitude'],
+                $location['longitude']
+            );
 
-        // Remove connection data
-        unset($this->connections[$fd]);
-    }
+            if ($distance <= $radiusKm) {
 
-    // Helper methods for broadcasting
-    public function broadcastToDrivers(array $data, ?array $excludeDrivers = []): void
-    {
-        $message = json_encode($data);
-        $excludeFds = [];
-
-        foreach ($excludeDrivers as $driverId) {
-            if (isset($this->drivers[$driverId])) {
-                $excludeFds[] = $this->drivers[$driverId];
+                $nearby[] = [
+                    'driver_id' => $driverId,
+                    'distance' => $distance,
+                ];
             }
         }
 
-        foreach ($this->drivers as $driverId => $fd) {
-            if (!in_array($fd, $excludeFds)) {
-                $this->sendToClient($fd, $message);
+        usort($nearby, fn($a, $b) => $a['distance'] <=> $b['distance']);
+
+        return $nearby;
+    }
+
+    private function distance(
+        float $lat1,
+        float $lng1,
+        float $lat2,
+        float $lng2
+    ): float {
+
+        $earthRadius = 6371;
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a =
+            sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) *
+            cos(deg2rad($lat2)) *
+            sin($dLng / 2) *
+            sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    public function sendBooking(array $driverIds, array $payload): void
+    {
+        foreach ($driverIds as $driverId) {
+
+            if (!isset($this->drivers[$driverId])) {
+                continue;
             }
+
+            $fd = $this->drivers[$driverId];
+
+            $this->server->push($fd, json_encode($payload));
         }
     }
 
-    public function broadcastToUsers(array $data, ?array $excludeUsers = []): void
+    protected function normalizeDriverIds(mixed $driverIds): array
     {
-        $message = json_encode($data);
-        $excludeFds = [];
-
-        foreach ($excludeUsers as $userId) {
-            if (isset($this->users[$userId])) {
-                $excludeFds[] = $this->users[$userId];
-            }
+        if (! is_array($driverIds)) {
+            $driverIds = [$driverIds];
         }
 
-        foreach ($this->users as $userId => $fd) {
-            if (!in_array($fd, $excludeFds)) {
-                $this->sendToClient($fd, $message);
-            }
-        }
-    }
+        $driverIds = array_map('intval', $driverIds);
+        $driverIds = array_filter($driverIds, fn ($driverId) => $driverId > 0);
 
-    public function sendToDriver(int $driverId, array $data): bool
-    {
-        if (isset($this->drivers[$driverId])) {
-            return $this->sendToClient($this->drivers[$driverId], json_encode($data));
-        }
-        return false;
-    }
-
-    public function sendToUser(int $userId, array $data): bool
-    {
-        if (isset($this->users[$userId])) {
-            return $this->sendToClient($this->users[$userId], json_encode($data));
-        }
-        return false;
-    }
-
-    protected function sendToClient(int $fd, string $message): bool
-    {
-        if (isset($this->connections[$fd]) && $this->server && $this->server->isEstablished($fd)) {
-            return $this->server->push($fd, $message);
-        }
-        return false;
-    }
-
-    // Method to get driver FD by ID
-    public function getDriverFd(int $driverId): ?int
-    {
-        return $this->drivers[$driverId] ?? null;
-    }
-
-    // Method to get user FD by ID
-    public function getUserFd(int $userId): ?int
-    {
-        return $this->users[$userId] ?? null;
+        return array_values(array_unique($driverIds));
     }
 }

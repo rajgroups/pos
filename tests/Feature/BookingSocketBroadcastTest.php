@@ -9,6 +9,8 @@ use App\Models\Vehicle;
 use App\Models\VehicleCategoryPricing;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -21,18 +23,90 @@ class BookingSocketBroadcastTest extends TestCase
     {
         parent::setUp();
 
-        // Ensure we fake Redis calls
-        Redis::shouldReceive('publish')->byDefault();
+        Http::fake([
+            'http://127.0.0.1:9502/*' => Http::response('success', 200),
+        ]);
+
+        Redis::shouldReceive('set')->byDefault()->andReturnTrue();
+        Redis::shouldReceive('del')->byDefault()->andReturn(1);
         Redis::shouldReceive('georadius')->byDefault()->andReturn([]);
     }
 
-    public function test_booking_actions_publish_to_user_socket_notifications(): void
+    public function test_accept_start_and_complete_broadcast_to_driver_and_user_sockets(): void
     {
-        // 1. Create a user
-        $user = User::factory()->create();
+        [$user, $driver, $vehicle, $category] = $this->createBookingContext();
+
+        Sanctum::actingAs($user);
+        $storeResponse = $this->postJson('/api/user/bookings', $this->bookingPayload($category->id));
+
+        $storeResponse->assertCreated();
+
+        $booking = Booking::where('booking_no', $storeResponse->json('data.booking_no'))
+            ->firstOrFail();
+
+        Sanctum::actingAs($driver);
+
+        $this->postJson("/api/driver/bookings/{$booking->booking_no}/accept", [
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'accepted');
+
+        Http::assertSentCount(1);
+        Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'accepted'));
+
+        $booking->refresh();
+
+        $this->postJson("/api/driver/bookings/{$booking->booking_no}/start", [
+            'start_otp' => $booking->start_otp,
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'started');
+
+        Http::assertSentCount(2);
+        Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'started'));
+
+        $this->postJson("/api/driver/bookings/{$booking->booking_no}/complete", [
+            'final_amount' => 180,
+            'payment_status' => 'paid',
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'completed');
+
+        Http::assertSentCount(3);
+        Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'completed'));
+    }
+
+    public function test_user_cancel_broadcasts_to_driver_and_user_sockets(): void
+    {
+        [$user, $driver, $vehicle, $category] = $this->createBookingContext();
+
+        Sanctum::actingAs($user);
+        $storeResponse = $this->postJson('/api/user/bookings', $this->bookingPayload($category->id));
+
+        $storeResponse->assertCreated();
+
+        $booking = Booking::where('booking_no', $storeResponse->json('data.booking_no'))
+            ->firstOrFail();
+
+        Sanctum::actingAs($driver);
+
+        $this->postJson("/api/driver/bookings/{$booking->booking_no}/accept", [
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+        ])->assertOk();
+
         Sanctum::actingAs($user);
 
-        // 2. Setup pricing categories
+        $this->postJson("/api/user/bookings/{$booking->booking_no}/cancel", [
+            'reason' => 'Changed plans',
+        ])->assertOk()
+            ->assertJsonPath('data.status', 'cancelled');
+
+        Http::assertSentCount(2);
+        Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'cancelled'));
+    }
+
+    private function createBookingContext(): array
+    {
         $category = VehicleType::create([
             'type_key' => 'cab',
             'name' => 'Cab',
@@ -78,101 +152,60 @@ class BookingSocketBroadcastTest extends TestCase
         ]);
 
         $vehicle = Vehicle::create([
+            'driver_id' => $driver->id,
             'vehicle_category_id' => $category->id,
             'vehicle_number' => 'TN01AB9999',
             'status' => 'active',
             'is_verified' => true,
         ]);
 
-        // Expect Redis::publish to be called for swoole_user_notifications during booking store
-        Redis::shouldReceive('publish')
-            ->once()
-            ->with('swoole_user_notifications', \Mockery::on(function ($argument) use ($user) {
-                $data = json_decode($argument, true);
-                return isset($data['user_id']) && 
-                    $data['user_id'] === $user->id &&
-                    $data['payload']['type'] === 'booking_status' &&
-                    $data['payload']['booking']['status'] === 'pending';
-            }));
+        $user = User::factory()->create();
 
-        // Trigger booking creation
-        $storeResponse = $this->postJson('/api/user/bookings', [
-            'vehicle_category_id' => $category->id,
+        return [$user, $driver, $vehicle, $category];
+    }
+
+    private function bookingPayload(int $categoryId): array
+    {
+        return [
+            'vehicle_category_id' => $categoryId,
+            'booking_mode' => 'instant',
             'payment_method' => 'cash',
             'locations' => [
                 [
                     'location_type' => 'pickup',
                     'latitude' => 13.0827,
                     'longitude' => 80.2707,
-                    'address' => 'Chennai Pickup',
+                    'address' => 'Chennai Central Railway Station',
                     'sequence' => 1,
                 ],
                 [
                     'location_type' => 'drop',
                     'latitude' => 13.0674,
                     'longitude' => 80.2376,
-                    'address' => 'Chennai Drop',
+                    'address' => 'T Nagar, Chennai',
                     'sequence' => 2,
                 ],
             ],
             'usage' => [
-                'distance_km' => 10,
+                'distance_km' => 15,
+                'hours_used' => 1.5,
             ],
-        ]);
+        ];
+    }
 
-        $storeResponse->assertCreated();
-        $bookingNo = $storeResponse->json('data.booking_no');
-        $booking = Booking::where('booking_no', $bookingNo)->firstOrFail();
+    private function bookingStatusAssertion(int $userId, int $driverId, string $status): \Closure
+    {
+        return function (Request $request) use ($userId, $driverId, $status): bool {
+            if ($request->url() !== 'http://127.0.0.1:9502/broadcast-booking-update') {
+                return false;
+            }
 
-        // 3. Act as Driver to accept booking, expect both driver and user notification
-        Sanctum::actingAs($driver);
+            $data = $request->data();
 
-        Redis::shouldReceive('publish')
-            ->once()
-            ->with('swoole_driver_notifications', \Mockery::on(function ($argument) use ($driver) {
-                $data = json_decode($argument, true);
-                return isset($data['driver_id']) && 
-                    $data['driver_id'] === $driver->id &&
-                    $data['payload']['booking']['status'] === 'accepted';
-            }));
-
-        Redis::shouldReceive('publish')
-            ->once()
-            ->with('swoole_user_notifications', \Mockery::on(function ($argument) use ($user) {
-                $data = json_decode($argument, true);
-                return isset($data['user_id']) && 
-                    $data['user_id'] === $user->id &&
-                    $data['payload']['booking']['status'] === 'accepted';
-            }));
-
-        $this->postJson("/api/driver/bookings/{$bookingNo}/accept", [
-            'driver_id' => $driver->id,
-            'vehicle_id' => $vehicle->id,
-        ])->assertOk();
-
-        // 4. Act as Driver to start booking, expect both driver and user notification
-        $booking->refresh();
-
-        Redis::shouldReceive('publish')
-            ->once()
-            ->with('swoole_driver_notifications', \Mockery::on(function ($argument) use ($driver) {
-                $data = json_decode($argument, true);
-                return isset($data['driver_id']) && 
-                    $data['driver_id'] === $driver->id &&
-                    $data['payload']['booking']['status'] === 'started';
-            }));
-
-        Redis::shouldReceive('publish')
-            ->once()
-            ->with('swoole_user_notifications', \Mockery::on(function ($argument) use ($user) {
-                $data = json_decode($argument, true);
-                return isset($data['user_id']) && 
-                    $data['user_id'] === $user->id &&
-                    $data['payload']['booking']['status'] === 'started';
-            }));
-
-        $this->postJson("/api/driver/bookings/{$bookingNo}/start", [
-            'start_otp' => $booking->start_otp,
-        ])->assertOk();
+            return ($data['type'] ?? null) === 'booking_status'
+                && ($data['booking']['status'] ?? null) === $status
+                && (int) ($data['booking']['user_id'] ?? 0) === $userId
+                && (int) ($data['booking']['driver_id'] ?? 0) === $driverId;
+        };
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Socket\SocketServer;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -28,124 +29,11 @@ Route::get('/all-clear', function () {
    //  Artisan::call('optimize');
    return "All cleared successfully";
 });
-
-// language
-Route::get('/redis-clear', function () {
-    Redis::flushdb(); // Clears only current database
-
-    return response()->json(['message' => 'Current database cleared']);
-});
-
-Route::get('/redis-view', function () {
-    $keys = Redis::keys('*');
-    $data = [];
-
-    foreach ($keys as $key) {
-        $type = Redis::type($key);
-        $ttl = Redis::ttl($key);
-
-        switch ($type) {
-            case 'string':
-                $value = Redis::get($key);
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => json_decode($value, true) ?? $value
-                ];
-                break;
-
-            case 'hash':
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => Redis::hGetAll($key)
-                ];
-                break;
-
-            case 'list':
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => Redis::lRange($key, 0, -1)
-                ];
-                break;
-
-            case 'set':
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => Redis::sMembers($key)
-                ];
-                break;
-
-            case 'zset':
-                $members = Redis::zRange($key, 0, -1);
-                $parsedValue = [];
-
-                foreach ($members as $member) {
-                    // Check if it's geo data (has coordinates)
-                    $coord = Redis::geopos($key, $member);
-                    if ($coord[0][0] !== null) {
-                        $parsedValue[$member] = [
-                            'score' => Redis::zScore($key, $member),
-                            'latitude' => $coord[0][1],
-                            'longitude' => $coord[0][0]
-                        ];
-                    } else {
-                        $parsedValue[$member] = Redis::zScore($key, $member);
-                    }
-                }
-
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => $parsedValue
-                ];
-                break;
-
-            case 'none':
-                // Try to get raw value anyway
-                $rawValue = Redis::get($key);
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => $rawValue ?: 'Key exists but expired or empty',
-                    'raw_attempt' => $rawValue
-                ];
-                break;
-
-            default:
-                $data[$key] = [
-                    'type' => $type,
-                    'ttl' => $ttl,
-                    'value' => "Unsupported type: {$type}"
-                ];
-                break;
-        }
-    }
-
+Route::get('/socket/connections', function (SocketServer $socket) {
+    dd($socket);
     return response()->json([
-        'total_keys' => count($keys),
-        'data' => $data
-    ]);
+        'connections' => $socket->connections,
+        'drivers' => $socket->drivers,
+        'users' => $socket->users,
+    ], JSON_PRETTY_PRINT);
 });
-Route::get('/drivers', function () {
-    $drivers = Redis::zrange('drivers', 0, -1);
-
-    $locations = [];
-    foreach ($drivers as $driverId) {
-        $coord = Redis::geopos('drivers', $driverId);
-        $locations[] = [
-            'driver_id' => $driverId,
-            'latitude' => $coord[0][1],
-            'longitude' => $coord[0][0]
-        ];
-    }
-
-    return response()->json($locations);
-});
-Route::get('/debug-notyf', function () {
-    notyf()->addSuccess('This should show now!');
-    return view('debug'); // a test view
-});
-

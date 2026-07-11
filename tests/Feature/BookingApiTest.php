@@ -9,12 +9,27 @@ use App\Models\Vehicle;
 use App\Models\VehicleCategoryPricing;
 use App\Models\VehicleType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redis;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            'http://127.0.0.1:9502/*' => Http::response('success', 200),
+        ]);
+
+        Redis::shouldReceive('set')->byDefault()->andReturnTrue();
+        Redis::shouldReceive('del')->byDefault()->andReturn(1);
+        Redis::shouldReceive('georadius')->byDefault()->andReturn([]);
+    }
 
     public function test_vehicle_categories_can_be_listed(): void
     {
