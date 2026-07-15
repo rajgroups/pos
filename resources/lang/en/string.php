@@ -171,17 +171,17 @@ return [
     ],
 
     // inside 'warehouses' or 'warehouse' group
-        'warehouse' => [
-            'created_success' => 'Warehouse created successfully.',
-            'updated_success' => 'Warehouse updated successfully.',
-            'deleted_success' => 'Warehouse deleted successfully.',
-            'not_found' => 'Warehouse not found.',
-            'delete_failed' => 'Failed to delete warehouse.',
-            // validation helpers
-            'name_required' => 'Warehouse name is required.',
-            'code_required' => 'Warehouse code is required.',
-            'code_unique' => 'Warehouse code must be unique.',
-            'address_required' => 'Address is required.',
-        ],
+    'warehouse' => [
+        'created_success' => 'Warehouse created successfully.',
+        'updated_success' => 'Warehouse updated successfully.',
+        'deleted_success' => 'Warehouse deleted successfully.',
+        'not_found' => 'Warehouse not found.',
+        'delete_failed' => 'Failed to delete warehouse.',
+        // validation helpers
+        'name_required' => 'Warehouse name is required.',
+        'code_required' => 'Warehouse code is required.',
+        'code_unique' => 'Warehouse code must be unique.',
+        'address_required' => 'Address is required.',
+    ],
 
 ];

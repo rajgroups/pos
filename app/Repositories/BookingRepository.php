@@ -3,74 +3,68 @@
 namespace App\Repositories;
 
 use App\Models\Booking;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class BookingRepository
 {
-    public function queryWithRelations(): Builder
+    /**
+     * The booking model instance.
+     *
+     * @var \App\Models\Booking
+     */
+    protected $model;
+
+    /**
+     * Create a new repository instance.
+     *
+     * @param \App\Models\Booking $model
+     * @return void
+     */
+    public function __construct(Booking $model)
     {
-        return Booking::query()->with([
-            'category.pricing',
-            'locations',
-            'pickupLocation',
-            'dropLocation',
-            'usage',
-            'fare',
-            'driver',
-            'vehicle',
-            'user',
-        ]);
+        $this->model = $model;
     }
 
-    public function findByBookingNo(string $bookingNo): ?Booking
+    /**
+     * Find an active booking for a given user ID.
+     *
+     * @param int $userId
+     * @return \App\Models\Booking|null
+     */
+    public function findActiveBookingByUserId(int $userId): ?Booking
     {
-        return $this->queryWithRelations()
-            ->where('booking_no', $bookingNo)
-            ->first();
-    }
-
-    public function lockByBookingNo(string $bookingNo): ?Booking
-    {
-        return Booking::query()
-            ->where('booking_no', $bookingNo)
-            ->lockForUpdate()
-            ->first();
-    }
-
-    public function create(array $attributes): Booking
-    {
-        return Booking::create($attributes);
-    }
-
-    public function getActiveStatuses(): array
-    {
-        return ['accepted', 'started'];
-    }
-
-    public function hasActiveDriverBooking(int $driverId, ?int $ignoreBookingId = null): bool
-    {
-        return Booking::query()
-            ->where('driver_id', $driverId)
-            ->whereIn('status', $this->getActiveStatuses())
-            ->when($ignoreBookingId, fn ($query) => $query->where('id', '!=', $ignoreBookingId))
-            ->exists();
-    }
-
-    public function hasActiveVehicleBooking(int $vehicleId, ?int $ignoreBookingId = null): bool
-    {
-        return Booking::query()
-            ->where('vehicle_id', $vehicleId)
-            ->whereIn('status', $this->getActiveStatuses())
-            ->when($ignoreBookingId, fn ($query) => $query->where('id', '!=', $ignoreBookingId))
-            ->exists();
-    }
-
-    public function forUser(int $userId): Collection
-    {
-        return $this->queryWithRelations()
-            ->where('user_id', $userId)
+        return $this->model->where('user_id', $userId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
             ->latest()
-            ->get();
+            ->first();
+    }
+
+    /**
+     * Check if a driver has an active booking.
+     *
+     * @param int $driverId
+     * @param int $excludeBookingId
+     * @return bool
+     */
+    public function hasActiveDriverBooking(int $driverId, int $excludeBookingId): bool
+    {
+        return $this->model->where('driver_id', $driverId)
+            ->where('id', '!=', $excludeBookingId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->exists();
+    }
+
+    /**
+     * Check if a vehicle has an active booking.
+     *
+     * @param int $vehicleId
+     * @param int $excludeBookingId
+     * @return bool
+     */
+    public function hasActiveVehicleBooking(int $vehicleId, int $excludeBookingId): bool
+    {
+        return $this->model->where('vehicle_id', $vehicleId)
+            ->where('id', '!=', $excludeBookingId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->exists();
     }
 }

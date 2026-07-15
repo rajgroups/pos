@@ -300,8 +300,8 @@ class BookingApiTest extends TestCase
             'driver_id' => $driver2->id,
             'vehicle_id' => $vehicle->id,
         ])->assertStatus(422)
-          ->assertJsonPath('status', false)
-          ->assertJsonPath('message', 'Driver ID mismatch.');
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('message', 'Driver ID mismatch.');
     }
 
     public function test_driver_cannot_start_unassigned_booking(): void
@@ -365,7 +365,7 @@ class BookingApiTest extends TestCase
         $this->postJson("/api/driver/bookings/{$booking->booking_no}/start", [
             'start_otp' => '123456',
         ])->assertStatus(403)
-          ->assertJsonPath('status', false)
-          ->assertJsonPath('message', 'You are not assigned to this booking.');
+            ->assertJsonPath('status', false)
+            ->assertJsonPath('message', 'You are not assigned to this booking.');
     }
 }

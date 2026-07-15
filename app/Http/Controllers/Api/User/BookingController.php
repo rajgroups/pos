@@ -110,4 +110,30 @@ class BookingController extends Controller
             'data' => new BookingFareResource($booking->fare),
         ]);
     }
+
+    public function activeRide(Request $request): JsonResponse
+    {
+        $activeBooking = $this->bookingService->userActiveBooking($request->user());
+
+        if (! $activeBooking) {
+            return ApiResponseHelper::success(
+                'No active ride found.',
+                null
+            );
+        }
+
+        $activeBooking->load([
+            'category.pricing',
+            'locations',
+            'pickupLocation',
+            'dropLocation',
+            'usage',
+            'fare',
+            'driver',
+            'vehicle',
+            'user',
+        ]);
+
+        return ApiResponseHelper::success('Active ride found.', new BookingResource($activeBooking));
+    }
 }

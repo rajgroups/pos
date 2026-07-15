@@ -16,9 +16,7 @@ use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
-    public function __construct(protected BookingService $bookingService)
-    {
-    }
+    public function __construct(protected BookingService $bookingService) {}
 
     public function accept(Request $request, $booking): JsonResponse
     {
@@ -95,56 +93,56 @@ class BookingController extends Controller
         ]);
     }
 
-public function complete(Request $request, $booking): JsonResponse
-{
-    $validated = ValidationHelper::validate($request->all(), [
-        'end_otp' => ['required', 'string', 'size:6'],
-    ]);
+    public function complete(Request $request, $booking): JsonResponse
+    {
+        $validated = ValidationHelper::validate($request->all(), [
+            'end_otp' => ['required', 'string', 'size:6'],
+        ]);
 
-    if ($validated['status'] === 'error') {
-        return ApiResponseHelper::error(
-            $validated['message'],
-            $validated['errors']
+        if ($validated['status'] === 'error') {
+            return ApiResponseHelper::error(
+                $validated['message'],
+                $validated['errors']
+            );
+        }
+
+        $driver = $request->user();
+
+        if (! $driver instanceof Driver) {
+            return ApiResponseHelper::error(
+                'Unauthorized. Only drivers can complete bookings.',
+                null,
+                403
+            );
+        }
+
+        $booking = Booking::find($booking);
+
+        if (! $booking) {
+            return ApiResponseHelper::error(
+                'Booking not found.',
+                null,
+                404
+            );
+        }
+
+        if ((int) $booking->driver_id !== (int) $driver->id) {
+            return ApiResponseHelper::error(
+                'You are not assigned to this booking.',
+                null,
+                403
+            );
+        }
+
+        $booking = $this->bookingService->completeBooking(
+            $booking,
+            $validated['data']
         );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Booking completed successfully.',
+            'data' => new BookingResource($booking),
+        ]);
     }
-
-    $driver = $request->user();
-
-    if (! $driver instanceof Driver) {
-        return ApiResponseHelper::error(
-            'Unauthorized. Only drivers can complete bookings.',
-            null,
-            403
-        );
-    }
-
-    $booking = Booking::find($booking);
-
-    if (! $booking) {
-        return ApiResponseHelper::error(
-            'Booking not found.',
-            null,
-            404
-        );
-    }
-
-    if ((int) $booking->driver_id !== (int) $driver->id) {
-        return ApiResponseHelper::error(
-            'You are not assigned to this booking.',
-            null,
-            403
-        );
-    }
-
-    $booking = $this->bookingService->completeBooking(
-        $booking,
-        $validated['data']
-    );
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Booking completed successfully.',
-        'data' => new BookingResource($booking),
-    ]);
-}
 }

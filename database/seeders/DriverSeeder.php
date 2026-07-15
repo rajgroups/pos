@@ -15,13 +15,6 @@ class DriverSeeder extends Seeder
             ['name' => 'Arun Kumar', 'phone' => '9000000001', 'email' => 'arun.driver@example.com', 'city' => 'Chennai', 'state' => 'Tamil Nadu', 'driver_type' => 'car', 'license_categories' => ['LMV', 'TR'], 'status' => 'active', 'is_verified' => true],
             ['name' => 'Bala Murugan', 'phone' => '9000000002', 'email' => 'bala.driver@example.com', 'city' => 'Madurai', 'state' => 'Tamil Nadu', 'driver_type' => 'bike', 'license_categories' => ['Bike'], 'status' => 'active', 'is_verified' => true],
             ['name' => 'Chetan Raj', 'phone' => '9000000003', 'email' => 'chetan.driver@example.com', 'city' => 'Bengaluru', 'state' => 'Karnataka', 'driver_type' => 'mini_van', 'license_categories' => ['LMV', 'TR'], 'status' => 'active', 'is_verified' => false],
-            ['name' => 'Dinesh Kumar', 'phone' => '9000000004', 'email' => 'dinesh.driver@example.com', 'city' => 'Coimbatore', 'state' => 'Tamil Nadu', 'driver_type' => 'bus', 'license_categories' => ['HMV', 'TR'], 'status' => 'inactive', 'is_verified' => true],
-            ['name' => 'Elango', 'phone' => '9000000005', 'email' => 'elango.driver@example.com', 'city' => 'Salem', 'state' => 'Tamil Nadu', 'driver_type' => 'tractor', 'license_categories' => ['TR', 'Tractor'], 'status' => 'active', 'is_verified' => true],
-            ['name' => 'Farooq Ahmed', 'phone' => '9000000006', 'email' => 'farooq.driver@example.com', 'city' => 'Hyderabad', 'state' => 'Telangana', 'driver_type' => 'car', 'license_categories' => ['LMV'], 'status' => 'active', 'is_verified' => false],
-            ['name' => 'Gokul Prasad', 'phone' => '9000000007', 'email' => 'gokul.driver@example.com', 'city' => 'Kochi', 'state' => 'Kerala', 'driver_type' => 'bus', 'license_categories' => ['HMV', 'TR'], 'status' => 'active', 'is_verified' => true],
-            ['name' => 'Hariharan', 'phone' => '9000000008', 'email' => 'hari.driver@example.com', 'city' => 'Trichy', 'state' => 'Tamil Nadu', 'driver_type' => 'bike', 'license_categories' => ['Bike', 'LMV'], 'status' => 'blocked', 'is_verified' => false],
-            ['name' => 'Imran Khan', 'phone' => '9000000009', 'email' => 'imran.driver@example.com', 'city' => 'Vijayawada', 'state' => 'Andhra Pradesh', 'driver_type' => 'car', 'license_categories' => ['LMV', 'TR'], 'status' => 'active', 'is_verified' => true],
-            ['name' => 'Jeeva', 'phone' => '9000000010', 'email' => 'jeeva.driver@example.com', 'city' => 'Erode', 'state' => 'Tamil Nadu', 'driver_type' => 'tractor', 'license_categories' => ['TR', 'Tractor'], 'status' => 'active', 'is_verified' => true],
         ];
 
         foreach ($drivers as $index => $driver) {

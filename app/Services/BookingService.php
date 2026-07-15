@@ -561,4 +561,13 @@ class BookingService
             ],
         ];
     }
+
+    /**
+     * @param \App\Models\User $user
+     * @return \App\Models\Booking|null
+     */
+    public function userActiveBooking(\App\Models\User $user): ?Booking
+    {
+        return $this->bookingRepository->findActiveBookingByUserId($user->id);
+    }
 }

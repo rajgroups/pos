@@ -2,16 +2,21 @@
 
 namespace App\Services\Socket;
 
+use App\Http\Resources\BookingResource;
 use App\Models\Driver;
+use App\Models\User;
+use App\Services\BookingService;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenSwoole\WebSocket\Server;
 
 class SocketServer
 {
     protected Server $server;
-    protected DriverPresenceStore $presenceStore;
+    protected DriverPresenceStore $presenceStore; // @phpstan-ignore-line
+    protected BookingService $bookingService; // @phpstan-ignore-line
 
     public array $connections = [];
+    /** @var array<int, int> */
     public array $drivers = [];
     public array $users = [];
     Protected array $driverLocations = [];  // driver_id => lat/lng
@@ -19,6 +24,7 @@ class SocketServer
     public function __construct()
     {
         $this->presenceStore = app(DriverPresenceStore::class);
+        $this->bookingService = app(BookingService::class);
     }
 
 
@@ -138,8 +144,10 @@ class SocketServer
                         continue;
                     }
 
-                    $this->server->push($driverFd, json_encode($bookingPayload));
-                    $sent++;
+                    if ($this->server->isEstablished($driverFd)) {
+                        $this->server->push($driverFd, json_encode($bookingPayload));
+                        $sent++;
+                    }
                 }
 
                 if ($sent === 0) {
@@ -186,7 +194,9 @@ class SocketServer
                 }
 
                 foreach ($targets as $fd) {
-                    $this->server->push($fd, json_encode($message));
+                    if ($this->server->isEstablished($fd)) {
+                        $this->server->push($fd, json_encode($message));
+                    }
                 }
 
                 $response->end(json_encode([
@@ -362,6 +372,31 @@ class SocketServer
         } else {
             $this->users[$user->id] = $fd;
             $this->presenceStore->setUserConnection($user->id, $fd);
+        }
+
+        if ($user instanceof User) {
+            $activeBooking = $this->bookingService->userActiveBooking($user);
+
+            if ($activeBooking) {
+                $activeBooking->load([
+                    'category.pricing',
+                    'locations',
+                    'pickupLocation',
+                    'dropLocation',
+                    'usage',
+                    'fare',
+                    'driver',
+                    'vehicle',
+                    'user',
+                ]);
+
+                if ($this->server->isEstablished($fd)) {
+                    $this->server->push($fd, json_encode([
+                        'type' => 'booking_status',
+                        'booking' => (new BookingResource($activeBooking))->resolve(),
+                    ]));
+                }
+            }
         }
 
         print_r($this->connections);

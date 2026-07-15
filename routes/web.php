@@ -23,11 +23,11 @@ include(base_path('routes/admin.php'));
 Route::get('/all-clear', function () {
     Artisan::call('cache:clear');
     Artisan::call('route:clear');
-   //  Artisan::call('optimize');
+    //  Artisan::call('optimize');
     Artisan::call('config:cache');
     Artisan::call('view:clear');
-   //  Artisan::call('optimize');
-   return "All cleared successfully";
+    //  Artisan::call('optimize');
+    return "All cleared successfully";
 });
 Route::get('/socket/connections', function (SocketServer $socket) {
     dd($socket);

@@ -31,6 +31,7 @@ Route::name('api.user.')->group(function () {
             Route::get('/{booking}', [BookingController::class, 'show'])->name('show');
             Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
             Route::get('/{booking}/fare', [BookingController::class, 'fare'])->name('fare');
+            Route::get('/check/active', [BookingController::class, 'activeRide'])->name('activeRide');
         });
     });
 });
