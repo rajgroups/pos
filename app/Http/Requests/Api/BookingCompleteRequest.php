@@ -14,6 +14,7 @@ class BookingCompleteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'end_otp' => ['required', 'string', 'size:6'],
             'final_amount' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => ['nullable', 'string', 'max:30'],
             'payment_status' => ['nullable', 'string', 'max:30'],

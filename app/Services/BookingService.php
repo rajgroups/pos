@@ -319,6 +319,12 @@ class BookingService
                 ]);
             }
 
+            if (($booking->start_otp ?? null) !== ($payload['end_otp'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'end_otp' => 'The OTP is invalid.',
+                ]);
+            }
+
             if (! empty($payload['usage'])) {
                 $this->syncUsage($booking, $payload['usage']);
             }

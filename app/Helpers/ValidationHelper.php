@@ -318,7 +318,7 @@ class ValidationHelper
                 'exists:drivers,id',
             ],
             'vehicle_id' => [
-                'required',
+                'nullable',
                 'integer',
                 'exists:vehicles,id',
             ],

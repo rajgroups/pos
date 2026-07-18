@@ -15,6 +15,7 @@ use App\Models\Booking;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class BookingController extends Controller
@@ -25,6 +26,7 @@ class BookingController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Log::info($request->all());
         $validated = ValidationHelper::validateBookingStore($request->all());
 
         if ($validated[KeywordHelper::STATUS] === KeywordHelper::ERROR) {

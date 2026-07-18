@@ -6,10 +6,10 @@ use App\Helpers\ApiResponseHelper;
 use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\BookingCompleteRequest;
-use App\Http\Requests\Api\BookingStartRequest;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\Driver;
+use App\Models\Vehicle;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,10 +39,35 @@ class BookingController extends Controller
             );
         }
 
+        $vehicleId = $validated['data']['vehicle_id'] ?? null;
+
+        if ($vehicleId === null) {
+            $vehicleId = $driver->vehicleAssignments()
+                ->where('is_current', true)
+                ->orderByDesc('assigned_from')
+                ->value('vehicle_id');
+        }
+
+        if ($vehicleId === null) {
+            $vehicleId = Vehicle::query()
+                ->where('driver_id', $driver->id)
+                ->where('status', 'active')
+                ->orderByDesc('id')
+                ->value('id');
+        }
+
+        if ($vehicleId === null) {
+            return ApiResponseHelper::error(
+                'Vehicle ID is required.',
+                null,
+                422
+            );
+        }
+
         return $this->bookingService->acceptBooking(
             (int) $booking,
             $driver->id,
-            (int) $validated['data']['vehicle_id']
+            (int) $vehicleId
         );
     }
     public function start(Request $request, $booking): JsonResponse
@@ -93,19 +118,8 @@ class BookingController extends Controller
         ]);
     }
 
-    public function complete(Request $request, $booking): JsonResponse
+    public function complete(BookingCompleteRequest $request, $booking): JsonResponse
     {
-        $validated = ValidationHelper::validate($request->all(), [
-            'end_otp' => ['required', 'string', 'size:6'],
-        ]);
-
-        if ($validated['status'] === 'error') {
-            return ApiResponseHelper::error(
-                $validated['message'],
-                $validated['errors']
-            );
-        }
-
         $driver = $request->user();
 
         if (! $driver instanceof Driver) {
@@ -136,7 +150,7 @@ class BookingController extends Controller
 
         $booking = $this->bookingService->completeBooking(
             $booking,
-            $validated['data']
+            $request->validated()
         );
 
         return response()->json([

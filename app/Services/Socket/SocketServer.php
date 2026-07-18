@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Services\BookingService;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenSwoole\WebSocket\Server;
+use Illuminate\Support\Facades\Log;
+
 
 class SocketServer
 {
@@ -77,6 +79,11 @@ class SocketServer
                 $payload = $request->post ?? [];
             }
 
+            logger()->info('Socket request received', [
+                'path' => $path,
+                'payload' => $payload,
+            ]);
+
             $response->header('Content-Type', 'application/json');
 
             if (! is_array($payload)) {
@@ -90,11 +97,23 @@ class SocketServer
             }
 
             if (in_array($path, ['send_booking', 'send-booking'], true)) {
+
+                Log::info('Booking request received', [
+                    'payload' => $payload,
+                ]);
+
                 $driverIds = $this->normalizeDriverIds(
                     $payload['driver_ids'] ?? ($payload['driver_id'] ?? [])
                 );
 
+                Log::info('Normalized driver IDs', [
+                    'driver_ids' => $driverIds,
+                ]);
+
                 if (empty($driverIds)) {
+
+                    Log::warning('No driver IDs provided');
+
                     $response->status(422);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -109,18 +128,36 @@ class SocketServer
                     && is_numeric($payload['latitude'])
                     && is_numeric($payload['longitude'])
                 ) {
+
+                    Log::info('Finding nearby drivers', [
+                        'latitude' => $payload['latitude'],
+                        'longitude' => $payload['longitude'],
+                        'radius' => $payload['radius'] ?? 5,
+                    ]);
+
                     $nearbyDriverIds = $this->presenceStore->findNearbyDriverIds(
                         (float) $payload['latitude'],
                         (float) $payload['longitude'],
                         (float) ($payload['radius'] ?? 5)
                     );
 
-                    if (! empty($nearbyDriverIds)) {
+                    Log::info('Nearby drivers found', [
+                        'nearby_driver_ids' => $nearbyDriverIds,
+                    ]);
+
+                    if (!empty($nearbyDriverIds)) {
                         $driverIds = array_values(array_intersect($driverIds, $nearbyDriverIds));
+
+                        Log::info('Drivers after nearby filter', [
+                            'driver_ids' => $driverIds,
+                        ]);
                     }
                 }
 
                 if (empty($driverIds)) {
+
+                    Log::warning('No matching online drivers after filtering');
+
                     $response->status(404);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -135,22 +172,58 @@ class SocketServer
                     'booking' => $payload['booking'] ?? [],
                 ];
 
+                Log::info('Booking payload prepared', [
+                    'booking_payload' => $bookingPayload,
+                ]);
+
                 $sent = 0;
 
                 foreach ($driverIds as $driverId) {
+
+                    Log::info("Processing driver {$driverId}");
+
                     $driverFd = $this->presenceStore->getDriverFd($driverId);
 
-                    if (! $driverFd) {
+                    Log::info('Driver FD lookup', [
+                        'driver_id' => $driverId,
+                        'fd' => $driverFd,
+                    ]);
+
+                    if (!$driverFd) {
+
+                        Log::warning("Driver {$driverId} has no FD");
+
                         continue;
                     }
 
                     if ($this->server->isEstablished($driverFd)) {
+
+                        Log::info("Sending booking to driver {$driverId}", [
+                            'fd' => $driverFd,
+                        ]);
+
                         $this->server->push($driverFd, json_encode($bookingPayload));
+
+                        Log::info("Booking sent successfully to driver {$driverId}");
+
                         $sent++;
+                    } else {
+
+                        Log::warning("Driver {$driverId} socket not established", [
+                            'fd' => $driverFd,
+                        ]);
                     }
                 }
 
+                Log::info('Booking dispatch completed', [
+                    'sent' => $sent,
+                    'driver_ids' => $driverIds,
+                ]);
+
                 if ($sent === 0) {
+
+                    Log::warning('All matching drivers are offline');
+
                     $response->status(404);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -166,6 +239,8 @@ class SocketServer
                     'driver_ids' => $driverIds,
                     'sent' => $sent,
                 ]));
+
+                Log::info('Booking request finished successfully');
 
                 return;
             }
@@ -416,10 +491,6 @@ class SocketServer
         $nearby = [];
 
         foreach ($this->driverLocations as $driverId => $location) {
-
-            if (time() - $location['updated_at'] > 20) {
-                continue;
-            }
 
             $distance = $this->distance(
                 $latitude,
