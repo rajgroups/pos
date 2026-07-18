@@ -2,6 +2,7 @@
 
 namespace App\Services\Socket;
 
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\BookingService;
@@ -13,6 +14,18 @@ class SocketDispatchService
 
     public function dispatchBooking(Booking $booking): void
     {
+        $booking->loadMissing([
+            'category.pricing',
+            'user',
+            'driver',
+            'vehicle',
+            'locations',
+            'pickupLocation',
+            'dropLocation',
+            'usage',
+            'fare',
+        ]);
+
         Log::info('Dispatch booking started', [
             'booking_id' => $booking->id,
             'booking_no' => $booking->booking_no,
@@ -76,24 +89,7 @@ class SocketDispatchService
             'longitude' => $pickup->longitude,
             'radius' => 5,
             'driver_ids' => $eligibleDriverIds,
-            'booking' => [
-                'id' => $booking->id,
-                'booking_no' => $booking->booking_no,
-                'service_mode' => $booking->service_mode,
-                'estimated_amount' => $booking->estimated_amount,
-
-                'pickup' => [
-                    'latitude' => $pickup->latitude,
-                    'longitude' => $pickup->longitude,
-                    'address' => $pickup->address,
-                ],
-
-                'drop' => [
-                    'latitude' => $drop?->latitude,
-                    'longitude' => $drop?->longitude,
-                    'address' => $drop?->address,
-                ],
-            ],
+            'booking' => (new BookingResource($booking))->resolve(),
         ];
 
         Log::info('Socket request payload', $payload);

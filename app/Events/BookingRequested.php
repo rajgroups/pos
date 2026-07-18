@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -19,6 +20,7 @@ class BookingRequested implements ShouldBroadcastNow
     ) {
         $this->booking->loadMissing([
             'category',
+            'user',
             'pickupLocation',
             'dropLocation',
         ]);
@@ -41,13 +43,7 @@ class BookingRequested implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'id' => $this->booking->id,
-            'booking_no' => $this->booking->booking_no,
-            'service_mode' => $this->booking->service_mode,
-            'estimated_amount' => $this->booking->estimated_amount,
-            'pickup_address' => $this->booking->pickup_address,
-            'drop_address' => $this->booking->drop_address,
-            'created_at' => $this->booking->created_at?->toIso8601String(),
+            'booking' => (new BookingResource($this->booking))->resolve(),
         ];
     }
 }

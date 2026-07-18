@@ -35,6 +35,13 @@ class BookingResource extends JsonResource
             'completed_at' => $this->completed_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
             'category' => new VehicleCategoryResource($this->whenLoaded('category')),
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id' => $this->user?->id,
+                    'name' => $this->user?->name,
+                    'email' => $this->user?->email,
+                ];
+            }),
             'driver' => $this->whenLoaded('driver', function () {
                 return [
                     'id' => $this->driver?->id,

@@ -455,6 +455,7 @@ class SocketServer
             if ($activeBooking) {
                 $activeBooking->load([
                     'category.pricing',
+                    'user',
                     'locations',
                     'pickupLocation',
                     'dropLocation',

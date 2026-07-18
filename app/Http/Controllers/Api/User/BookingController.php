@@ -55,6 +55,7 @@ class BookingController extends Controller
     {
         $booking->load([
             'category.pricing',
+            'user',
             'locations',
             'pickupLocation',
             'dropLocation',
@@ -126,6 +127,7 @@ class BookingController extends Controller
 
         $activeBooking->load([
             'category.pricing',
+            'user',
             'locations',
             'pickupLocation',
             'dropLocation',

@@ -84,6 +84,7 @@ class BookingService
 
             return $booking->load([
                 'category.pricing',
+                'user',
                 'locations',
                 'pickupLocation',
                 'dropLocation',
@@ -145,6 +146,7 @@ class BookingService
 
             return $booking->fresh()->load([
                 'category.pricing',
+                'user',
                 'locations',
                 'pickupLocation',
                 'dropLocation',
@@ -230,6 +232,7 @@ class BookingService
 
                 return $booking->fresh()->load([
                     'category.pricing',
+                    'user',
                     'locations',
                     'pickupLocation',
                     'dropLocation',
@@ -287,11 +290,13 @@ class BookingService
             $booking->update([
                 'status' => 'started',
                 'otp_verified_at' => now(),
+                'start_otp' => (string) random_int(100000, 999999), // Generate new OTP for completion
                 'started_at' => now(),
             ]);
 
             return $booking->fresh()->load([
                 'category.pricing',
+                'user',
                 'locations',
                 'pickupLocation',
                 'dropLocation',
@@ -345,6 +350,7 @@ class BookingService
 
             return $booking->fresh()->load([
                 'category.pricing',
+                'user',
                 'locations',
                 'pickupLocation',
                 'dropLocation',
