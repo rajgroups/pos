@@ -582,4 +582,13 @@ class BookingService
     {
         return $this->bookingRepository->findActiveBookingByUserId($user->id);
     }
+
+    /**
+     * @param \App\Models\Driver $driver
+     * @return \App\Models\Booking|null
+     */
+    public function driverActiveBooking(\App\Models\Driver $driver): ?Booking
+    {
+        return $this->bookingRepository->findActiveBookingByDriverId($driver->id);
+    }
 }

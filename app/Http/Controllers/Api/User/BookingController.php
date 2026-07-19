@@ -84,8 +84,15 @@ class BookingController extends Controller
         ]);
     }
 
-    public function cancel(BookingCancelRequest $request, Booking $booking): JsonResponse
+    public function cancel(BookingCancelRequest $request, $bookingId): JsonResponse
     {
+        $booking = Booking::find($bookingId);
+
+        if (! $booking) {
+            return ApiResponseHelper::error('Booking not found.', null, 404);
+        }
+
+        // $this->authorize('cancel', $booking);
         $booking = $this->bookingService->cancelBooking($booking);
 
         return response()->json([

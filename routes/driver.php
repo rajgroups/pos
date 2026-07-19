@@ -10,9 +10,11 @@ Route::name('api.driver.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('bookings')->name('bookings.')->group(function () {
+            Route::get('/{booking}', [BookingController::class, 'show'])->name('show');
             Route::post('/{booking}/accept', [BookingController::class, 'accept'])->name('accept');
             Route::post('/{booking}/start', [BookingController::class, 'start'])->name('start');
             Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
+            Route::get('/check/active', [BookingController::class, 'activeRide'])->name('activeRide');
         });
     });
 });

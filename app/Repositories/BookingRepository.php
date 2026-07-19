@@ -67,4 +67,18 @@ class BookingRepository
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->exists();
     }
+
+    /**
+     * Find an active booking for a given driver ID.
+     *
+     * @param int $driverId
+     * @return \App\Models\Booking|null
+     */
+    public function findActiveBookingByDriverId(int $driverId): ?Booking
+    {
+        return $this->model->where('driver_id', $driverId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->latest()
+            ->first();
+    }
 }
