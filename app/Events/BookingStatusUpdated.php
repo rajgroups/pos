@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -16,11 +17,15 @@ class BookingStatusUpdated implements ShouldBroadcastNow
     public function __construct(public Booking $booking)
     {
         $this->booking->loadMissing([
-            'category',
+            'category.pricing',
+            'user',
             'driver',
             'vehicle',
+            'locations',
             'pickupLocation',
             'dropLocation',
+            'usage',
+            'fare',
         ]);
     }
 
@@ -38,19 +43,14 @@ class BookingStatusUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        $booking = (new BookingResource($this->booking))->resolve();
+
+        if ($this->booking->status === 'started' && ! empty($this->booking->start_otp)) {
+            $booking['start_otp'] = $this->booking->start_otp;
+        }
+
         return [
-            'id' => $this->booking->id,
-            'booking_no' => $this->booking->booking_no,
-            'status' => $this->booking->status,
-            'service_mode' => $this->booking->service_mode,
-            'scheduled_at' => $this->booking->scheduled_at?->toIso8601String(),
-            'driver_id' => $this->booking->driver_id,
-            'vehicle_id' => $this->booking->vehicle_id,
-            'user_id' => $this->booking->user_id,
-            'vehicle_category_id' => $this->booking->vehicle_category_id,
-            'estimated_amount' => $this->booking->estimated_amount,
-            'final_amount' => $this->booking->final_amount,
-            'updated_at' => $this->booking->updated_at?->toIso8601String(),
+            'booking' => $booking,
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\BookingStatusUpdated;
 use App\Helpers\ApiResponseHelper;
+use App\Http\Resources\BookingResource;
 use App\Models\Booking;
 use App\Models\BookingFare;
 use App\Models\BookingLocation;
@@ -109,6 +110,35 @@ class BookingService
             ?? throw ValidationException::withMessages([
                 'booking_no' => 'Booking not found.',
             ]);
+    }
+
+    public function retryBooking(Booking $booking): Booking
+    {
+        $booking->update([
+            'status' => 'pending',
+            'driver_id' => null,
+            'vehicle_id' => null,
+            'accepted_at' => null,
+            'started_at' => null,
+            'completed_at' => null,
+            'cancelled_at' => null,
+        ]);
+
+        $this->broadcastBookingUpdate($booking);
+
+        $this->socketDispatchService->dispatchBooking($booking);
+
+        return $booking->load([
+            'category.pricing',
+            'user',
+            'locations',
+            'pickupLocation',
+            'dropLocation',
+            'usage',
+            'fare',
+            'driver',
+            'vehicle',
+        ]);
     }
 
     public function getFareSummary(array $payload): array
@@ -435,18 +465,18 @@ class BookingService
     {
         event(new BookingStatusUpdated($booking));
 
+        $bookingPayload = (new BookingResource($booking))->resolve();
+
+        if ($booking->status === 'started' && ! empty($booking->start_otp)) {
+            $bookingPayload['start_otp'] = $booking->start_otp;
+        }
+
         // Use an HTTP call to the Swoole server to broadcast the update.
         $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
         $response = Http::asJson()->post($socketUrl . '/broadcast-booking-update', [
             'type' => 'booking_status',
-            'booking' => [
-                'id' => $booking->id,
-                'booking_no' => $booking->booking_no,
-                'status' => $booking->status,
-                'driver_id' => $booking->driver_id,
-                'user_id' => $booking->user_id,
-            ],
+            'booking' => $bookingPayload,
         ]);
 
         if (! $response->successful()) {

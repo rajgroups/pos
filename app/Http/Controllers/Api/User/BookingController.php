@@ -62,7 +62,7 @@ class BookingController extends Controller
             'usage',
             'fare',
             'driver',
-            'vehicle',
+            'vehicle.location',
             'user',
         ]);
 
@@ -141,10 +141,24 @@ class BookingController extends Controller
             'usage',
             'fare',
             'driver',
-            'vehicle',
+            'vehicle.location',
             'user',
         ]);
 
         return ApiResponseHelper::success('Active ride found.', new BookingResource($activeBooking));
+    }
+
+    public function retry(Booking $booking): JsonResponse
+    {
+        if ($booking->booking_mode !== 'instant') {
+            return ApiResponseHelper::error('Only instant bookings can be retried.', null, 400);
+        }
+
+        $booking = $this->bookingService->retryBooking($booking);
+
+        return ApiResponseHelper::success(
+            'Booking request resent successfully.',
+            new BookingResource($booking)
+        );
     }
 }

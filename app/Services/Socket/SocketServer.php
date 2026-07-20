@@ -233,6 +233,50 @@ class SocketServer
                     return;
                 }
 
+                // Register a background timeout of 60 seconds (60000ms)
+                if (isset($booking['id'])) {
+                    $bookingId = (int) $booking['id'];
+                    $userId = isset($booking['user_id']) ? (int) $booking['user_id'] : null;
+
+                    \OpenSwoole\Timer::after(60000, function () use ($bookingId, $userId) {
+                        try {
+                            $dbBooking = \App\Models\Booking::find($bookingId);
+                            if ($dbBooking && in_array($dbBooking->status, ['pending', 'searching_driver'], true)) {
+                                $dbBooking->update([
+                                    'status' => 'no_driver_available',
+                                ]);
+
+                                Log::info('Booking dispatch timed out, no driver accepted.', [
+                                    'booking_id' => $bookingId,
+                                    'booking_no' => $dbBooking->booking_no,
+                                ]);
+
+                                // Broadcast to the user over WebSocket
+                                $payload = [
+                                    'type' => 'booking_status',
+                                    'booking' => (new BookingResource($dbBooking))->resolve(),
+                                ];
+
+                                if ($userId) {
+                                    $userFd = $this->presenceStore->getUserFd($userId);
+                                    if ($userFd && $this->server->isEstablished($userFd)) {
+                                        $this->server->push($userFd, json_encode($payload));
+                                        Log::info('Sent no_driver_available status update to user socket.', [
+                                            'user_id' => $userId,
+                                            'fd' => $userFd,
+                                        ]);
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error processing background dispatch timeout.', [
+                                'booking_id' => $bookingId,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    });
+                }
+
                 $response->end(json_encode([
                     'type' => 'success',
                     'message' => 'Booking sent',
@@ -334,6 +378,48 @@ class SocketServer
                         (float) $payload['latitude'],
                         (float) $payload['longitude']
                     );
+
+                    // Persist to database vehicle_locations table
+                    try {
+                        $vehicle = \App\Models\Vehicle::where('driver_id', $driverId)->where('status', 'active')->first();
+                        if ($vehicle) {
+                            \App\Models\VehicleLocation::create([
+                                'vehicle_id' => $vehicle->id,
+                                'latitude' => (float) $payload['latitude'],
+                                'longitude' => (float) $payload['longitude'],
+                                'location_updated_at' => now(),
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to write vehicle location to DB', ['error' => $e->getMessage()]);
+                    }
+
+                    // Broadcast to active passenger
+                    try {
+                        $activeBooking = \App\Models\Booking::where('driver_id', $driverId)
+                            ->whereIn('status', ['accepted', 'started'])
+                            ->first();
+
+                        if ($activeBooking) {
+                            $userId = $activeBooking->user_id;
+                            $userFd = $this->presenceStore->getUserFd((int) $userId);
+                            if ($userFd && $this->server->isEstablished($userFd)) {
+                                $this->server->push($userFd, json_encode([
+                                    'type' => 'driver_location_update',
+                                    'booking_no' => $activeBooking->booking_no,
+                                    'latitude' => (float) $payload['latitude'],
+                                    'longitude' => (float) $payload['longitude'],
+                                ]));
+                                Log::info('Broadcasted driver location to passenger.', [
+                                    'driver_id' => $driverId,
+                                    'user_id' => $userId,
+                                    'fd' => $userFd,
+                                ]);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to broadcast driver location to passenger', ['error' => $e->getMessage()]);
+                    }
 
                     $server->push($frame->fd, json_encode([
                         'type' => 'location_updated',
@@ -452,27 +538,33 @@ class SocketServer
         if ($user instanceof User) {
             $activeBooking = $this->bookingService->userActiveBooking($user);
 
-            if ($activeBooking) {
-                $activeBooking->load([
-                    'category.pricing',
-                    'user',
-                    'locations',
+                if ($activeBooking) {
+                    $activeBooking->load([
+                        'category.pricing',
+                        'user',
+                        'locations',
                     'pickupLocation',
                     'dropLocation',
                     'usage',
                     'fare',
                     'driver',
-                    'vehicle',
-                    'user',
-                ]);
+                        'vehicle',
+                        'user',
+                    ]);
 
-                if ($this->server->isEstablished($fd)) {
-                    $this->server->push($fd, json_encode([
-                        'type' => 'booking_status',
-                        'booking' => (new BookingResource($activeBooking))->resolve(),
-                    ]));
+                    $bookingPayload = (new BookingResource($activeBooking))->resolve();
+
+                    if ($activeBooking->status === 'started' && ! empty($activeBooking->start_otp)) {
+                        $bookingPayload['start_otp'] = $activeBooking->start_otp;
+                    }
+
+                    if ($this->server->isEstablished($fd)) {
+                        $this->server->push($fd, json_encode([
+                            'type' => 'booking_status',
+                            'booking' => $bookingPayload,
+                        ]));
+                    }
                 }
-            }
         }
 
         print_r($this->connections);
