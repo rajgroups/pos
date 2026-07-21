@@ -70,6 +70,45 @@ class BookingController extends Controller
             (int) $vehicleId
         );
     }
+    public function arrived(Request $request, $booking): JsonResponse
+    {
+        $driver = $request->user();
+
+        if (! $driver instanceof Driver) {
+            return ApiResponseHelper::error(
+                'Unauthorized. Only drivers can update booking status.',
+                null,
+                403
+            );
+        }
+
+        $booking = Booking::find($booking);
+
+        if (! $booking) {
+            return ApiResponseHelper::error(
+                'Booking not found.',
+                null,
+                404
+            );
+        }
+
+        if ((int) $booking->driver_id !== (int) $driver->id) {
+            return ApiResponseHelper::error(
+                'You are not assigned to this booking.',
+                null,
+                403
+            );
+        }
+
+        $booking = $this->bookingService->arrivedAtPickup($booking);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Arrived at pickup location.',
+            'data' => new BookingResource($booking),
+        ]);
+    }
+
     public function start(Request $request, $booking): JsonResponse
     {
         $validated = ValidationHelper::validate($request->all(), [

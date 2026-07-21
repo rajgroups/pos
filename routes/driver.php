@@ -12,6 +12,7 @@ Route::name('api.driver.')->group(function () {
         Route::prefix('bookings')->name('bookings.')->group(function () {
             Route::get('/{booking}', [BookingController::class, 'show'])->name('show');
             Route::post('/{booking}/accept', [BookingController::class, 'accept'])->name('accept');
+            Route::post('/{booking}/arrived', [BookingController::class, 'arrived'])->name('arrived');
             Route::post('/{booking}/start', [BookingController::class, 'start'])->name('start');
             Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
             Route::get('/check/active', [BookingController::class, 'activeRide'])->name('activeRide');

@@ -32,6 +32,7 @@ class BookingResource extends JsonResource
             'payment_status' => $this->payment_status,
             'otp_verified_at' => $this->otp_verified_at?->toIso8601String(),
             'accepted_at' => $this->accepted_at?->toIso8601String(),
+            'arrived_at' => $this->arrived_at?->toIso8601String(),
             'started_at' => $this->started_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'cancelled_at' => $this->cancelled_at?->toIso8601String(),
@@ -41,6 +42,7 @@ class BookingResource extends JsonResource
                     'id' => $this->user?->id,
                     'name' => $this->user?->name,
                     'email' => $this->user?->email,
+                    'phone' => $this->user?->phone,
                 ];
             }),
             'driver' => $this->whenLoaded('driver', function () {

@@ -290,6 +290,41 @@ class BookingService
             Redis::del($lockKey);
         }
     }
+    public function arrivedAtPickup(Booking $booking): Booking
+    {
+        $booking = DB::transaction(function () use ($booking) {
+            $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
+
+            if ($booking->status !== 'accepted') {
+                throw ValidationException::withMessages([
+                    'booking_no' => 'This booking is not in a valid state to mark as arrived.',
+                ]);
+            }
+
+            $booking->update([
+                'status' => 'arrived',
+                'arrived_at' => now(),
+            ]);
+
+            return $booking->fresh()->load([
+                'category.pricing',
+                'user',
+                'locations',
+                'pickupLocation',
+                'dropLocation',
+                'usage',
+                'fare',
+                'driver',
+                'vehicle',
+                'user',
+            ]);
+        });
+
+        $this->broadcastBookingUpdate($booking);
+
+        return $booking;
+    }
+
     public function startBooking(Booking $booking, string $otp): Booking
     {
         $booking = DB::transaction(function () use ($booking, $otp) {
