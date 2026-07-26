@@ -118,6 +118,7 @@ class BookingService
             'status' => 'pending',
             'driver_id' => null,
             'vehicle_id' => null,
+            'start_otp' => (string) random_int(100000, 999999),
             'accepted_at' => null,
             'started_at' => null,
             'completed_at' => null,
@@ -652,8 +653,52 @@ class BookingService
      * @param \App\Models\Driver $driver
      * @return \App\Models\Booking|null
      */
+    /**
+     * Get paginated bookings for a user with filters.
+     *
+     * @param \App\Models\User $user
+     * @param array $filters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getUserBookings(\App\Models\User $user, array $filters = [])
+    {
+        return $this->bookingRepository->getUserBookings($user->id, $filters);
+    }
+
+    /**
+     * @param \App\Models\Driver $driver
+     * @return \App\Models\Booking|null
+     */
     public function driverActiveBooking(\App\Models\Driver $driver): ?Booking
     {
-        return $this->bookingRepository->findActiveBookingByDriverId($driver->id);
+        return Booking::query()
+            ->where('driver_id', $driver->id)
+            ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * Get paginated bookings for a driver with filters.
+     *
+     * @param \App\Models\Driver $driver
+     * @param array $filters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getDriverBookings(\App\Models\Driver $driver, array $filters = [])
+    {
+        return $this->bookingRepository->getDriverBookings($driver->id, $filters);
+    }
+
+    /**
+     * Get summary stats for a driver.
+     *
+     * @param \App\Models\Driver $driver
+     * @return array
+     */
+    public function getDriverStats(\App\Models\Driver $driver): array
+    {
+        return $this->bookingRepository->getDriverStats($driver->id);
     }
 }
+

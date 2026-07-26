@@ -13,6 +13,8 @@ use App\Models\Vehicle;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class BookingController extends Controller
 {
@@ -199,7 +201,49 @@ class BookingController extends Controller
         ]);
     }
 
-  public function show(int $bookingId): JsonResponse
+    public function index(Request $request): JsonResponse
+    {
+        $driver = $request->user();
+
+        if (! $driver instanceof Driver) {
+            return ApiResponseHelper::error('Unauthorized.', null, 401);
+        }
+
+        $filters = $request->only([
+            'status',
+            'search',
+            'date_filter',
+            'from_date',
+            'to_date',
+            'payment_method',
+            'vehicle_category_id',
+            'type',
+            'min_price',
+            'max_price',
+            'sort_by',
+            'page',
+            'per_page',
+            'limit',
+        ]);
+
+        $paginator = $this->bookingService->getDriverBookings($driver, $filters);
+        $stats = $this->bookingService->getDriverStats($driver);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Driver bookings fetched successfully.',
+            'data' => BookingResource::collection($paginator->items()),
+            'meta' => array_merge([
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'has_more' => $paginator->hasMorePages(),
+            ], $stats),
+        ]);
+    }
+
+    public function show(int $bookingId): JsonResponse
     {
         $booking = Booking::with([
             'category.pricing',
@@ -217,6 +261,38 @@ class BookingController extends Controller
             'status' => true,
             'message' => 'Booking fetched successfully.',
             'data' => new BookingResource($booking),
+        ]);
+    }
+
+    public function fare($bookingId): JsonResponse
+    {
+        $booking = Booking::with(['fare', 'category.pricing', 'user', 'driver', 'vehicle', 'pickupLocation', 'dropLocation'])->find($bookingId);
+
+        if (! $booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found.',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Booking fare fetched successfully.',
+            'data' => [
+                'booking_id' => $booking->booking_no,
+                'status' => $booking->status,
+                'base_fare' => (float) ($booking->fare?->base_fare ?? 0),
+                'usage_amount' => (float) ($booking->fare?->usage_amount ?? 0),
+                'extra_charge' => (float) ($booking->fare?->extra_charge ?? 0),
+                'discount' => (float) ($booking->fare?->discount ?? 0),
+                'total_amount' => (float) ($booking->final_amount > 0 ? $booking->final_amount : ($booking->fare?->total_amount ?? $booking->estimated_amount)),
+                'payment_method' => $booking->payment_method ?? 'Cash',
+                'payment_status' => $booking->payment_status ?? 'pending',
+                'pickup' => $booking->pickupLocation?->address ?? '',
+                'drop' => $booking->dropLocation?->address ?? '',
+                'created_at' => $booking->created_at?->toIso8601String(),
+            ],
         ]);
     }
 
@@ -246,4 +322,91 @@ class BookingController extends Controller
 
         return ApiResponseHelper::success('Active ride found.', new BookingResource($activeBooking));
     }
+
+    public function dashboard(Request $request): JsonResponse
+    {
+        $driver = $request->user();
+
+        if (! $driver instanceof Driver) {
+            return ApiResponseHelper::error('Unauthorized.', null, 401);
+        }
+
+        $stats = $this->bookingService->getDriverStats($driver);
+
+        $todayEarnings = Booking::where('driver_id', $driver->id)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', now()->today())
+            ->sum(DB::raw('COALESCE(NULLIF(final_amount, 0), estimated_amount)'));
+
+        $todayTrips = Booking::where('driver_id', $driver->id)
+            ->where('status', 'completed')
+            ->whereDate('completed_at', now()->today())
+            ->count();
+
+        $recentBookings = Booking::where('driver_id', $driver->id)
+            ->with([
+                'category',
+                'user',
+                'pickupLocation',
+                'dropLocation',
+                'fare',
+            ])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Dashboard fetched successfully.',
+            'data' => [
+                'is_online' => (bool) $driver->is_online,
+                'today_earnings' => round((float) $todayEarnings, 2),
+                'today_trips' => (int) $todayTrips,
+                'average_rating' => (float) ($stats['average_rating'] ?? 4.9),
+                'total_rides' => (int) ($stats['total_rides'] ?? 0),
+                'recent_trips' => BookingResource::collection($recentBookings),
+            ],
+        ]);
+    }
+
+    public function toggleOnlineStatus(Request $request): JsonResponse
+    {
+        $driver = $request->user();
+
+        if (! $driver instanceof Driver) {
+            return ApiResponseHelper::error('Unauthorized.', null, 401);
+        }
+
+        $validated = $request->validate([
+            'is_online' => ['required', 'boolean'],
+        ]);
+
+        $newStatus = (bool) $validated['is_online'];
+
+        if (! $newStatus) {
+            $activeBooking = $this->bookingService->driverActiveBooking($driver);
+            if ($activeBooking) {
+                return ApiResponseHelper::error(
+                    'You cannot go offline while you have an active ride.',
+                    null,
+                    422
+                );
+            }
+        }
+
+        $driver->update([
+            'is_online' => $newStatus,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => $newStatus ? 'Driver is now online.' : 'Driver is now offline.',
+            'data' => [
+                'is_online' => (bool) $driver->is_online,
+                'driver_id' => $driver->id,
+            ],
+        ]);
+    }
 }
+
+

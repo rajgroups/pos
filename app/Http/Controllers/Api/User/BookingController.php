@@ -24,6 +24,44 @@ class BookingController extends Controller
     {
     }
 
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return ApiResponseHelper::error('User not authenticated.', null, 401);
+        }
+
+        $filters = $request->only([
+            'status',
+            'search',
+            'date_filter',
+            'from_date',
+            'to_date',
+            'payment_method',
+            'vehicle_category_id',
+            'sort_by',
+            'page',
+            'per_page',
+            'limit',
+        ]);
+
+        $paginator = $this->bookingService->getUserBookings($user, $filters);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Bookings fetched successfully.',
+            'data' => BookingResource::collection($paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'has_more' => $paginator->hasMorePages(),
+            ],
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         // Log::info($request->all());

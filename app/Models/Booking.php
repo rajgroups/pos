@@ -105,6 +105,11 @@ class Booking extends Model
         return $this->hasOne(BookingFare::class);
     }
 
+    public function sosAlerts(): HasMany
+    {
+        return $this->hasMany(SosAlert::class)->latest();
+    }
+
     public function getCategoryNameAttribute(): ?string
     {
         return $this->category?->name;

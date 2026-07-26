@@ -65,15 +65,16 @@ class DriverService
     }
 
     /**
-     * Verifies the login OTP for a driver.
+     * Verifies the login OTP for a driver and optionally updates FCM token.
      *
      * @param string $mobile
      * @param string $otp
+     * @param string|null $fcmToken
      * @return Driver The authenticated driver model.
      * @throws ModelNotFoundException if driver is not found.
      * @throws Exception if OTP is invalid.
      */
-    public function verifyLoginOtp(string $mobile, string $otp): Driver
+    public function verifyLoginOtp(string $mobile, string $otp, ?string $fcmToken = null): Driver
     {
         $driver = $this->findByMobile($mobile);
 
@@ -85,9 +86,14 @@ class DriverService
             throw new Exception(__('string.common.invalid_otp'));
         }
 
-        $this->updateDriver($driver->id, ['otp' => null]);
+        $updateData = ['otp' => null];
+        if (!empty($fcmToken)) {
+            $updateData['fcm_token'] = $fcmToken;
+        }
 
-        return $driver;
+        $this->updateDriver($driver->id, $updateData);
+
+        return $driver->fresh();
     }
 
     public function findNearbyDrivers(

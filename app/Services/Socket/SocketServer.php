@@ -409,6 +409,7 @@ class SocketServer
                                     'booking_no' => $activeBooking->booking_no,
                                     'latitude' => (float) $payload['latitude'],
                                     'longitude' => (float) $payload['longitude'],
+                                    'bearing' => (float) ($payload['bearing'] ?? 0),
                                 ]));
                                 Log::info('Broadcasted driver location to passenger.', [
                                     'driver_id' => $driverId,

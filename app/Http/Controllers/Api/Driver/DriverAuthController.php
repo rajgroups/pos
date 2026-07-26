@@ -84,7 +84,8 @@ class DriverAuthController extends Controller
         }
 
         try {
-            $driver = $this->driverService->verifyLoginOtp($request->mobile, $request->otp);
+            $fcmToken = $request->input('fcm_token');
+            $driver = $this->driverService->verifyLoginOtp($request->mobile, $request->otp, $fcmToken);
 
             $token = $driver->createToken('auth_token')->plainTextToken;
 
@@ -93,6 +94,7 @@ class DriverAuthController extends Controller
                 'name' => $driver->name ?? null,
                 'email' => $driver->email ?? null,
                 'mobile' => $driver->phone ?? null,
+                'fcm_token' => $driver->fcm_token ?? null,
             ];
 
             return ApiResponseHelper::success(__('string.common.login_success'), [
@@ -105,4 +107,31 @@ class DriverAuthController extends Controller
             return ApiResponseHelper::error($e->getMessage(), [], 422);
         }
     }
+
+    /**
+     * Update driver FCM token
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateFcmToken(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $driver = $request->user();
+        if (!$driver) {
+            return ApiResponseHelper::error('Unauthorized access.', [], 401);
+        }
+
+        $this->driverService->updateDriver($driver->id, [
+            'fcm_token' => $request->fcm_token,
+        ]);
+
+        return ApiResponseHelper::success('FCM token updated successfully.', [
+            'fcm_token' => $request->fcm_token,
+        ], 200);
+    }
 }
+

@@ -190,4 +190,21 @@ class UserAuthController extends Controller
             200
         );
     }
+
+    /**
+     * Logout user and revoke Sanctum access token.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user) {
+            $user->currentAccessToken()?->delete();
+        }
+
+        return ApiResponseHelper::success('Logged out successfully.', null, 200);
+    }
 }

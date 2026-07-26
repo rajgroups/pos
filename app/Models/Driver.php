@@ -32,6 +32,8 @@ class Driver extends Authenticatable
         'license_categories',
         'driver_type',
         'status',
+        'is_online',
+        'fcm_token',
         'is_verified',
         'profile_photo',
         'license_front',
@@ -49,7 +51,9 @@ class Driver extends Authenticatable
         'license_expiry' => 'date',
         'license_categories' => 'array',
         'is_verified' => 'boolean',
+        'is_online' => 'boolean',
     ];
+
 
     public function documents(): HasMany
     {
