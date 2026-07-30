@@ -138,6 +138,7 @@ class BookingApiTest extends TestCase
 
         $storeResponse = $this->postJson('/api/user/bookings', [
             'vehicle_category_id' => $category->id,
+            'booking_mode' => 'instant',
             'payment_method' => 'cash',
             'locations' => [
                 [
@@ -161,7 +162,7 @@ class BookingApiTest extends TestCase
         ]);
 
         $storeResponse->assertCreated()
-            ->assertJsonPath('status', true);
+            ->assertJsonPath('status', 'success');
 
         $bookingNo = $storeResponse->json('data.booking_no');
         $booking = Booking::where('booking_no', $bookingNo)->firstOrFail();
@@ -182,7 +183,9 @@ class BookingApiTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.status', 'started');
 
+        $booking->refresh();
         $this->postJson("/api/driver/bookings/{$bookingNo}/complete", [
+            'end_otp' => $booking->start_otp,
             'final_amount' => 180,
             'payment_status' => 'paid',
         ])->assertOk()
@@ -300,7 +303,7 @@ class BookingApiTest extends TestCase
             'driver_id' => $driver2->id,
             'vehicle_id' => $vehicle->id,
         ])->assertStatus(422)
-            ->assertJsonPath('status', false)
+            ->assertJsonPath('status', 'error')
             ->assertJsonPath('message', 'Driver ID mismatch.');
     }
 

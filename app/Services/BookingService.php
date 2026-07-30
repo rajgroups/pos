@@ -203,12 +203,14 @@ class BookingService
     }
 
     public function acceptBooking(
-        int $bookingId,
+        int|string $bookingId,
         int $driverId,
         int $vehicleId
     ) {
 
-        $booking = Booking::find($bookingId);
+        $booking = is_numeric($bookingId)
+            ? Booking::find($bookingId)
+            : Booking::where('booking_no', (string) $bookingId)->first();
 
         if (! $booking) {
             return ApiResponseHelper::error('Booking not found.', null, 404);

@@ -41,6 +41,10 @@ class BookingController extends Controller
             );
         }
 
+        if (isset($validated['data']['driver_id']) && (int) $validated['data']['driver_id'] !== (int) $driver->id) {
+            return ApiResponseHelper::error('Driver ID mismatch.', null, 422);
+        }
+
         $vehicleId = $validated['data']['vehicle_id'] ?? null;
 
         if ($vehicleId === null) {
@@ -67,7 +71,7 @@ class BookingController extends Controller
         }
 
         return $this->bookingService->acceptBooking(
-            (int) $booking,
+            $booking,
             $driver->id,
             (int) $vehicleId
         );
@@ -84,7 +88,7 @@ class BookingController extends Controller
             );
         }
 
-        $booking = Booking::find($booking);
+        $booking = is_numeric($booking) ? Booking::find($booking) : Booking::where('booking_no', (string) $booking)->first();
 
         if (! $booking) {
             return ApiResponseHelper::error(
@@ -132,7 +136,7 @@ class BookingController extends Controller
             ], 403);
         }
 
-        $booking = Booking::find($booking);
+        $booking = is_numeric($booking) ? Booking::find($booking) : Booking::where('booking_no', (string) $booking)->first();
         if (! $booking) {
             return response()->json([
                 'status' => false,
@@ -171,7 +175,7 @@ class BookingController extends Controller
             );
         }
 
-        $booking = Booking::find($booking);
+        $booking = is_numeric($booking) ? Booking::find($booking) : Booking::where('booking_no', (string) $booking)->first();
 
         if (! $booking) {
             return ApiResponseHelper::error(
