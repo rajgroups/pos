@@ -60,7 +60,9 @@ class BookingService
 
             $startOtp = (string) random_int(100000, 999999);
             $fare = $this->calculateFare($category, Arr::get($payload, 'usage', []));
-            $initialStatus = $serviceMode === 'scheduled' ? 'requested' : 'pending';
+            $initialStatus = $serviceMode === 'scheduled'
+                ? Booking::STATUS_REQUESTED
+                : Booking::STATUS_PENDING;
 
             $booking = Booking::create([
                 'booking_no' => (string) Str::ulid(),
@@ -114,8 +116,14 @@ class BookingService
 
     public function retryBooking(Booking $booking): Booking
     {
+        if (in_array($booking->status, Booking::TERMINAL_STATUSES, true)) {
+            throw ValidationException::withMessages([
+                'booking_no' => 'This booking can no longer be retried.',
+            ]);
+        }
+
         $booking->update([
-            'status' => 'pending',
+            'status' => Booking::STATUS_PENDING,
             'driver_id' => null,
             'vehicle_id' => null,
             'start_otp' => (string) random_int(100000, 999999),
@@ -163,14 +171,14 @@ class BookingService
         $booking = DB::transaction(function () use ($booking) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-            if (in_array($booking->status, ['completed', 'cancelled'], true)) {
+            if (in_array($booking->status, Booking::TERMINAL_STATUSES, true)) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'This booking cannot be cancelled.',
                 ]);
             }
 
             $booking->update([
-                'status' => 'cancelled',
+                'status' => Booking::STATUS_CANCELLED,
                 'cancelled_at' => now(),
                 'payment_status' => $booking->payment_status === 'paid' ? 'refunded' : $booking->payment_status,
             ]);
@@ -224,8 +232,8 @@ class BookingService
                     ->first();
 
                 $validAcceptStates = $booking->service_mode === 'scheduled'
-                    ? ['requested', 'scheduled']
-                    : ['pending'];
+                    ? [Booking::STATUS_REQUESTED, Booking::STATUS_SCHEDULED]
+                    : [Booking::STATUS_PENDING];
 
                 if (! in_array($booking->status, $validAcceptStates, true)) {
                     throw new \Exception('This booking is not in a valid state.');
@@ -257,7 +265,7 @@ class BookingService
                 $booking->update([
                     'driver_id'   => $driverId,
                     'vehicle_id'  => $vehicleId,
-                    'status'      => 'accepted',
+                    'status'      => Booking::STATUS_ACCEPTED,
                     'accepted_at' => now(),
                 ]);
 
@@ -296,14 +304,14 @@ class BookingService
         $booking = DB::transaction(function () use ($booking) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-            if ($booking->status !== 'accepted') {
+            if ($booking->status !== Booking::STATUS_ACCEPTED) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'This booking is not in a valid state to mark as arrived.',
                 ]);
             }
 
             $booking->update([
-                'status' => 'arrived',
+                'status' => Booking::STATUS_ARRIVED,
                 'arrived_at' => now(),
             ]);
 
@@ -332,8 +340,8 @@ class BookingService
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
             $validStartStates = $booking->service_mode === 'scheduled'
-                ? ['accepted', 'assigned', 'dispatched']
-                : ['accepted', 'arrived'];
+                ? [Booking::STATUS_ACCEPTED, Booking::STATUS_ASSIGNED, Booking::STATUS_DISPATCHED]
+                : [Booking::STATUS_ACCEPTED, Booking::STATUS_ARRIVED];
 
             if (! in_array($booking->status, $validStartStates, true)) {
                 throw ValidationException::withMessages([
@@ -354,7 +362,7 @@ class BookingService
             }
 
             $booking->update([
-                'status' => 'started',
+                'status' => Booking::STATUS_STARTED,
                 'otp_verified_at' => now(),
                 'start_otp' => (string) random_int(100000, 999999), // Generate new OTP for completion
                 'started_at' => now(),
@@ -384,7 +392,7 @@ class BookingService
         $booking = DB::transaction(function () use ($booking, $payload) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-            if ($booking->status !== 'started') {
+            if ($booking->status !== Booking::STATUS_STARTED) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'Only started bookings can be completed.',
                 ]);
@@ -407,7 +415,7 @@ class BookingService
             }
 
             $booking->update([
-                'status' => 'completed',
+                'status' => Booking::STATUS_COMPLETED,
                 'final_amount' => $finalAmount,
                 'payment_method' => $payload['payment_method'] ?? $booking->payment_method,
                 'payment_status' => $payload['payment_status'] ?? 'pending',
@@ -503,7 +511,7 @@ class BookingService
 
         $bookingPayload = (new BookingResource($booking))->resolve();
 
-        if ($booking->status === 'started' && ! empty($booking->start_otp)) {
+        if ($booking->status === Booking::STATUS_STARTED && ! empty($booking->start_otp)) {
             $bookingPayload['start_otp'] = $booking->start_otp;
         }
 
@@ -523,6 +531,49 @@ class BookingService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
+        }
+
+        // Send FCM Push Notification alongside existing socket broadcast
+        try {
+            $fcmService = app(\App\Services\FcmNotificationService::class);
+            $status = $booking->status;
+
+            $notificationTitles = [
+                Booking::STATUS_ACCEPTED => 'Ride Accepted',
+                Booking::STATUS_ARRIVED => 'Driver Arrived',
+                Booking::STATUS_STARTED => 'Ride Started',
+                Booking::STATUS_COMPLETED => 'Ride Completed',
+                Booking::STATUS_CANCELLED => 'Ride Cancelled',
+            ];
+
+            $notificationBodies = [
+                Booking::STATUS_ACCEPTED => 'Your ride request has been accepted.',
+                Booking::STATUS_ARRIVED => 'The driver has arrived at the pickup location.',
+                Booking::STATUS_STARTED => 'The ride has started.',
+                Booking::STATUS_COMPLETED => 'The ride has been completed. Thank you!',
+                Booking::STATUS_CANCELLED => 'The ride has been cancelled.',
+            ];
+
+            if (isset($notificationTitles[$status])) {
+                $title = $notificationTitles[$status];
+                $body = $notificationBodies[$status];
+                $data = [
+                    'type' => 'booking_status',
+                    'status' => $status,
+                    'booking_id' => (string) $booking->id,
+                    'booking_no' => (string) $booking->booking_no,
+                ];
+
+                if ($booking->driver && !empty($booking->driver->fcm_token)) {
+                    $fcmService->sendToToken($booking->driver->fcm_token, $title, $body, $data);
+                }
+
+                if ($booking->user && !empty($booking->user->device_token)) {
+                    $fcmService->sendToToken($booking->user->device_token, $title, $body, $data);
+                }
+            }
+        } catch (\Throwable $e) {
+            logger()->error('FCM broadcast exception: ' . $e->getMessage());
         }
     }
 
@@ -673,7 +724,7 @@ class BookingService
     {
         return Booking::query()
             ->where('driver_id', $driver->id)
-            ->whereNotIn('status', ['completed', 'cancelled', 'expired'])
+            ->whereNotIn('status', Booking::TERMINAL_STATUSES)
             ->latest()
             ->first();
     }
@@ -701,4 +752,3 @@ class BookingService
         return $this->bookingRepository->getDriverStats($driver->id);
     }
 }
-

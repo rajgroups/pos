@@ -26,7 +26,12 @@ class SosController extends Controller
         }
 
         // Only allow SOS on active/in-progress bookings
-        $activeStatuses = ['accepted', 'arrived', 'started', 'in_progress'];
+        $activeStatuses = [
+            Booking::STATUS_ACCEPTED,
+            Booking::STATUS_ARRIVED,
+            Booking::STATUS_STARTED,
+            Booking::STATUS_IN_PROGRESS,
+        ];
         if (! in_array($booking->status, $activeStatuses, true)) {
             return ApiResponseHelper::error(
                 'SOS can only be triggered for an active ride.',

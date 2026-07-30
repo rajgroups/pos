@@ -13,6 +13,64 @@ class Booking extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Booking lifecycle statuses used across the app.
+     *
+     * Stored status values:
+     * pending, requested, accepted, arrived, started, completed, cancelled,
+     * expired, no_driver_available, timeout.
+     *
+     * Transitional / legacy aliases that appear in filters or dispatch flows:
+     * assigned, dispatched, scheduled, searching_driver, in_progress.
+     */
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_REQUESTED = 'requested';
+    public const STATUS_ASSIGNED = 'assigned';
+    public const STATUS_DISPATCHED = 'dispatched';
+    public const STATUS_SCHEDULED = 'scheduled';
+    public const STATUS_ACCEPTED = 'accepted';
+    public const STATUS_ARRIVED = 'arrived';
+    public const STATUS_STARTED = 'started';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_NO_DRIVER_AVAILABLE = 'no_driver_available';
+    public const STATUS_TIMEOUT = 'timeout';
+    public const STATUS_SEARCHING_DRIVER = 'searching_driver';
+
+    /**
+     * Status groups used by booking filters and background dispatch logic.
+     */
+    public const ACTIVE_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_REQUESTED,
+        self::STATUS_ASSIGNED,
+        self::STATUS_DISPATCHED,
+        self::STATUS_ACCEPTED,
+        self::STATUS_ARRIVED,
+        self::STATUS_STARTED,
+        self::STATUS_SEARCHING_DRIVER,
+    ];
+
+    public const IN_PROGRESS_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_REQUESTED,
+        self::STATUS_ASSIGNED,
+        self::STATUS_DISPATCHED,
+        self::STATUS_ACCEPTED,
+        self::STATUS_ARRIVED,
+        self::STATUS_STARTED,
+    ];
+
+    public const TERMINAL_STATUSES = [
+        self::STATUS_COMPLETED,
+        self::STATUS_CANCELLED,
+        self::STATUS_EXPIRED,
+        self::STATUS_NO_DRIVER_AVAILABLE,
+        self::STATUS_TIMEOUT,
+    ];
+
     protected $fillable = [
         'booking_no',
         'user_id',

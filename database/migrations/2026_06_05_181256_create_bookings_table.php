@@ -41,7 +41,11 @@ return new class extends Migration
             $table->string('start_otp', 10)->nullable();
             $table->timestamp('otp_verified_at')->nullable();
 
-            // Status
+            // Booking lifecycle status values are documented in App\Models\Booking.
+            // Stored values used by the app: pending, requested, accepted, arrived,
+            // started, completed, cancelled, expired, no_driver_available, timeout.
+            // Transitional aliases used by some filters / dispatch flows:
+            // assigned, dispatched, scheduled, searching_driver, in_progress.
             $table->string('status', 30)->default('pending')->index();
 
             // Estimated

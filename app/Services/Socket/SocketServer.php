@@ -3,6 +3,7 @@
 namespace App\Services\Socket;
 
 use App\Http\Resources\BookingResource;
+use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\User;
 use App\Services\BookingService;
@@ -114,6 +115,8 @@ class SocketServer
 
                     Log::warning('No driver IDs provided');
 
+                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
+
                     $response->status(422);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -157,6 +160,8 @@ class SocketServer
                 if (empty($driverIds)) {
 
                     Log::warning('No matching online drivers after filtering');
+
+                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
 
                     $response->status(404);
                     $response->end(json_encode([
@@ -224,6 +229,8 @@ class SocketServer
 
                     Log::warning('All matching drivers are offline');
 
+                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
+
                     $response->status(404);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -241,9 +248,9 @@ class SocketServer
                     \OpenSwoole\Timer::after(60000, function () use ($bookingId, $userId) {
                         try {
                             $dbBooking = \App\Models\Booking::find($bookingId);
-                            if ($dbBooking && in_array($dbBooking->status, ['pending', 'searching_driver'], true)) {
+                            if ($dbBooking && in_array($dbBooking->status, [Booking::STATUS_PENDING, Booking::STATUS_SEARCHING_DRIVER], true)) {
                                 $dbBooking->update([
-                                    'status' => 'no_driver_available',
+                                    'status' => Booking::STATUS_NO_DRIVER_AVAILABLE,
                                 ]);
 
                                 Log::info('Booking dispatch timed out, no driver accepted.', [
@@ -397,7 +404,7 @@ class SocketServer
                     // Broadcast to active passenger
                     try {
                         $activeBooking = \App\Models\Booking::where('driver_id', $driverId)
-                            ->whereIn('status', ['accepted', 'started'])
+                            ->whereIn('status', [Booking::STATUS_ACCEPTED, Booking::STATUS_STARTED])
                             ->first();
 
                         if ($activeBooking) {
@@ -555,7 +562,7 @@ class SocketServer
 
                     $bookingPayload = (new BookingResource($activeBooking))->resolve();
 
-                    if ($activeBooking->status === 'started' && ! empty($activeBooking->start_otp)) {
+                    if ($activeBooking->status === Booking::STATUS_STARTED && ! empty($activeBooking->start_otp)) {
                         $bookingPayload['start_otp'] = $activeBooking->start_otp;
                     }
 
@@ -574,6 +581,66 @@ class SocketServer
         echo "Authenticated {$this->connections[$fd]['type']} : {$user->id}\n";
 
         return true;
+    }
+
+    protected function markBookingNoDriverAvailable($bookingId, $userId = null): void
+    {
+        if (! $bookingId) {
+            return;
+        }
+
+        $booking = Booking::query()->find((int) $bookingId);
+
+        if (! $booking) {
+            return;
+        }
+
+        if (in_array($booking->status, Booking::TERMINAL_STATUSES, true)) {
+            return;
+        }
+
+        if (! in_array($booking->status, [
+            Booking::STATUS_PENDING,
+            Booking::STATUS_REQUESTED,
+            Booking::STATUS_SEARCHING_DRIVER,
+        ], true)) {
+            return;
+        }
+
+        $booking->update([
+            'status' => Booking::STATUS_NO_DRIVER_AVAILABLE,
+        ]);
+
+        $booking->loadMissing([
+            'category.pricing',
+            'user',
+            'driver',
+            'vehicle',
+            'locations',
+            'pickupLocation',
+            'dropLocation',
+            'usage',
+            'fare',
+        ]);
+
+        $payload = [
+            'type' => 'booking_status',
+            'booking' => (new BookingResource($booking))->resolve(),
+        ];
+
+        if ($userId) {
+            $userFd = $this->presenceStore->getUserFd((int) $userId);
+            if ($userFd && $this->server->isEstablished($userFd)) {
+                $this->server->push($userFd, json_encode($payload));
+                Log::info('Sent no_driver_available status update to user socket.', [
+                    'user_id' => (int) $userId,
+                    'fd' => $userFd,
+                    'booking_id' => $booking->id,
+                ]);
+            }
+        }
+
+        event(new \App\Events\BookingStatusUpdated($booking));
     }
 
     public function findNearbyDrivers(

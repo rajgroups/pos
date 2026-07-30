@@ -35,7 +35,7 @@ class BookingRepository
     public function findActiveBookingByUserId(int $userId): ?Booking
     {
         return $this->model->where('user_id', $userId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', Booking::TERMINAL_STATUSES)
             ->latest()
             ->first();
     }
@@ -51,7 +51,7 @@ class BookingRepository
     {
         return $this->model->where('driver_id', $driverId)
             ->where('id', '!=', $excludeBookingId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', Booking::TERMINAL_STATUSES)
             ->exists();
     }
 
@@ -66,7 +66,7 @@ class BookingRepository
     {
         return $this->model->where('vehicle_id', $vehicleId)
             ->where('id', '!=', $excludeBookingId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNotIn('status', Booking::TERMINAL_STATUSES)
             ->exists();
     }
 
@@ -99,21 +99,25 @@ class BookingRepository
                 case 'ongoing':
                 case 'active':
                 case 'in_progress':
-                    $query->whereIn('status', ['pending', 'requested', 'accepted', 'arrived', 'started', 'dispatched']);
+                    $query->whereIn('status', Booking::IN_PROGRESS_STATUSES);
                     break;
 
-                case 'completed':
-                    $query->where('status', 'completed');
+                case Booking::STATUS_COMPLETED:
+                    $query->where('status', Booking::STATUS_COMPLETED);
                     break;
 
-                case 'cancelled':
+                case Booking::STATUS_CANCELLED:
                 case 'canceled':
-                    $query->where('status', 'cancelled');
+                    $query->where('status', Booking::STATUS_CANCELLED);
                     break;
 
                 case 'missed':
-                case 'expired':
-                    $query->whereIn('status', ['expired', 'no_driver_available', 'timeout']);
+                case Booking::STATUS_EXPIRED:
+                    $query->whereIn('status', [
+                        Booking::STATUS_EXPIRED,
+                        Booking::STATUS_NO_DRIVER_AVAILABLE,
+                        Booking::STATUS_TIMEOUT,
+                    ]);
                     break;
 
                 default:
@@ -211,21 +215,25 @@ class BookingRepository
                 case 'ongoing':
                 case 'active':
                 case 'in_progress':
-                    $query->whereIn('status', ['pending', 'requested', 'accepted', 'arrived', 'started', 'dispatched']);
+                    $query->whereIn('status', Booking::IN_PROGRESS_STATUSES);
                     break;
 
-                case 'completed':
-                    $query->where('status', 'completed');
+                case Booking::STATUS_COMPLETED:
+                    $query->where('status', Booking::STATUS_COMPLETED);
                     break;
 
-                case 'cancelled':
+                case Booking::STATUS_CANCELLED:
                 case 'canceled':
-                    $query->where('status', 'cancelled');
+                    $query->where('status', Booking::STATUS_CANCELLED);
                     break;
 
                 case 'missed':
-                case 'expired':
-                    $query->whereIn('status', ['expired', 'no_driver_available', 'timeout']);
+                case Booking::STATUS_EXPIRED:
+                    $query->whereIn('status', [
+                        Booking::STATUS_EXPIRED,
+                        Booking::STATUS_NO_DRIVER_AVAILABLE,
+                        Booking::STATUS_TIMEOUT,
+                    ]);
                     break;
 
                 default:
@@ -334,11 +342,11 @@ class BookingRepository
     public function getDriverStats(int $driverId): array
     {
         $totalRides = $this->model->where('driver_id', $driverId)
-            ->where('status', 'completed')
+            ->where('status', Booking::STATUS_COMPLETED)
             ->count();
 
         $totalEarnings = (float) $this->model->where('driver_id', $driverId)
-            ->where('status', 'completed')
+            ->where('status', Booking::STATUS_COMPLETED)
             ->sum(DB::raw('COALESCE(NULLIF(final_amount, 0), estimated_amount)'));
 
         $avgRating = 4.9; // Default fallback rating if rating system is not present
@@ -351,4 +359,3 @@ class BookingRepository
         ];
     }
 }
-

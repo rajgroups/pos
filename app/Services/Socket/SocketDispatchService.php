@@ -113,13 +113,49 @@ class SocketDispatchService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-
-            return;
+        } else {
+            Log::info('Booking dispatched successfully to socket server', [
+                'booking_id' => $booking->id,
+                'booking_no' => $booking->booking_no,
+            ]);
         }
 
-        Log::info('Booking dispatched successfully', [
-            'booking_id' => $booking->id,
-            'booking_no' => $booking->booking_no,
-        ]);
+        // Send FCM Push Notification to eligible drivers alongside WebSockets
+        try {
+            $targetDriverIds = $booking->driver_id ? [$booking->driver_id] : $eligibleDriverIds;
+            $fcmTokens = \App\Models\Driver::query()
+                ->whereIn('id', $targetDriverIds)
+                ->whereNotNull('fcm_token')
+                ->where('fcm_token', '!=', '')
+                ->pluck('fcm_token')
+                ->toArray();
+
+            if (!empty($fcmTokens)) {
+                $fcmService = app(\App\Services\FcmNotificationService::class);
+                $title = 'New Ride Request';
+                $body = 'Tap to view and accept the ride request from ' . ($booking->user?->name ?? 'a rider');
+                $data = [
+                    'type' => 'new_ride_request',
+                    'booking_id' => (string) $booking->id,
+                    'booking_no' => (string) $booking->booking_no,
+                    'status' => (string) ($booking->status ?? Booking::STATUS_PENDING),
+                    'driver_id' => (string) ($booking->driver_id ?? ''),
+                    'vehicle_id' => (string) ($booking->vehicle_id ?? ''),
+                    'vehicle_category_id' => (string) ($booking->vehicle_category_id ?? ''),
+                    'scheduled_at' => (string) ($booking->scheduled_at ?? ''),
+                    'passenger_name' => (string) ($booking->user?->name ?? ''),
+                    'pickup_address' => (string) ($booking->pickupLocation?->address ?? ''),
+                    'drop_address' => (string) ($booking->dropLocation?->address ?? ''),
+                    'estimated_amount' => (string) ($booking->estimated_amount ?? 0),
+                    'booking_mode' => (string) ($booking->service_mode ?? ''),
+                    'vehicle_name' => (string) ($booking->vehicle?->model ?? ''),
+                    'vehicle_number' => (string) ($booking->vehicle?->vehicle_number ?? ''),
+                    'notes' => (string) ($booking->notes ?? ''),
+                ];
+                $fcmService->sendToTokens($fcmTokens, $title, $body, $data);
+            }
+        } catch (\Throwable $e) {
+            Log::error('FCM dispatch error in SocketDispatchService: ' . $e->getMessage());
+        }
     }
 }

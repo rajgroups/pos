@@ -45,7 +45,7 @@ class BookingStatusUpdated implements ShouldBroadcastNow
     {
         $booking = (new BookingResource($this->booking))->resolve();
 
-        if ($this->booking->status === 'started' && ! empty($this->booking->start_otp)) {
+        if ($this->booking->status === Booking::STATUS_STARTED && ! empty($this->booking->start_otp)) {
             $booking['start_otp'] = $this->booking->start_otp;
         }
 
