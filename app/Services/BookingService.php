@@ -590,11 +590,17 @@ class BookingService
             ->whereKey($vehicleCategoryId)
             ->with([
                 'children.children',
+                'parent',
             ])
-            ->firstOrFail()
-            ;
+            ->firstOrFail();
 
-        return $this->collectCategoryIds($category);
+        $ids = $this->collectCategoryIds($category);
+
+        if ($category->parent_id) {
+            $ids[] = (int) $category->parent_id;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     protected function collectCategoryIds(VehicleCategory $category): array

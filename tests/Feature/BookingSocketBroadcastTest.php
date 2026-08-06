@@ -24,7 +24,7 @@ class BookingSocketBroadcastTest extends TestCase
         parent::setUp();
 
         Http::fake([
-            'http://127.0.0.1:9502/*' => Http::response('success', 200),
+            '*' => Http::response('success', 200),
         ]);
 
         Redis::shouldReceive('set')->byDefault()->andReturnTrue();
@@ -52,7 +52,7 @@ class BookingSocketBroadcastTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.status', 'accepted');
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'accepted'));
 
         $booking->refresh();
@@ -62,16 +62,19 @@ class BookingSocketBroadcastTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.status', 'started');
 
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
         Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'started'));
 
+        $booking->refresh();
+
         $this->postJson("/api/driver/bookings/{$booking->booking_no}/complete", [
+            'end_otp' => $booking->start_otp,
             'final_amount' => 180,
             'payment_status' => 'paid',
         ])->assertOk()
             ->assertJsonPath('data.status', 'completed');
 
-        Http::assertSentCount(3);
+        Http::assertSentCount(4);
         Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'completed'));
     }
 
@@ -101,7 +104,7 @@ class BookingSocketBroadcastTest extends TestCase
         ])->assertOk()
             ->assertJsonPath('data.status', 'cancelled');
 
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
         Http::assertSent($this->bookingStatusAssertion($user->id, $driver->id, 'cancelled'));
     }
 
@@ -196,7 +199,7 @@ class BookingSocketBroadcastTest extends TestCase
     private function bookingStatusAssertion(int $userId, int $driverId, string $status): \Closure
     {
         return function (Request $request) use ($userId, $driverId, $status): bool {
-            if ($request->url() !== 'http://127.0.0.1:9502/broadcast-booking-update') {
+            if (! str_contains($request->url(), '/broadcast-booking-update')) {
                 return false;
             }
 

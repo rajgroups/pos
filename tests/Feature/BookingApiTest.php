@@ -121,6 +121,7 @@ class BookingApiTest extends TestCase
         ]);
 
         $vehicle = Vehicle::create([
+            'driver_id' => $driver->id,
             'vehicle_category_id' => $category->id,
             'vehicle_number' => 'TN01AB9999',
             'status' => 'active',
@@ -370,5 +371,92 @@ class BookingApiTest extends TestCase
         ])->assertStatus(403)
             ->assertJsonPath('status', false)
             ->assertJsonPath('message', 'You are not assigned to this booking.');
+    }
+
+    public function test_booking_dispatch_filters_drivers_by_selected_vehicle_category(): void
+    {
+        $carCategory = VehicleType::create([
+            'type_key' => 'cab',
+            'name' => 'Mini Cab',
+            'slug' => 'cab-mini-cab',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+
+        $autoCategory = VehicleType::create([
+            'type_key' => 'auto',
+            'name' => 'Regular Auto',
+            'slug' => 'auto-regular-auto',
+            'sort_order' => 2,
+            'is_active' => true,
+        ]);
+
+        $carDriver = Driver::create([
+            'name' => 'Car Driver',
+            'phone' => '9000000111',
+            'license_number' => 'DL-11111',
+            'driver_type' => 'car',
+            'status' => 'active',
+            'is_verified' => true,
+        ]);
+
+        $autoDriver = Driver::create([
+            'name' => 'Auto Driver',
+            'phone' => '9000000222',
+            'license_number' => 'DL-22222',
+            'driver_type' => 'auto',
+            'status' => 'active',
+            'is_verified' => true,
+        ]);
+
+        Vehicle::create([
+            'driver_id' => $carDriver->id,
+            'vehicle_category_id' => $carCategory->id,
+            'vehicle_number' => 'TN01CAR1',
+            'status' => 'active',
+        ]);
+
+        Vehicle::create([
+            'driver_id' => $autoDriver->id,
+            'vehicle_category_id' => $autoCategory->id,
+            'vehicle_number' => 'TN01AUTO1',
+            'status' => 'active',
+        ]);
+
+        $user = User::factory()->create();
+
+        $booking = Booking::create([
+            'booking_no' => (string) \Illuminate\Support\Str::ulid(),
+            'user_id' => $user->id,
+            'vehicle_category_id' => $autoCategory->id,
+            'service_mode' => 'instant',
+            'status' => 'pending',
+            'estimated_amount' => 60,
+        ]);
+
+        \App\Models\BookingLocation::create([
+            'booking_id' => $booking->id,
+            'location_type' => 'pickup',
+            'latitude' => 13.0464,
+            'longitude' => 80.1154,
+            'sequence' => 1,
+        ]);
+
+        Http::fake([
+            'http://127.0.0.1:9502/*' => Http::response(['status' => 'success'], 200),
+        ]);
+
+        app(\App\Services\Socket\SocketDispatchService::class)->dispatchBooking($booking);
+
+        Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($autoDriver, $carDriver) {
+            if (! str_contains($request->url(), '/send_booking')) {
+                return false;
+            }
+
+            $driverIds = $request->data()['driver_ids'] ?? [];
+
+            return in_array($autoDriver->id, $driverIds, true)
+                && ! in_array($carDriver->id, $driverIds, true);
+        });
     }
 }

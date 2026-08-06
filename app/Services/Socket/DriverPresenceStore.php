@@ -83,10 +83,10 @@ class DriverPresenceStore
             return [];
         }
 
-        return array_values(array_unique(array_map(
+        return array_values(array_unique(array_filter(array_map(
             fn ($row) => (int) ($row[0] ?? 0),
             array_filter($results)
-        )));
+        ), fn (int $driverId) => $driverId > 0)));
     }
 
     protected function driverFdKey(int $driverId): string

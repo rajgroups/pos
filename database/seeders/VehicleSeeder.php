@@ -46,6 +46,8 @@ class VehicleSeeder extends Seeder
             ['slug' => 'tractor-farm-tractor', 'brand' => 'John Deere', 'model' => '5310', 'color' => 'Green', 'seating_capacity' => 1, 'load_capacity' => 1800.00, 'status' => 'maintenance', 'is_verified' => true],
         ];
 
+        $driverByType = Driver::query()->pluck('id', 'driver_type')->toArray();
+
         for ($i = 0; $i < 50; $i++) {
             $template = $vehicleTemplates[$i % count($vehicleTemplates)];
             $sequence = $i + 1;
@@ -55,10 +57,22 @@ class VehicleSeeder extends Seeder
             $permitExpiry = Carbon::create(2028 + ($i % 4), (($i % 12) + 1), min(28, 8 + ($i % 20)));
             $fitnessExpiry = Carbon::create(2027 + ($i % 3), (($i % 12) + 1), min(28, 6 + ($i % 22)));
 
+            $targetDriverId = null;
+            $slug = $template['slug'];
+            if (str_starts_with($slug, 'cab-')) {
+                $targetDriverId = $driverByType['car'] ?? ($driverIds->first() ?? null);
+            } elseif (str_starts_with($slug, 'auto-')) {
+                $targetDriverId = $driverByType['auto'] ?? ($driverIds->last() ?? null);
+            } elseif (str_starts_with($slug, 'bike-') || str_starts_with($slug, 'parcel-')) {
+                $targetDriverId = $driverByType['bike'] ?? ($driverIds[1] ?? null);
+            } else {
+                $targetDriverId = $driverIds->isNotEmpty() ? $driverIds[$i % $driverIds->count()] : null;
+            }
+
             DB::table('vehicles')->updateOrInsert(
                 ['vehicle_number' => $this->vehicleNumber($sequence)],
                 [
-                    'driver_id' => $driverIds->isNotEmpty() ? $driverIds[$i % $driverIds->count()] : null,
+                    'driver_id' => $targetDriverId,
                     'vehicle_category_id' => $categoryIds[$template['slug']] ?? null,
                     'brand' => $template['brand'],
                     'model' => $template['model'],

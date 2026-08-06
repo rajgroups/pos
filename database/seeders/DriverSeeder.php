@@ -14,7 +14,7 @@ class DriverSeeder extends Seeder
         $drivers = [
             ['name' => 'Arun Kumar', 'phone' => '9000000001', 'email' => 'arun.driver@example.com', 'city' => 'Chennai', 'state' => 'Tamil Nadu', 'driver_type' => 'car', 'license_categories' => ['LMV', 'TR'], 'status' => 'active', 'is_verified' => true],
             ['name' => 'Bala Murugan', 'phone' => '9000000002', 'email' => 'bala.driver@example.com', 'city' => 'Madurai', 'state' => 'Tamil Nadu', 'driver_type' => 'bike', 'license_categories' => ['Bike'], 'status' => 'active', 'is_verified' => true],
-            ['name' => 'Chetan Raj', 'phone' => '9000000003', 'email' => 'chetan.driver@example.com', 'city' => 'Bengaluru', 'state' => 'Karnataka', 'driver_type' => 'mini_van', 'license_categories' => ['LMV', 'TR'], 'status' => 'active', 'is_verified' => false],
+            ['name' => 'Chetan Raj', 'phone' => '9000000003', 'email' => 'chetan.driver@example.com', 'city' => 'Bengaluru', 'state' => 'Karnataka', 'driver_type' => 'auto', 'license_categories' => ['LMV', '3W'], 'status' => 'active', 'is_verified' => true],
         ];
 
         foreach ($drivers as $index => $driver) {

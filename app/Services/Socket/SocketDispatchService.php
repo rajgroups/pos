@@ -60,6 +60,10 @@ class SocketDispatchService
         $eligibleDriverIds = Vehicle::query()
             ->whereIn('vehicle_category_id', $eligibleCategoryIds)
             ->where('status', 'active')
+            ->whereNotNull('driver_id')
+            ->whereHas('driver', function ($query) {
+                $query->where('status', 'active');
+            })
             ->pluck('driver_id')
             ->unique()
             ->values()
@@ -73,6 +77,11 @@ class SocketDispatchService
         if (empty($eligibleDriverIds)) {
             Log::warning('Dispatch aborted: No eligible drivers found', [
                 'booking_id' => $booking->id,
+                'vehicle_category_id' => $booking->vehicle_category_id,
+            ]);
+
+            $booking->update([
+                'status' => Booking::STATUS_NO_DRIVER_AVAILABLE,
             ]);
 
             return;

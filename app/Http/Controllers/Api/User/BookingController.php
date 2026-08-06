@@ -124,7 +124,9 @@ class BookingController extends Controller
 
     public function cancel(BookingCancelRequest $request, $bookingId): JsonResponse
     {
-        $booking = Booking::find($bookingId);
+        $booking = is_numeric($bookingId)
+            ? Booking::find($bookingId)
+            : Booking::where('booking_no', (string) $bookingId)->first();
 
         if (! $booking) {
             return ApiResponseHelper::error('Booking not found.', null, 404);

@@ -148,13 +148,11 @@ class SocketServer
                         'nearby_driver_ids' => $nearbyDriverIds,
                     ]);
 
-                    if (!empty($nearbyDriverIds)) {
-                        $driverIds = array_values(array_intersect($driverIds, $nearbyDriverIds));
+                    $driverIds = array_values(array_intersect($driverIds, $nearbyDriverIds));
 
-                        Log::info('Drivers after nearby filter', [
-                            'driver_ids' => $driverIds,
-                        ]);
-                    }
+                    Log::info('Drivers after nearby filter', [
+                        'driver_ids' => $driverIds,
+                    ]);
                 }
 
                 if (empty($driverIds)) {
@@ -166,7 +164,7 @@ class SocketServer
                     $response->status(404);
                     $response->end(json_encode([
                         'type' => 'error',
-                        'message' => 'No online drivers matched the booking request',
+                        'message' => 'No drivers available for the selected vehicle category',
                     ]));
 
                     return;
