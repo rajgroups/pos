@@ -30,6 +30,16 @@ class BookingService
 
     public function createBooking(array $payload): Booking
     {
+        $activeBooking = Booking::query()
+            ->where('user_id', $payload['user_id'])
+            ->whereNotIn('status', Booking::TERMINAL_STATUSES)
+            ->first();
+
+        if ($activeBooking) {
+            throw ValidationException::withMessages([
+                'booking' => 'You already have an active ride in progress. Please complete or cancel your existing ride before booking a new one.',
+            ]);
+        }
 
         $booking = DB::transaction(function () use ($payload) {
             $category = VehicleCategory::query()
@@ -170,6 +180,12 @@ class BookingService
     {
         $booking = DB::transaction(function () use ($booking) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
+
+            if ($booking->status === Booking::STATUS_STARTED) {
+                throw ValidationException::withMessages([
+                    'booking_no' => 'Trip is already in progress and cannot be cancelled.',
+                ]);
+            }
 
             if (in_array($booking->status, Booking::TERMINAL_STATUSES, true)) {
                 throw ValidationException::withMessages([
@@ -495,12 +511,6 @@ class BookingService
         if (! in_array($requestedMode, ['instant', 'scheduled'], true)) {
             throw ValidationException::withMessages([
                 'booking_mode' => 'The selected booking mode is not supported.',
-            ]);
-        }
-
-        if ($requestedMode !== $categoryMode) {
-            throw ValidationException::withMessages([
-                'booking_mode' => 'The selected booking mode does not match this vehicle category.',
             ]);
         }
 

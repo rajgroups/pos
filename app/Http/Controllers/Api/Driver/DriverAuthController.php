@@ -95,6 +95,7 @@ class DriverAuthController extends Controller
                 'email' => $driver->email ?? null,
                 'mobile' => $driver->phone ?? null,
                 'fcm_token' => $driver->fcm_token ?? null,
+                'wallet_balance' => (float) ($driver->wallet_balance ?? 0),
             ];
 
             return ApiResponseHelper::success(__('string.common.login_success'), [
@@ -134,4 +135,3 @@ class DriverAuthController extends Controller
         ], 200);
     }
 }
-

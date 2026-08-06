@@ -32,6 +32,7 @@ class DriverFcmTokenTest extends TestCase
                     'driver' => [
                         'id' => $driver->id,
                         'fcm_token' => 'sample_fcm_token_123',
+                        'wallet_balance' => 0.0,
                     ],
                 ],
             ]);

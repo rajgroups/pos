@@ -65,11 +65,6 @@ class SocketServer
                 $server->disconnect($request->fd);
                 return;
             }
-
-            $server->push($request->fd, json_encode([
-                'type' => 'connected',
-                'message' => 'Authenticated'
-            ]));
         });
 
         $this->server->on('Request', function ($request, $response) {
@@ -541,6 +536,41 @@ class SocketServer
             $this->presenceStore->setUserConnection($user->id, $fd);
         }
 
+        $connectedPayload = [
+            'type' => 'connected',
+            'message' => 'Authenticated',
+        ];
+
+        if ($user instanceof Driver) {
+            $connectedPayload['driver'] = [
+                'id' => $user->id,
+                'name' => $user->name ?? null,
+                'phone' => $user->phone ?? null,
+                'status' => $user->status ?? null,
+                'is_online' => (bool) ($user->is_online ?? false),
+                'wallet_balance' => (float) ($user->wallet_balance ?? 0),
+            ];
+
+            $appGroup = 'driver_app';
+            $latestVersion = \App\Models\AppSetting::get("{$appGroup}_latest_version", '1.0.0');
+            $minVersion = \App\Models\AppSetting::get("{$appGroup}_min_version", '1.0.0');
+            $forceUpdateFlag = \App\Models\AppSetting::get("{$appGroup}_force_update", '0');
+
+            $connectedPayload['app_update'] = [
+                'latest_version' => $latestVersion,
+                'min_version' => $minVersion,
+                'force_update' => ($forceUpdateFlag === '1' || strtolower($forceUpdateFlag) === 'true'),
+                'url_android' => \App\Models\AppSetting::get("{$appGroup}_url_android", ''),
+                'url_ios' => \App\Models\AppSetting::get("{$appGroup}_url_ios", ''),
+                'title' => \App\Models\AppSetting::get("{$appGroup}_update_title", 'New Update Available!'),
+                'message' => \App\Models\AppSetting::get("{$appGroup}_update_message", 'A new version of the app is available. Please update to continue.'),
+            ];
+        }
+
+        if ($this->server->isEstablished($fd)) {
+            $this->server->push($fd, json_encode($connectedPayload));
+        }
+
         if ($user instanceof User) {
             $activeBooking = $this->bookingService->userActiveBooking($user);
 
@@ -573,9 +603,6 @@ class SocketServer
                 }
         }
 
-        print_r($this->connections);
-        print_r($this->users);
-        print_r($this->drivers);
         echo "Authenticated {$this->connections[$fd]['type']} : {$user->id}\n";
 
         return true;

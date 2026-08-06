@@ -21,6 +21,7 @@ class Driver extends Authenticatable
         'email',
         'dob',
         'gender',
+        'wallet_balance',
         'address',
         'city',
         'state',
@@ -52,6 +53,7 @@ class Driver extends Authenticatable
         'license_categories' => 'array',
         'is_verified' => 'boolean',
         'is_online' => 'boolean',
+        'wallet_balance' => 'decimal:2',
     ];
 
 
@@ -70,5 +72,10 @@ class Driver extends Authenticatable
         return $this->belongsToMany(Vehicle::class, 'driver_vehicle_assignments')
             ->withPivot(['assigned_from', 'assigned_to', 'is_current'])
             ->withTimestamps();
+    }
+
+    public function rechargeRequests(): HasMany
+    {
+        return $this->hasMany(WalletRechargeRequest::class);
     }
 }

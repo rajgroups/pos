@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AppUpdateController;
-use App\Http\Controllers\Api\Driver\DriverAuthController;
 use App\Http\Controllers\Api\Driver\BookingController;
+use App\Http\Controllers\Api\Driver\DriverAuthController;
+use App\Http\Controllers\Api\Driver\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::name('api.driver.')->group(function () {
@@ -14,6 +15,7 @@ Route::name('api.driver.')->group(function () {
         Route::post('/fcm-token', [DriverAuthController::class, 'updateFcmToken'])->name('updateFcmToken');
         Route::get('/dashboard', [BookingController::class, 'dashboard'])->name('dashboard');
         Route::post('/profile/online-status', [BookingController::class, 'toggleOnlineStatus'])->name('toggleOnlineStatus');
+        Route::post('/wallet/recharge-request', [WalletController::class, 'requestRecharge'])->name('wallet.rechargeRequest');
 
         Route::prefix('bookings')->name('bookings.')->group(function () {
             Route::get('/', [BookingController::class, 'index'])->name('index');

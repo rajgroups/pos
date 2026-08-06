@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\RideController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WalletRechargeController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -43,6 +44,13 @@ Route::prefix('admin')->name('admin.')->group(function(){
 
         // For Drivers Management Routes
         Route::resource('drivers', DriverController::class);
+
+        // For Wallet Recharge Requests Management Routes
+        Route::prefix('recharge-requests')->name('recharge-requests.')->group(function () {
+            Route::get('/', [WalletRechargeController::class, 'index'])->name('index');
+            Route::post('/{id}/approve', [WalletRechargeController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [WalletRechargeController::class, 'reject'])->name('reject');
+        });
 
 
         // For Admin Management Routes

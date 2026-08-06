@@ -17,7 +17,8 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->date('dob')->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable();
-
+            $table->decimal('wallet_balance', 12, 2)
+                ->default(0);
             // Address
             $table->text('address')->nullable();
             $table->string('city')->nullable();
