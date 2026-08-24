@@ -110,8 +110,6 @@ class SocketServer
 
                     Log::warning('No driver IDs provided');
 
-                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
-
                     $response->status(422);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -154,8 +152,6 @@ class SocketServer
 
                     Log::warning('No matching online drivers after filtering');
 
-                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
-
                     $response->status(404);
                     $response->end(json_encode([
                         'type' => 'error',
@@ -188,6 +184,11 @@ class SocketServer
                     ]);
 
                     if (!$driverFd) {
+                        Log::info('Driver socket status', [
+                            'driver_id' => $driverId,
+                            'status' => 'offline',
+                            'reason' => 'No active FD',
+                        ]);
 
                         Log::warning("Driver {$driverId} has no FD");
 
@@ -195,6 +196,11 @@ class SocketServer
                     }
 
                     if ($this->server->isEstablished($driverFd)) {
+                        Log::info('Driver socket status', [
+                            'driver_id' => $driverId,
+                            'status' => 'online',
+                            'fd' => $driverFd,
+                        ]);
 
                         Log::info("Sending booking to driver {$driverId}", [
                             'fd' => $driverFd,
@@ -206,6 +212,11 @@ class SocketServer
 
                         $sent++;
                     } else {
+                        Log::info('Driver socket status', [
+                            'driver_id' => $driverId,
+                            'status' => 'offline',
+                            'reason' => 'Socket not established',
+                        ]);
 
                         Log::warning("Driver {$driverId} socket not established", [
                             'fd' => $driverFd,
@@ -219,62 +230,16 @@ class SocketServer
                 ]);
 
                 if ($sent === 0) {
+                    Log::warning('No drivers have active socket connections, booking remains pending for FCM/timeout');
 
-                    Log::warning('All matching drivers are offline');
-
-                    $this->markBookingNoDriverAvailable($payload['booking']['id'] ?? null, $payload['booking']['user_id'] ?? null);
-
-                    $response->status(404);
                     $response->end(json_encode([
-                        'type' => 'error',
-                        'message' => 'All matching drivers are offline',
+                        'type' => 'success',
+                        'message' => 'Booking dispatch attempted via FCM fallback (no active socket FDs)',
+                        'driver_ids' => $driverIds,
+                        'sent' => 0,
                     ]));
 
                     return;
-                }
-
-                // Register a background timeout of 60 seconds (60000ms)
-                if (isset($booking['id'])) {
-                    $bookingId = (int) $booking['id'];
-                    $userId = isset($booking['user_id']) ? (int) $booking['user_id'] : null;
-
-                    \OpenSwoole\Timer::after(60000, function () use ($bookingId, $userId) {
-                        try {
-                            $dbBooking = \App\Models\Booking::find($bookingId);
-                            if ($dbBooking && in_array($dbBooking->status, [Booking::STATUS_PENDING, Booking::STATUS_SEARCHING_DRIVER], true)) {
-                                $dbBooking->update([
-                                    'status' => Booking::STATUS_NO_DRIVER_AVAILABLE,
-                                ]);
-
-                                Log::info('Booking dispatch timed out, no driver accepted.', [
-                                    'booking_id' => $bookingId,
-                                    'booking_no' => $dbBooking->booking_no,
-                                ]);
-
-                                // Broadcast to the user over WebSocket
-                                $payload = [
-                                    'type' => 'booking_status',
-                                    'booking' => (new BookingResource($dbBooking))->resolve(),
-                                ];
-
-                                if ($userId) {
-                                    $userFd = $this->presenceStore->getUserFd($userId);
-                                    if ($userFd && $this->server->isEstablished($userFd)) {
-                                        $this->server->push($userFd, json_encode($payload));
-                                        Log::info('Sent no_driver_available status update to user socket.', [
-                                            'user_id' => $userId,
-                                            'fd' => $userFd,
-                                        ]);
-                                    }
-                                }
-                            }
-                        } catch (\Exception $e) {
-                            Log::error('Error processing background dispatch timeout.', [
-                                'booking_id' => $bookingId,
-                                'error' => $e->getMessage(),
-                            ]);
-                        }
-                    });
                 }
 
                 $response->end(json_encode([
@@ -430,12 +395,20 @@ class SocketServer
 
                 case 'accept_booking':
 
+                    Log::info('Driver accepted booking', [
+                        'fd' => $frame->fd,
+                        'payload' => $payload,
+                    ]);
                     echo "Driver accepted booking\n";
 
                     break;
 
                 case 'reject_booking':
 
+                    Log::info('Driver rejected booking', [
+                        'fd' => $frame->fd,
+                        'payload' => $payload,
+                    ]);
                     echo "Driver rejected booking\n";
 
                     break;

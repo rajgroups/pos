@@ -26,7 +26,7 @@ class SocketDispatchService
             'fare',
         ]);
 
-        Log::info('Dispatch booking started', [
+        Log::info('Booking dispatch started', [
             'booking_id' => $booking->id,
             'booking_no' => $booking->booking_no,
         ]);
@@ -75,6 +75,12 @@ class SocketDispatchService
             'count' => count($eligibleDriverIds),
         ]);
 
+        Log::info('Eligible drivers found', [
+            'booking_id' => $booking->id,
+            'driver_ids' => $eligibleDriverIds,
+            'count' => count($eligibleDriverIds),
+        ]);
+
         if (empty($eligibleDriverIds)) {
             Log::warning('Dispatch aborted: No eligible online drivers found', [
                 'booking_id' => $booking->id,
@@ -87,6 +93,43 @@ class SocketDispatchService
 
             return;
         }
+
+        // Determine dynamic driver waiting time
+        $rawWaitingTime = \App\Models\AppSetting::get('driver_waiting_time');
+        
+        $waitingTimeMinutes = 3;
+        if ($rawWaitingTime !== null && is_numeric($rawWaitingTime)) {
+            $parsedTime = (int) $rawWaitingTime;
+            if ($parsedTime > 0) {
+                $waitingTimeMinutes = $parsedTime;
+            }
+        }
+
+        $expiresAt = now()->addMinutes($waitingTimeMinutes);
+
+        Log::info('Driver waiting time resolved', [
+            'booking_id' => $booking->id,
+            'waiting_time_minutes' => $waitingTimeMinutes,
+        ]);
+
+        Log::info('Booking response expires at', [
+            'booking_id' => $booking->id,
+            'expires_at' => $expiresAt->toDateTimeString(),
+        ]);
+
+        Log::info(sprintf(
+            "Booking dispatch waiting time resolved\nbooking_id: %d\nwaiting_time_minutes: %d\nexpireset: %s",
+            $booking->id,
+            $waitingTimeMinutes,
+            $expiresAt->toDateTimeString()
+        ));
+
+        $booking->update([
+            'driver_response_expires_at' => $expiresAt,
+        ]);
+
+        // Dispatch delayed job for expiry
+        \App\Jobs\ExpireDriverBookingRequest::dispatch($booking->id)->delay($expiresAt);
 
         $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
@@ -143,6 +186,12 @@ class SocketDispatchService
                 ->toArray();
 
             if (!empty($fcmTokens)) {
+                Log::info('FCM dispatch attempted', [
+                    'booking_id' => $booking->id,
+                    'driver_ids' => $targetDriverIds,
+                    'token_count' => count($fcmTokens),
+                ]);
+
                 $fcmService = app(\App\Services\FcmNotificationService::class);
                 $title = 'New Ride Request';
                 $body = 'Tap to view and accept the ride request from ' . ($booking->user?->name ?? 'a rider');

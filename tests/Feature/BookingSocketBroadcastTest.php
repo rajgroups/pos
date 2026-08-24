@@ -152,6 +152,7 @@ class BookingSocketBroadcastTest extends TestCase
             'license_number' => 'DL-99999999999',
             'status' => 'active',
             'is_verified' => true,
+            'is_online' => 1,
         ]);
 
         $vehicle = Vehicle::create([

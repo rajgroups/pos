@@ -137,6 +137,7 @@ class BookingService
             'driver_id' => null,
             'vehicle_id' => null,
             'start_otp' => (string) random_int(100000, 999999),
+            'driver_response_expires_at' => null,
             'accepted_at' => null,
             'started_at' => null,
             'completed_at' => null,
@@ -285,6 +286,11 @@ class BookingService
                     'vehicle_id'  => $vehicleId,
                     'status'      => Booking::STATUS_ACCEPTED,
                     'accepted_at' => now(),
+                ]);
+
+                \Illuminate\Support\Facades\Log::info('Driver accepted booking', [
+                    'booking_id' => $booking->id,
+                    'driver_id' => $driverId,
                 ]);
 
                 return $booking->fresh()->load([
@@ -517,7 +523,7 @@ class BookingService
         return $requestedMode;
     }
 
-    protected function broadcastBookingUpdate(Booking $booking): void
+    public function broadcastBookingUpdate(Booking $booking): void
     {
         event(new BookingStatusUpdated($booking));
 

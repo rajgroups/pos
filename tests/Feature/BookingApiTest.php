@@ -18,12 +18,15 @@ class BookingApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected string $socketUrl;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
         Http::fake([
-            'http://127.0.0.1:9502/*' => Http::response('success', 200),
+            $this->socketUrl . '/*' => Http::response('success', 200),
         ]);
 
         Redis::shouldReceive('set')->byDefault()->andReturnTrue();
@@ -118,6 +121,7 @@ class BookingApiTest extends TestCase
             'license_number' => 'DL-99999999999',
             'status' => 'active',
             'is_verified' => true,
+            'is_online' => 1,
         ]);
 
         $vehicle = Vehicle::create([
@@ -398,6 +402,7 @@ class BookingApiTest extends TestCase
             'driver_type' => 'car',
             'status' => 'active',
             'is_verified' => true,
+            'is_online' => 1,
         ]);
 
         $autoDriver = Driver::create([
@@ -407,6 +412,7 @@ class BookingApiTest extends TestCase
             'driver_type' => 'auto',
             'status' => 'active',
             'is_verified' => true,
+            'is_online' => 1,
         ]);
 
         Vehicle::create([
@@ -443,7 +449,7 @@ class BookingApiTest extends TestCase
         ]);
 
         Http::fake([
-            'http://127.0.0.1:9502/*' => Http::response(['status' => 'success'], 200),
+            $this->socketUrl . '/*' => Http::response(['status' => 'success'], 200),
         ]);
 
         app(\App\Services\Socket\SocketDispatchService::class)->dispatchBooking($booking);
@@ -484,6 +490,7 @@ class BookingApiTest extends TestCase
             'driver_type' => 'auto',
             'status' => 'active',
             'is_verified' => true,
+            'is_online' => 1,
         ]);
         Vehicle::create([
             'driver_id' => $driver->id,
@@ -512,7 +519,7 @@ class BookingApiTest extends TestCase
         ]);
 
         Http::fake([
-            'http://127.0.0.1:9502/*' => Http::response(['status' => 'success'], 200),
+            $this->socketUrl . '/*' => Http::response(['status' => 'success'], 200),
         ]);
 
         Sanctum::actingAs($user);
