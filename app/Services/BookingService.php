@@ -126,7 +126,7 @@ class BookingService
 
     public function retryBooking(Booking $booking): Booking
     {
-        if (in_array($booking->status, Booking::TERMINAL_STATUSES, true)) {
+        if (in_array($booking->status, [Booking::STATUS_COMPLETED, Booking::STATUS_CANCELLED], true)) {
             throw ValidationException::withMessages([
                 'booking_no' => 'This booking can no longer be retried.',
             ]);
@@ -600,22 +600,35 @@ class BookingService
             ->whereKey($vehicleCategoryId)
             ->with([
                 'children.children',
-                'parent',
+                'parent.children',
             ])
-            ->firstOrFail();
+            ->first();
 
-        $ids = $this->collectCategoryIds($category);
+        if (! $category) {
+            return [$vehicleCategoryId];
+        }
+
+        $ids = [$category->id];
 
         if ($category->parent_id) {
             $ids[] = (int) $category->parent_id;
+            if ($category->parent) {
+                foreach ($category->parent->children ?? [] as $sibling) {
+                    $ids[] = (int) $sibling->id;
+                }
+            }
         }
 
-        return array_values(array_unique($ids));
+        foreach ($category->children ?? [] as $child) {
+            $ids = array_merge($ids, $this->collectCategoryIds($child));
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
     }
 
     protected function collectCategoryIds(VehicleCategory $category): array
     {
-        $ids = [$category->id];
+        $ids = [(int) $category->id];
 
         foreach ($category->children ?? [] as $child) {
             $ids = array_merge($ids, $this->collectCategoryIds($child));

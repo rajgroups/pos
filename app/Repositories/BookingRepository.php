@@ -349,7 +349,8 @@ class BookingRepository
             ->where('status', Booking::STATUS_COMPLETED)
             ->sum(DB::raw('COALESCE(NULLIF(final_amount, 0), estimated_amount)'));
 
-        $avgRating = 4.9; // Default fallback rating if rating system is not present
+        $avgRating = \App\Models\Review::where('driver_id', $driverId)->avg('rating');
+        $avgRating = $avgRating ? round((float) $avgRating, 2) : 4.9;
 
         return [
             'total_rides' => $totalRides,

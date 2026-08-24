@@ -36,6 +36,12 @@ class VehicleService
                         'back' => $vehicle->back_image,
                         'side' => $vehicle->side_image,
                     ]),
+                    'category_icon' => $vehicle->vehicleType?->icon
+                        ? asset('storage/' . ltrim($vehicle->vehicleType->icon, '/'))
+                        : null,
+                    'category_image' => $vehicle->vehicleType?->image
+                        ? asset('storage/' . ltrim($vehicle->vehicleType->image, '/'))
+                        : null,
                     'location' => $vehicle->location ? [
                         'latitude' => (float) $vehicle->location->latitude,
                         'longitude' => (float) $vehicle->location->longitude,

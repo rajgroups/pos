@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\User\UserAuthController;
 use App\Http\Controllers\Api\User\BookingController;
 use App\Http\Controllers\Api\User\HelpController;
 use App\Http\Controllers\Api\User\ProfileController;
+use App\Http\Controllers\Api\User\ReviewController;
 use App\Http\Controllers\Api\User\SosController;
 use App\Http\Controllers\Api\User\VehicleCategoryController;
 use App\Http\Controllers\Api\User\VehicleController;
@@ -52,6 +53,10 @@ Route::name('api.user.')->group(function () {
             // SOS routes
             Route::post('/{booking}/sos', [SosController::class, 'store'])->name('sos.store');
             Route::get('/{booking}/sos', [SosController::class, 'index'])->name('sos.index');
+
+            // Review routes
+            Route::post('/{booking}/review', [ReviewController::class, 'store'])->name('review.store');
+            Route::get('/{booking}/review', [ReviewController::class, 'show'])->name('review.show');
         });
     });
 });

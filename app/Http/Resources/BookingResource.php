@@ -80,6 +80,9 @@ class BookingResource extends JsonResource
             'fare' => $this->relationLoaded('fare')
                 ? new BookingFareResource($this->fare)
                 : null,
+            'user_review' => $this->relationLoaded('userReview') && $this->userReview
+                ? new ReviewResource($this->userReview)
+                : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

@@ -22,7 +22,13 @@ class VehicleCategoryResource extends JsonResource
             'price_label' => $this->price_label,
             'eta' => $this->eta,
             'image' => $this->image,
+            'image_url' => $this->image
+                ? asset('storage/' . ltrim($this->image, '/'))
+                : null,
             'icon' => $this->icon,
+            'icon_url' => $this->icon && str_contains($this->icon, '/')
+                ? asset('storage/' . ltrim($this->icon, '/'))
+                : null,
             'accent_color' => $this->accent_color,
             'gradient_start' => $this->gradient_start,
             'gradient_end' => $this->gradient_end,

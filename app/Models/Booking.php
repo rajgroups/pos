@@ -163,6 +163,16 @@ class Booking extends Model
         return $this->hasOne(BookingFare::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function userReview(): HasOne
+    {
+        return $this->hasOne(Review::class)->where('reviewed_by', 'user');
+    }
+
     public function sosAlerts(): HasMany
     {
         return $this->hasMany(SosAlert::class)->latest();

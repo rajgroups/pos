@@ -78,4 +78,15 @@ class Driver extends Authenticatable
     {
         return $this->hasMany(WalletRechargeRequest::class);
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function getAverageRatingAttribute(): float
+    {
+        $avg = $this->reviews()->avg('rating');
+        return $avg ? round((float) $avg, 2) : 4.9;
+    }
 }

@@ -459,4 +459,72 @@ class BookingApiTest extends TestCase
                 && ! in_array($carDriver->id, $driverIds, true);
         });
     }
+
+    public function test_retry_booking_succeeds_when_no_driver_available(): void
+    {
+        $category = \App\Models\VehicleCategory::create([
+            'name' => 'Retry Auto',
+            'slug' => 'retry-auto',
+            'type_key' => 'auto',
+            'service_mode' => 'instant',
+            'is_active' => true,
+        ]);
+
+        \App\Models\VehicleCategoryPricing::create([
+            'vehicle_category_id' => $category->id,
+            'pricing_type' => 'distance',
+            'base_fare' => 30,
+            'per_km_rate' => 10,
+        ]);
+
+        $driver = Driver::create([
+            'name' => 'Retry Driver',
+            'phone' => '9000000333',
+            'license_number' => 'DL-33333',
+            'driver_type' => 'auto',
+            'status' => 'active',
+            'is_verified' => true,
+        ]);
+        Vehicle::create([
+            'driver_id' => $driver->id,
+            'vehicle_category_id' => $category->id,
+            'vehicle_number' => 'TN01RETRY',
+            'status' => 'active',
+        ]);
+
+        $user = User::factory()->create();
+
+        $booking = Booking::create([
+            'booking_no' => (string) \Illuminate\Support\Str::ulid(),
+            'user_id' => $user->id,
+            'vehicle_category_id' => $category->id,
+            'service_mode' => 'instant',
+            'status' => Booking::STATUS_NO_DRIVER_AVAILABLE,
+            'estimated_amount' => 60,
+        ]);
+
+        \App\Models\BookingLocation::create([
+            'booking_id' => $booking->id,
+            'location_type' => 'pickup',
+            'latitude' => 13.0464,
+            'longitude' => 80.1154,
+            'sequence' => 1,
+        ]);
+
+        Http::fake([
+            'http://127.0.0.1:9502/*' => Http::response(['status' => 'success'], 200),
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson("/api/user/bookings/{$booking->booking_no}/retry");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'pending');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => 'pending',
+        ]);
+    }
 }

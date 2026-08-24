@@ -190,7 +190,7 @@ class BookingController extends Controller
 
     public function retry(Booking $booking): JsonResponse
     {
-        if ($booking->booking_mode !== 'instant') {
+        if ($booking->service_mode !== 'instant') {
             return ApiResponseHelper::error('Only instant bookings can be retried.', null, 400);
         }
 

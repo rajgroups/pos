@@ -62,20 +62,21 @@ class SocketDispatchService
             ->where('status', 'active')
             ->whereNotNull('driver_id')
             ->whereHas('driver', function ($query) {
-                $query->where('status', 'active');
+                $query->where('status', 'active')
+                    ->where('is_online', 1);
             })
             ->pluck('driver_id')
             ->unique()
             ->values()
             ->toArray();
 
-        Log::info('Eligible drivers', [
+        Log::info('Eligible online drivers', [
             'driver_ids' => $eligibleDriverIds,
             'count' => count($eligibleDriverIds),
         ]);
 
         if (empty($eligibleDriverIds)) {
-            Log::warning('Dispatch aborted: No eligible drivers found', [
+            Log::warning('Dispatch aborted: No eligible online drivers found', [
                 'booking_id' => $booking->id,
                 'vehicle_category_id' => $booking->vehicle_category_id,
             ]);
@@ -129,11 +130,13 @@ class SocketDispatchService
             ]);
         }
 
-        // Send FCM Push Notification to eligible drivers alongside WebSockets
+        // Send FCM Push Notification ONLY to eligible online drivers alongside WebSockets
         try {
             $targetDriverIds = $booking->driver_id ? [$booking->driver_id] : $eligibleDriverIds;
             $fcmTokens = \App\Models\Driver::query()
                 ->whereIn('id', $targetDriverIds)
+                ->where('status', 'active')
+                ->where('is_online', 1)
                 ->whereNotNull('fcm_token')
                 ->where('fcm_token', '!=', '')
                 ->pluck('fcm_token')
