@@ -33,6 +33,14 @@ class BookingService
         $activeBooking = Booking::query()
             ->where('user_id', $payload['user_id'])
             ->whereNotIn('status', Booking::TERMINAL_STATUSES)
+            ->where(function ($query) {
+                $query->where('service_mode', '!=', 'scheduled')
+                    ->orWhere('status', '!=', Booking::STATUS_SCHEDULED)
+                    ->orWhere(function ($q) {
+                        $q->where('service_mode', 'scheduled')
+                          ->where('scheduled_at', '<=', now());
+                    });
+            })
             ->first();
 
         if ($activeBooking) {
@@ -71,7 +79,7 @@ class BookingService
             $startOtp = (string) random_int(100000, 999999);
             $fare = $this->calculateFare($category, Arr::get($payload, 'usage', []));
             $initialStatus = $serviceMode === 'scheduled'
-                ? Booking::STATUS_REQUESTED
+                ? Booking::STATUS_SCHEDULED
                 : Booking::STATUS_PENDING;
 
             $booking = Booking::create([
@@ -251,7 +259,7 @@ class BookingService
                     ->first();
 
                 $validAcceptStates = $booking->service_mode === 'scheduled'
-                    ? [Booking::STATUS_REQUESTED, Booking::STATUS_SCHEDULED]
+                    ? [Booking::STATUS_PENDING, Booking::STATUS_REQUESTED, Booking::STATUS_SCHEDULED]
                     : [Booking::STATUS_PENDING];
 
                 if (! in_array($booking->status, $validAcceptStates, true)) {

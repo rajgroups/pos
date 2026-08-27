@@ -192,6 +192,31 @@ class UserAuthController extends Controller
     }
 
     /**
+     * Update user device token for FCM push notifications.
+     */
+    public function updateFcmToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return ApiResponseHelper::error('User not authenticated.', null, 401);
+        }
+
+        $fcmToken = $request->input('fcm_token') ?? $request->input('device_token');
+
+        if (empty($fcmToken)) {
+            return ApiResponseHelper::error('FCM token is required.', null, 422);
+        }
+
+        $user->update(['device_token' => $fcmToken]);
+
+        return ApiResponseHelper::success('Device FCM token updated successfully.', [
+            'user_id' => $user->id,
+            'device_token' => $user->device_token,
+        ]);
+    }
+
+    /**
      * Logout user and revoke Sanctum access token.
      *
      * @param \Illuminate\Http\Request $request

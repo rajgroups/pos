@@ -2,45 +2,51 @@
 
 namespace Tests\Feature;
 
+use App\Models\Driver;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ApiLoginRoutesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_user_login_route_is_registered(): void
     {
-        $response = $this->postJson('/api/user/login', [
-            'email' => 'user@example.com',
-            'password' => 'secret123',
+        $user = User::factory()->create([
+            'mobile' => '9876543210',
+        ]);
+
+        $response = $this->postJson('/api/user/send-otp', [
+            'mobile' => '9876543210',
         ]);
 
         $response
             ->assertOk()
-            ->assertJson([
-                'status' => true,
-                'message' => 'User login route is working.',
-                'data' => [
-                    'login_type' => 'user',
-                    'identifier' => 'user@example.com',
-                ],
-            ]);
+            ->assertJsonPath('status', 'success');
     }
 
     public function test_driver_login_route_is_registered(): void
     {
-        $response = $this->postJson('/api/driver/login', [
+        $driver = Driver::create([
+            'name' => 'Test Driver OTP',
             'phone' => '9999999999',
-            'password' => 'secret123',
+            'email' => 'driver_otp@example.com',
+            'city' => 'Chennai',
+            'state' => 'Tamil Nadu',
+            'driver_type' => 'car',
+            'license_categories' => ['LMV'],
+            'license_number' => 'DL-99999999999',
+            'status' => 'active',
+            'is_verified' => true,
+        ]);
+
+        $response = $this->postJson('/api/driver/send-otp', [
+            'mobile' => '9999999999',
         ]);
 
         $response
             ->assertOk()
-            ->assertJson([
-                'status' => true,
-                'message' => 'Driver login route is working.',
-                'data' => [
-                    'login_type' => 'driver',
-                    'identifier' => '9999999999',
-                ],
-            ]);
+            ->assertJsonPath('status', 'success');
     }
 }

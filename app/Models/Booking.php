@@ -79,6 +79,9 @@ class Booking extends Model
         'vehicle_category_id',
         'service_mode',
         'scheduled_at',
+        'scheduled_processed_at',
+        'scheduled_notification_sent_at',
+        'driver_search_started_at',
         'duration_hours',
         'start_otp',
         'otp_verified_at',
@@ -97,6 +100,9 @@ class Booking extends Model
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'scheduled_processed_at' => 'datetime',
+        'scheduled_notification_sent_at' => 'datetime',
+        'driver_search_started_at' => 'datetime',
         'duration_hours' => 'decimal:2',
         'otp_verified_at' => 'datetime',
         'driver_response_expires_at' => 'datetime',

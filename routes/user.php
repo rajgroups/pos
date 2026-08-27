@@ -33,6 +33,7 @@ Route::name('api.user.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [UserAuthController::class, 'logout'])->name('logout');
+        Route::post('/fcm-token', [UserAuthController::class, 'updateFcmToken'])->name('updateFcmToken');
         Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.updatePost');

@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\Cache;
 
 include(base_path('routes/admin.php'));
 
+Route::get('/', function () {
+    return response()->json(['name' => config('app.name'), 'status' => 'online']);
+});
+
 Route::get('/all-clear', function () {
     Artisan::call('cache:clear');
     Artisan::call('route:clear');

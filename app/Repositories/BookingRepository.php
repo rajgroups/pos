@@ -36,6 +36,14 @@ class BookingRepository
     {
         return $this->model->where('user_id', $userId)
             ->whereNotIn('status', Booking::TERMINAL_STATUSES)
+            ->where(function ($query) {
+                $query->where('service_mode', '!=', 'scheduled')
+                    ->orWhere('status', '!=', Booking::STATUS_SCHEDULED)
+                    ->orWhere(function ($q) {
+                        $q->where('service_mode', 'scheduled')
+                          ->where('scheduled_at', '<=', now());
+                    });
+            })
             ->latest()
             ->first();
     }
