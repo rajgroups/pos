@@ -4,12 +4,14 @@ use App\Http\Controllers\Api\AppUpdateController;
 use App\Http\Controllers\Api\Driver\BookingController;
 use App\Http\Controllers\Api\Driver\DriverAuthController;
 use App\Http\Controllers\Api\Driver\WalletController;
+use App\Http\Controllers\Api\EnquiryController;
 use Illuminate\Support\Facades\Route;
 
 Route::name('api.driver.')->group(function () {
     Route::post('/send-otp', [DriverAuthController::class, 'sendOtp'])->name('sendOtp');
     Route::post('/verify-otp', [DriverAuthController::class, 'verifyOtp'])->name('verifyOtp');
     Route::get('/check-update', [AppUpdateController::class, 'checkDriverApp'])->name('checkUpdate');
+    Route::post('/partner-enquiry', [EnquiryController::class, 'store'])->name('partnerEnquiry');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/fcm-token', [DriverAuthController::class, 'updateFcmToken'])->name('updateFcmToken');

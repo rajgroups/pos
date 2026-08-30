@@ -42,7 +42,9 @@ return [
         'not_found' => 'Record not found',
         'user_found' => 'User found',
         'no_user_found' => 'No user found with this mobile number',
-        'otp_sent' => 'OTP sent successfully.'
+        'otp_sent' => 'OTP sent successfully.',
+        'login_success' => 'Login successful.',
+        'invalid_otp' => 'Invalid OTP. Please try again.',
     ],
 
     // -------------------------------------------------

@@ -51,14 +51,14 @@ class UserAuthController extends Controller
             $request->mobile
         );
 
-        // Return error if user does not exist
-        if (empty($userExist)) {
+        $isNewUser = false;
 
-            return ApiResponseHelper::error(
-                __('string.common.no_user_found'),
-                [],
-                404
-            );
+        // Auto-register if user does not exist (mobile-only registration)
+        if (empty($userExist)) {
+            $userExist = $userService->createUser([
+                'mobile' => $request->mobile,
+            ]);
+            $isNewUser = true;
         }
 
         // Generate 4 digit OTP
@@ -82,7 +82,9 @@ class UserAuthController extends Controller
             \Log::error("Failed to send OTP SMS to user {$request->mobile}: " . $e->getMessage());
         }
 
-        $responseData = [];
+        $responseData = [
+            'is_new_user' => $isNewUser,
+        ];
         if (config('services.sms_gateway.debug_return_otp', true)) {
             $responseData['otp'] = $otp;
         }

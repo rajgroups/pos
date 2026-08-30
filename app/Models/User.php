@@ -39,6 +39,7 @@ class User extends Authenticatable
         'emergency_contact_mobile',
         'emergency_contact_relation',
         'wallet_balance',
+        'device_token',
     ];
 
     /**
