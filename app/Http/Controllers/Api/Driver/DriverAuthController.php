@@ -51,12 +51,15 @@ class DriverAuthController extends Controller
         try {
             $otp = $this->driverService->sendLoginOtp($request->mobile);
 
-            // Return success response with OTP
+            $responseData = [];
+            if (config('services.sms_gateway.debug_return_otp', true)) {
+                $responseData['otp'] = $otp;
+            }
+
+            // Return success response with optional OTP
             return ApiResponseHelper::success(
                 __('string.common.driver_found'),
-                [
-                    'otp' => $otp
-                ],
+                $responseData,
                 200
             );
         } catch (ModelNotFoundException $e) {

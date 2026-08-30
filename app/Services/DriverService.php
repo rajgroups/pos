@@ -61,6 +61,13 @@ class DriverService
 
         $this->updateDriver($driver->id, ['otp' => $otp]);
 
+        try {
+            $smsService = app(\App\Interfaces\SmsServiceInterface::class);
+            $smsService->send($mobile, "Your Indicab verification OTP is {$otp}.");
+        } catch (\Exception $e) {
+            \Log::error("Failed to send OTP SMS to driver {$mobile}: " . $e->getMessage());
+        }
+
         return $otp;
     }
 

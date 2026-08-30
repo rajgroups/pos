@@ -9,6 +9,7 @@ use App\Helpers\ResponseHelper;
 use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
 use App\Services\UserService;
+use App\Interfaces\SmsServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -73,12 +74,23 @@ class UserAuthController extends Controller
             ]
         );
 
-        // Return success response with OTP
+        // Send OTP SMS
+        try {
+            $smsService = app(SmsServiceInterface::class);
+            $smsService->send($request->mobile, "Your Indicab verification OTP is {$otp}.");
+        } catch (\Exception $e) {
+            \Log::error("Failed to send OTP SMS to user {$request->mobile}: " . $e->getMessage());
+        }
+
+        $responseData = [];
+        if (config('services.sms_gateway.debug_return_otp', true)) {
+            $responseData['otp'] = $otp;
+        }
+
+        // Return success response with optional OTP
         return ApiResponseHelper::success(
             __('string.common.user_found'),
-            [
-                'otp' => $otp
-            ],
+            $responseData,
             200
         );
     }

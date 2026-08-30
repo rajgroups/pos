@@ -40,4 +40,10 @@ return [
         'service_account_file' => env('FCM_SERVICE_ACCOUNT_FILE', storage_path('app/firebase/firebase-service-account.json')),
     ],
 
+    'sms_gateway' => [
+        'registration_token' => env('SMS_GATEWAY_REGISTRATION_TOKEN'),
+        'timeout_minutes' => env('SMS_GATEWAY_TIMEOUT', 10),
+        'debug_return_otp' => env('SMS_GATEWAY_DEBUG_RETURN_OTP', true),
+    ],
+
 ];
