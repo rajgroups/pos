@@ -62,6 +62,19 @@ class BookingService
                 ]);
             }
 
+            if ((bool) $category->drop_location_required) {
+                $locations = $payload['locations'] ?? [];
+                $hasDropLocation = collect($locations)->contains(function ($location) {
+                    return ($location['location_type'] ?? '') === 'drop';
+                });
+
+                if (! $hasDropLocation) {
+                    throw ValidationException::withMessages([
+                        'locations' => 'Drop location is required for this vehicle category.',
+                    ]);
+                }
+            }
+
             $serviceMode = $this->resolveServiceMode($category, $payload);
 
             if ($serviceMode === 'scheduled' && empty($payload['scheduled_at'])) {

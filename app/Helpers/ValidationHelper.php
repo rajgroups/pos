@@ -306,7 +306,32 @@ class ValidationHelper
             'locations.*.address.required' => 'An address is required for all locations.',
         ];
 
-        return self::validate($data, $rules, $messages);
+        $validation = self::validate($data, $rules, $messages);
+        if ($validation[KeywordHelper::STATUS] === KeywordHelper::ERROR) {
+            return $validation;
+        }
+
+        if (! empty($data['vehicle_category_id'])) {
+            $category = \App\Models\VehicleCategory::find($data['vehicle_category_id']);
+            if ($category && (bool) $category->drop_location_required) {
+                $locations = $data['locations'] ?? [];
+                $hasDropLocation = collect($locations)->contains(function ($location) {
+                    return ($location['location_type'] ?? '') === 'drop';
+                });
+
+                if (! $hasDropLocation) {
+                    return [
+                        KeywordHelper::STATUS  => KeywordHelper::ERROR,
+                        KeywordHelper::MESSAGE => 'Drop location is required for this vehicle category.',
+                        KeywordHelper::ERRORS  => [
+                            'locations' => ['Drop location is required for this vehicle category.'],
+                        ],
+                    ];
+                }
+            }
+        }
+
+        return $validation;
     }
 
     public static function ValidateAcceptBooking(array $data)

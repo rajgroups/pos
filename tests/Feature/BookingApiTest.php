@@ -534,4 +534,235 @@ class BookingApiTest extends TestCase
             'status' => 'pending',
         ]);
     }
+
+    public function test_category_drop_location_required_true_with_drop_succeeds(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $category = VehicleType::create([
+            'type_key' => 'cab',
+            'name' => 'Cab Drop Required',
+            'slug' => 'cab-drop-req',
+            'description' => 'Cab requiring drop',
+            'tagline' => 'City rides',
+            'starting_fare' => 'From Rs 50',
+            'icon' => 'local_taxi_rounded',
+            'accent_color' => '#0F766E',
+            'gradient_start' => '#F0FDFA',
+            'gradient_end' => '#CCFBF1',
+            'sort_order' => 1,
+            'is_active' => true,
+            'drop_location_required' => true,
+        ]);
+
+        VehicleCategoryPricing::create([
+            'vehicle_category_id' => $category->id,
+            'pricing_type' => 'distance',
+            'base_fare' => 50,
+            'per_km_rate' => 10,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/user/bookings', [
+            'vehicle_category_id' => $category->id,
+            'booking_mode' => 'instant',
+            'payment_method' => 'cash',
+            'locations' => [
+                [
+                    'location_type' => 'pickup',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'address' => 'Chennai Central',
+                    'sequence' => 1,
+                ],
+                [
+                    'location_type' => 'drop',
+                    'latitude' => 12.9815,
+                    'longitude' => 80.2180,
+                    'address' => 'Guindy',
+                    'sequence' => 2,
+                ],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('status', 'success');
+    }
+
+    public function test_category_drop_location_required_true_without_drop_fails_validation(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $category = VehicleType::create([
+            'type_key' => 'cab',
+            'name' => 'Cab Drop Required 2',
+            'slug' => 'cab-drop-req-2',
+            'description' => 'Cab requiring drop',
+            'tagline' => 'City rides',
+            'starting_fare' => 'From Rs 50',
+            'icon' => 'local_taxi_rounded',
+            'accent_color' => '#0F766E',
+            'gradient_start' => '#F0FDFA',
+            'gradient_end' => '#CCFBF1',
+            'sort_order' => 2,
+            'is_active' => true,
+            'drop_location_required' => true,
+        ]);
+
+        VehicleCategoryPricing::create([
+            'vehicle_category_id' => $category->id,
+            'pricing_type' => 'distance',
+            'base_fare' => 50,
+            'per_km_rate' => 10,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/user/bookings', [
+            'vehicle_category_id' => $category->id,
+            'booking_mode' => 'instant',
+            'payment_method' => 'cash',
+            'locations' => [
+                [
+                    'location_type' => 'pickup',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'address' => 'Chennai Central',
+                    'sequence' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonPath('message', 'Drop location is required for this vehicle category.');
+    }
+
+    public function test_category_drop_location_required_false_without_drop_succeeds(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $category = VehicleType::create([
+            'type_key' => 'rental_hourly',
+            'name' => 'Hourly Rental',
+            'slug' => 'hourly-rental',
+            'description' => 'Rental without drop',
+            'tagline' => 'Flexible hours',
+            'starting_fare' => 'From Rs 200',
+            'icon' => 'schedule_rounded',
+            'accent_color' => '#0F766E',
+            'gradient_start' => '#F0FDFA',
+            'gradient_end' => '#CCFBF1',
+            'sort_order' => 3,
+            'is_active' => true,
+            'drop_location_required' => false,
+        ]);
+
+        VehicleCategoryPricing::create([
+            'vehicle_category_id' => $category->id,
+            'pricing_type' => 'hourly',
+            'base_fare' => 200,
+            'per_hour_rate' => 100,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/user/bookings', [
+            'vehicle_category_id' => $category->id,
+            'booking_mode' => 'instant',
+            'payment_method' => 'cash',
+            'locations' => [
+                [
+                    'location_type' => 'pickup',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'address' => 'Chennai Central',
+                    'sequence' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('status', 'success');
+    }
+
+    public function test_category_drop_location_required_false_with_drop_succeeds(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $category = VehicleType::create([
+            'type_key' => 'rental_hourly',
+            'name' => 'Hourly Rental Optional Drop',
+            'slug' => 'hourly-rental-opt',
+            'description' => 'Rental optional drop',
+            'tagline' => 'Flexible hours',
+            'starting_fare' => 'From Rs 200',
+            'icon' => 'schedule_rounded',
+            'accent_color' => '#0F766E',
+            'gradient_start' => '#F0FDFA',
+            'gradient_end' => '#CCFBF1',
+            'sort_order' => 4,
+            'is_active' => true,
+            'drop_location_required' => false,
+        ]);
+
+        VehicleCategoryPricing::create([
+            'vehicle_category_id' => $category->id,
+            'pricing_type' => 'hourly',
+            'base_fare' => 200,
+            'per_hour_rate' => 100,
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/user/bookings', [
+            'vehicle_category_id' => $category->id,
+            'booking_mode' => 'instant',
+            'payment_method' => 'cash',
+            'locations' => [
+                [
+                    'location_type' => 'pickup',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'address' => 'Chennai Central',
+                    'sequence' => 1,
+                ],
+                [
+                    'location_type' => 'drop',
+                    'latitude' => 12.9815,
+                    'longitude' => 80.2180,
+                    'address' => 'Guindy',
+                    'sequence' => 2,
+                ],
+            ],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('status', 'success');
+    }
+
+    public function test_invalid_vehicle_category_id_fails_validation(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/user/bookings', [
+            'vehicle_category_id' => 999999,
+            'booking_mode' => 'instant',
+            'payment_method' => 'cash',
+            'locations' => [
+                [
+                    'location_type' => 'pickup',
+                    'latitude' => 13.0827,
+                    'longitude' => 80.2707,
+                    'address' => 'Chennai Central',
+                    'sequence' => 1,
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('status', 'error');
+    }
 }

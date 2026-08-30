@@ -65,4 +65,20 @@ class BookingStoreRequest extends FormRequest
             'usage.weight_ton.numeric' => 'Weight must be numeric.',
         ];
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->filled('vehicle_category_id')) {
+                $category = \App\Models\VehicleCategory::find($this->input('vehicle_category_id'));
+                if ($category && (bool) $category->drop_location_required) {
+                    $locations = $this->input('locations', []);
+                    $hasDrop = collect($locations)->contains(fn ($l) => ($l['location_type'] ?? '') === 'drop');
+                    if (! $hasDrop) {
+                        $validator->errors()->add('locations', 'Drop location is required for this vehicle category.');
+                    }
+                }
+            }
+        });
+    }
 }

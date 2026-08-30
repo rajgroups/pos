@@ -35,6 +35,7 @@ class VehicleCategoryResource extends JsonResource
             'max_capacity' => $this->max_capacity,
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
+            'drop_location_required' => (bool) ($this->drop_location_required ?? true),
             'pricing' => new VehicleCategoryPricingResource($this->whenLoaded('pricing')),
             'children' => $this->relationLoaded('children')
                 ? VehicleCategoryResource::collection($this->children)

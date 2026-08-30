@@ -33,11 +33,13 @@ class VehicleCategory extends Model
         'max_capacity',
         'sort_order',
         'is_active',
+        'drop_location_required',
     ];
 
     protected $casts = [
         'service_mode' => 'string',
         'is_active' => 'boolean',
+        'drop_location_required' => 'boolean',
         'max_capacity' => 'integer',
         'sort_order' => 'integer',
     ];
