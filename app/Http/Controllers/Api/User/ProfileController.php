@@ -57,7 +57,14 @@ class ProfileController extends Controller
             return ApiResponseHelper::error('User not authenticated.', null, 401);
         }
 
-        $validator = Validator::make($request->all(), [
+        $input = $request->all();
+        foreach ($input as $key => $value) {
+            if ($value === '') {
+                $input[$key] = null;
+            }
+        }
+
+        $validator = Validator::make($input, [
             'name' => 'nullable|string|max:191',
             'first_name' => 'nullable|string|max:191',
             'last_name' => 'nullable|string|max:191',
@@ -77,7 +84,7 @@ class ProfileController extends Controller
             return ApiResponseHelper::error('Validation failed.', $validator->errors()->toArray(), 422);
         }
 
-        $data = array_filter($validator->validated(), fn ($val) => $val !== null);
+        $data = array_intersect_key($validator->validated(), $input);
 
         // If name is provided but first_name/last_name not provided, auto split
         if (isset($data['name']) && empty($data['first_name'])) {
@@ -111,5 +118,55 @@ class ProfileController extends Controller
             'rating' => 4.85,
             'updated_at' => $user->updated_at?->toIso8601String(),
         ]);
+    }
+
+    /**
+     * Request OTP to authorize account deletion.
+     */
+    public function requestDeleteOtp(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return ApiResponseHelper::error('User not authenticated.', null, 401);
+        }
+
+        // Generate 4 digit OTP (for testing, we can use 1234 or random)
+        $otp = (string) rand(1000, 9999);
+        $user->update(['otp' => $otp]);
+
+        return ApiResponseHelper::success('Account deletion OTP sent.', [
+            'otp' => $otp // Return OTP in response so frontend can easily read/pre-fill it
+        ]);
+    }
+
+    /**
+     * Confirm OTP and authorize account deletion via SoftDelete.
+     */
+    public function confirmDelete(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return ApiResponseHelper::error('User not authenticated.', null, 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|string|min:4|max:6',
+        ]);
+
+        if ($validator->fails()) {
+            return ApiResponseHelper::error('Validation failed.', $validator->errors()->toArray(), 422);
+        }
+
+        if ($user->otp !== $request->input('otp')) {
+            return ApiResponseHelper::error('Invalid OTP code. Please try again.', null, 400);
+        }
+
+        // Revoke tokens
+        $user->tokens()->delete();
+
+        // Perform Soft Delete
+        $user->delete();
+
+        return ApiResponseHelper::success('Your account has been deleted successfully.', null);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\User\SosController;
 use App\Http\Controllers\Api\User\VehicleCategoryController;
 use App\Http\Controllers\Api\User\VehicleController;
 use App\Http\Controllers\Api\User\VehicleTypeController;
+use App\Http\Controllers\Api\User\NearbyVehicleController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,11 +33,14 @@ Route::name('api.user.')->group(function () {
     Route::apiResource('users', UserController::class);
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/vehicles/nearby', [NearbyVehicleController::class, 'index'])->name('vehicles.nearby');
         Route::post('/logout', [UserAuthController::class, 'logout'])->name('logout');
         Route::post('/fcm-token', [UserAuthController::class, 'updateFcmToken'])->name('updateFcmToken');
         Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
         Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::post('/profile', [ProfileController::class, 'update'])->name('profile.updatePost');
+        Route::post('/delete-account/request-otp', [ProfileController::class, 'requestDeleteOtp'])->name('profile.delete.requestOtp');
+        Route::post('/delete-account/confirm', [ProfileController::class, 'confirmDelete'])->name('profile.delete.confirm');
 
         Route::get('/support/tickets', [HelpController::class, 'tickets'])->name('support.tickets');
         Route::post('/support/tickets', [HelpController::class, 'createTicket'])->name('support.createTicket');

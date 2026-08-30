@@ -41,7 +41,8 @@ return [
     'common' => [
         'not_found' => 'Record not found',
         'user_found' => 'User found',
-        'no_user_found' => 'No user found with this mobile number'
+        'no_user_found' => 'No user found with this mobile number',
+        'otp_sent' => 'OTP sent successfully.'
     ],
 
     // -------------------------------------------------

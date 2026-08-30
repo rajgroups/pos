@@ -89,7 +89,7 @@ class UserAuthController extends Controller
 
         // Return success response with optional OTP
         return ApiResponseHelper::success(
-            __('string.common.user_found'),
+            __('string.common.otp_sent'),
             $responseData,
             200
         );
