@@ -19,6 +19,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('v1/config', [\App\Http\Controllers\Api\ConfigController::class, 'index']);
+
 Route::prefix('v1/sms-gateway')->group(function () {
     Route::post('/register', [SmsGatewayController::class, 'register']);
 

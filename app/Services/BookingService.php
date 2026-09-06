@@ -554,22 +554,30 @@ class BookingService
             $bookingPayload['start_otp'] = $booking->start_otp;
         }
 
-        // Use an HTTP call to the Swoole server to broadcast the update.
-        $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
+        if (app(\App\Services\IndicabModeService::class)->isPrime()) {
+            // Use an HTTP call to the Swoole server to broadcast the update.
+            $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
-        $response = Http::asJson()->post($socketUrl . '/broadcast-booking-update', [
-            'type' => 'booking_status',
-            'booking' => $bookingPayload,
-        ]);
+            try {
+                $response = Http::asJson()->post($socketUrl . '/broadcast-booking-update', [
+                    'type' => 'booking_status',
+                    'booking' => $bookingPayload,
+                ]);
 
-        if (! $response->successful()) {
-            logger()->warning('Failed to broadcast booking update to socket server.', [
-                'booking_id' => $booking->id,
-                'booking_no' => $booking->booking_no,
-                'url' => $socketUrl . '/broadcast-booking-update',
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
+                if (! $response->successful()) {
+                    logger()->warning('Failed to broadcast booking update to socket server.', [
+                        'booking_id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'url' => $socketUrl . '/broadcast-booking-update',
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                logger()->warning('Socket server unavailable for broadcast', [
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
 
         // Send FCM Push Notification alongside existing socket broadcast

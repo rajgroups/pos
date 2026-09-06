@@ -131,46 +131,54 @@ class SocketDispatchService
         // Dispatch delayed job for expiry
         \App\Jobs\ExpireDriverBookingRequest::dispatch($booking->id)->delay($expiresAt);
 
-        $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
+        if (app(\App\Services\IndicabModeService::class)->isPrime()) {
+            $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
-        Log::info('Sending booking to socket server', [
-            'url' => $socketUrl . '/send_booking',
-        ]);
-
-        $payload = [
-            'latitude' => $pickup->latitude,
-            'longitude' => $pickup->longitude,
-            'radius' => 5,
-            'driver_ids' => $eligibleDriverIds,
-            'booking' => (new BookingResource($booking))->resolve(),
-        ];
-
-        Log::info('Socket request payload', $payload);
-
-        $response = Http::asJson()->post(
-            $socketUrl . '/send_booking',
-            $payload
-        );
-
-        Log::info('Socket server response', [
-            'status' => $response->status(),
-            'successful' => $response->successful(),
-            'body' => $response->body(),
-        ]);
-
-        if (! $response->successful()) {
-            Log::warning('Failed to dispatch booking request to socket server.', [
-                'booking_id' => $booking->id,
-                'booking_no' => $booking->booking_no,
+            Log::info('Sending booking to socket server', [
                 'url' => $socketUrl . '/send_booking',
-                'status' => $response->status(),
-                'body' => $response->body(),
             ]);
-        } else {
-            Log::info('Booking dispatched successfully to socket server', [
-                'booking_id' => $booking->id,
-                'booking_no' => $booking->booking_no,
-            ]);
+
+            $payload = [
+                'latitude' => $pickup->latitude,
+                'longitude' => $pickup->longitude,
+                'radius' => 5,
+                'driver_ids' => $eligibleDriverIds,
+                'booking' => (new BookingResource($booking))->resolve(),
+            ];
+
+            Log::info('Socket request payload', $payload);
+
+            try {
+                $response = Http::asJson()->post(
+                    $socketUrl . '/send_booking',
+                    $payload
+                );
+
+                Log::info('Socket server response', [
+                    'status' => $response->status(),
+                    'successful' => $response->successful(),
+                    'body' => $response->body(),
+                ]);
+
+                if (! $response->successful()) {
+                    Log::warning('Failed to dispatch booking request to socket server.', [
+                        'booking_id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                        'url' => $socketUrl . '/send_booking',
+                        'status' => $response->status(),
+                        'body' => $response->body(),
+                    ]);
+                } else {
+                    Log::info('Booking dispatched successfully to socket server', [
+                        'booking_id' => $booking->id,
+                        'booking_no' => $booking->booking_no,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Socket server unavailable for dispatch', [
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
 
         // Send FCM Push Notification ONLY to eligible online drivers alongside WebSockets

@@ -104,4 +104,8 @@ Route::prefix('admin')->name('admin.')->group(function(){
             Route::post('/{id}/resolve', [\App\Http\Controllers\Admin\SosAlertController::class, 'resolve'])->name('resolve');
         });
 
+        // For System Settings
+        Route::get('/settings/mode', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'mode'])->name('settings.mode');
+        Route::post('/settings/mode', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMode'])->name('settings.mode.update');
+
 });
