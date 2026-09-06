@@ -8,6 +8,7 @@ use App\Helpers\ValidationHelper;
 use App\Http\Controllers\Controller;
 use App\Services\CategoryService;
 use Illuminate\Http\Request;
+use App\Models\VehicleCategory;
 
 class CategoryController extends Controller
 {
@@ -18,15 +19,51 @@ class CategoryController extends Controller
         $this->service = $service;
     }
 
+    private function getCategoryOptions($excludeId = null)
+    {
+        $tree = VehicleCategory::whereNull('parent_id')->orWhere('parent_id', 0)->with('childrenRecursive')->orderBy('sort_order')->get();
+        return $this->buildCategoryOptions($tree, '', $excludeId);
+    }
+
+    private function buildCategoryOptions($categories, $prefix = '', $excludeId = null)
+    {
+        $options = [];
+        foreach ($categories as $category) {
+            if ($excludeId && $category->id == $excludeId) {
+                continue;
+            }
+            $options[$category->id] = $prefix . $category->name;
+            if ($category->childrenRecursive->isNotEmpty()) {
+                $options += $this->buildCategoryOptions($category->childrenRecursive, $prefix . '— ', $excludeId);
+            }
+        }
+        return $options;
+    }
+
+    private function buildCategoryTreeList($categories, $level = 0)
+    {
+        $list = collect();
+        foreach ($categories as $category) {
+            $category->level = $level;
+            $category->prefix = str_repeat('— ', $level);
+            $list->push($category);
+            if ($category->childrenRecursive->isNotEmpty()) {
+                $list = $list->merge($this->buildCategoryTreeList($category->childrenRecursive, $level + 1));
+            }
+        }
+        return $list;
+    }
+
     public function index()
     {
-        $categorys = $this->service->getAll();
-        return view('admin.category.list', compact('categorys'));
+        $treeCategories = VehicleCategory::whereNull('parent_id')->orWhere('parent_id', 0)->with('childrenRecursive')->orderBy('sort_order')->get();
+        $categorys = $this->buildCategoryTreeList($treeCategories);
+        return view('admin.category.list', compact('categorys', 'treeCategories'));
     }
 
     public function create()
     {
-        $categories = $this->service->getAll();
+        $categories = $this->getCategoryOptions();
         return view('admin.category.create', compact('categories'));
     }
 
@@ -41,7 +78,7 @@ class CategoryController extends Controller
             return back()->withInput(); // <-- This fixes old()
         }
 
-        $this->service->create($request->all());
+        $this->service->create($validate['data']);
 
         NotifyHelper::success('category.created_success'); // key-based success
         return back();
@@ -57,7 +94,7 @@ class CategoryController extends Controller
         }
 
         $category = $this->service->getById($id);
-        $categories = $this->service->getAll();
+        $categories = $this->getCategoryOptions($id);
 
         return view('admin.category.edit', compact('category', 'categories'));
     }

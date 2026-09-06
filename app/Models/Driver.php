@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -62,16 +62,9 @@ class Driver extends Authenticatable
         return $this->hasMany(DriverDocument::class);
     }
 
-    public function vehicleAssignments(): HasMany
+    public function vehicle(): HasOne
     {
-        return $this->hasMany(DriverVehicleAssignment::class);
-    }
-
-    public function vehicles(): BelongsToMany
-    {
-        return $this->belongsToMany(Vehicle::class, 'driver_vehicle_assignments')
-            ->withPivot(['assigned_from', 'assigned_to', 'is_current'])
-            ->withTimestamps();
+        return $this->hasOne(Vehicle::class, 'driver_id');
     }
 
     public function rechargeRequests(): HasMany

@@ -39,10 +39,24 @@ class ValidationHelper
     public static function validateCategory(array $data, $isUpdate = false, $id = null)
     {
         $rules = [
-            'name'      => 'required|unique:category,name' . ($isUpdate ? ',' . $id : ''),
-            'slug'      => 'required|unique:category,slug' . ($isUpdate ? ',' . $id : ''),
-            'status'    => 'required|in:0,1',
+            'name'      => 'required|unique:vehicle_categories,name' . ($isUpdate ? ',' . $id : ''),
+            'slug'      => 'required|unique:vehicle_categories,slug' . ($isUpdate ? ',' . $id : ''),
+            'is_active' => 'required|in:0,1',
             'parent_id' => 'nullable',
+
+            'type_key' => 'nullable|string|max:50',
+            'service_mode' => 'nullable|string|in:instant,scheduled,both',
+            'description' => 'nullable|string',
+            'tagline' => 'nullable|string|max:255',
+            'starting_fare' => 'nullable|string|max:100',
+            'price_label' => 'nullable|string|max:100',
+            'eta' => 'nullable|string|max:100',
+            'accent_color' => 'nullable|string|max:50',
+            'gradient_start' => 'nullable|string|max:50',
+            'gradient_end' => 'nullable|string|max:50',
+            'max_capacity' => 'nullable|integer|min:1',
+            'sort_order' => 'nullable|integer|min:0',
+            'drop_location_required' => 'boolean',
 
             'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'icon'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
@@ -58,7 +72,7 @@ class ValidationHelper
             'slug.unique'   => __('string.category.slug_unique'),
 
             // Status
-            'status.required' => __('string.category.status_required'),
+            'is_active.required' => __('string.category.status_required'),
 
             // Image messages
             'image.image'  => __('string.category.image_invalid'),
@@ -82,7 +96,7 @@ class ValidationHelper
     public static function validateCategoryExist($id)
     {
         $rules = [
-            'id' => 'required|exists:category,id',
+            'id' => 'required|exists:vehicle_categories,id',
         ];
 
         $messages = [
@@ -135,6 +149,51 @@ class ValidationHelper
         ];
 
         return self::validate($data, $rules ,$messages);
+    }
+
+    /**
+     * Document Type Validation
+     */
+    public static function validateDocumentType(array $data, $isUpdate = false, $id = null){
+
+        $rules = [
+            'name'        => 'required|unique:document_types,name'.($isUpdate ? ',' .$id : ''),
+            'slug'        => 'required|unique:document_types,slug'.($isUpdate ? ','.$id : ''),
+            'for_type'    => 'required|in:driver,vehicle,both',
+            'has_expiry'  => 'required|in:0,1',
+            'is_required' => 'required|in:0,1',
+            'is_active'   => 'required|in:0,1',
+        ];
+
+        $messages = [
+            'name.required'        => 'Document type name is required.',
+            'name.unique'          => 'Document type name must be unique.',
+            'slug.required'        => 'Slug is required.',
+            'slug.unique'          => 'Slug must be unique.',
+            'for_type.required'    => 'Target type (driver/vehicle/both) is required.',
+            'has_expiry.required'  => 'Expiry requirement flag is required.',
+            'is_required.required' => 'Mandatory flag is required.',
+            'is_active.required'   => 'Status flag is required.',
+        ];
+
+        return self::validate($data, $rules ,$messages);
+    }
+
+    /**
+     * CHECK DOCUMENT TYPE EXIST
+     */
+    public static function validateDocumentTypeExist($id)
+    {
+        $rules = [
+            'id' => 'required|exists:document_types,id',
+        ];
+
+        $messages = [
+            'id.required' => 'Document type ID is required.',
+            'id.exists'   => 'Document type not found.',
+        ];
+
+        return self::validate(['id' => $id], $rules, $messages);
     }
 
     /**

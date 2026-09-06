@@ -26,5 +26,17 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+
+        $this->renderable(function (\PDOException $e, $request) {
+            if (str_contains($e->getMessage(), 'SQLSTATE[HY000] [2002]')) {
+                return response()->view('errors.500', [], 500);
+            }
+        });
+
+        $this->renderable(function (\Illuminate\Database\QueryException $e, $request) {
+            if (str_contains($e->getMessage(), 'SQLSTATE[HY000] [2002]')) {
+                return response()->view('errors.500', [], 500);
+            }
+        });
     }
 }

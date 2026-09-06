@@ -5,8 +5,9 @@ namespace App\Repositories;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder;
+use App\Interfaces\VehicleInterface;
 
-class VehicleRepository
+class VehicleRepository implements VehicleInterface
 {
     public function getByFilters(array $filters = []): Collection
     {
@@ -69,5 +70,38 @@ class VehicleRepository
             ->select('vehicles.*')
             ->selectRaw("{$haversine} as distance", [$latitude, $longitude, $latitude])
             ->whereRaw("{$haversine} <= ?", [$latitude, $longitude, $latitude, $radius]);
+    }
+
+    public function all()
+    {
+        return Vehicle::latest()->paginate(10);
+    }
+
+    public function find($id)
+    {
+        return Vehicle::find($id);
+    }
+
+    public function create(array $data)
+    {
+        $vehicle = new Vehicle();
+        $vehicle->fill($data);
+        $vehicle->save();
+        return $vehicle;
+    }
+
+    public function update($id, array $data)
+    {
+        $vehicle = Vehicle::find($id);
+        if ($vehicle) {
+            $vehicle->fill($data);
+            return $vehicle->save();
+        }
+        return false;
+    }
+
+    public function delete($id)
+    {
+        return Vehicle::where('id', $id)->delete();
     }
 }

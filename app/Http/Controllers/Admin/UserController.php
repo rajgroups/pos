@@ -44,7 +44,16 @@ class UserController extends Controller
     public function show($id)
     {
         $user = $this->userService->getUserById($id);
-        return view('admin.user.show', compact('user'));
+        if (!$user) {
+            abort(404);
+        }
+        $bookings = \App\Models\Booking::where('user_id', $user->id)
+            ->with(['driver', 'category', 'pickupLocation', 'dropLocation'])
+            ->latest()
+            ->take(10)
+            ->get();
+            
+        return view('admin.user.show', compact('user', 'bookings'));
     }
 
     public function edit($id)

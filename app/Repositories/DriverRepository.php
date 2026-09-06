@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\Driver;
+use App\Interfaces\DriverInterface;
 
-class DriverRepository
+class DriverRepository implements DriverInterface
 {
     /**
      * Find driver by mobile number
@@ -24,7 +25,7 @@ class DriverRepository
      * @param array $data
      * @return bool
      */
-    public function update(int $id, array $data): bool
+    public function update($id, array $data)
     {
         $driver = Driver::find($id);
         if ($driver) {
@@ -34,7 +35,29 @@ class DriverRepository
 
             return $driver->save();
         }
-
         return false;
+    }
+
+    public function all()
+    {
+        return Driver::latest()->paginate(10);
+    }
+
+    public function find($id)
+    {
+        return Driver::find($id);
+    }
+
+    public function create(array $data)
+    {
+        $driver = new Driver();
+        $driver->fill($data);
+        $driver->save();
+        return $driver;
+    }
+
+    public function delete($id)
+    {
+        return Driver::where('id', $id)->delete();
     }
 }

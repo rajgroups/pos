@@ -73,277 +73,62 @@
     </div>
     <div class="sidebar-inner slimscroll">
         <div id="sidebar-menu" class="sidebar-menu">
+
             <ul>
                 <li class="submenu-open">
                     <h6 class="submenu-hdr">Main</h6>
                     <ul>
                         <li class="submenu">
-                            <a href="javascript:void(0);" class="subdrop active"><i class="ti ti-layout-grid fs-16 me-2"></i><span>Dashboard</span></a>
+                            <a href="{{ route('admin.home') }}" class="{{ Route::is('admin.home') ? 'active subdrop' : '' }}"><i class="ti ti-layout-grid fs-16 me-2"></i><span>Dashboard</span></a>
                         </li>
+                        <li class="submenu">
+                            <a href="javascript:void(0);" class="{{ Route::is('admin.ride.*') ? 'active subdrop' : '' }}"><i class="ti ti-car fs-16 me-2"></i><span>Bookings</span><span class="menu-arrow"></span></a>
+                            <ul>
+                                <li><a href="{{ route('admin.ride.upcoming') }}" class="{{ Route::is('admin.ride.upcoming') ? 'active' : '' }}">Upcoming Rides</a></li>
+                                <li><a href="{{ route('admin.ride.active') }}" class="{{ Route::is('admin.ride.active') ? 'active' : '' }}">Active Rides</a></li>
+                                <li><a href="{{ route('admin.ride.complete') }}" class="{{ Route::is('admin.ride.complete') ? 'active' : '' }}">Completed Rides</a></li>
+                                <li><a href="{{ route('admin.ride.cancelled') }}" class="{{ Route::is('admin.ride.cancelled') ? 'active' : '' }}">Cancelled Rides</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{{ route('admin.sos.index', ['status' => 'active']) }}" class="{{ Route::is('admin.sos.*') ? 'active text-danger fw-bold' : 'text-danger' }}"><i class="ti ti-alert-triangle fs-16 me-2"></i><span>Emergency (SOS)</span></a></li>
                     </ul>
                 </li>
-                 <li class="submenu-open">
-                    <h6 class="submenu-hdr">User managemnts</h6>
-                    <ul>
-                        <li><a href="{{ route('admin.users.index') }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Users</span></a></li>
-                        <li><a href="{{ route('admin.drivers.index') }}"><i class="ti ti-user-up fs-16 me-2"></i><span>Drivers</span></a></li>
-                        <li><a href="{{ route('admin.admin.index') }}"><i class="ti ti-user-dollar fs-16 me-2"></i><span>Admins</span></a></li>
-                        <li><a href="{{ route('admin.ride.active') }}"><i class="ti ti-home-bolt fs-16 me-2"></i><span>Ride</span></a></li>
-                        {{-- <li><a href="warehouse.html"><i class="ti ti-archive fs-16 me-2"></i><span>Warehouses</span></a> --}}
-                        </li>
-                    </ul>
-                </li>
+                
                 <li class="submenu-open">
-                    <h6 class="submenu-hdr">Peoples</h6>
+                    <h6 class="submenu-hdr">Masters</h6>
                     <ul>
-                        <li><a href="{{ route('admin.users.index') }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Customers</span></a></li>
-                        <li><a href="billers.html"><i class="ti ti-user-up fs-16 me-2"></i><span>Billers</span></a></li>
-                        <li><a href="suppliers.html"><i class="ti ti-user-dollar fs-16 me-2"></i><span>Suppliers</span></a></li>
-                        <li><a href="store-list.html"><i class="ti ti-home-bolt fs-16 me-2"></i><span>Stores</span></a></li>
-                        <li><a href="warehouse.html"><i class="ti ti-archive fs-16 me-2"></i><span>Warehouses</span></a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">Inventory</h6>
-
-                    <ul>
-
-                        {{-- <li><a href="category-list.html"><i class="ti ti-list-details fs-16 me-2"></i><span>Category</span></a></li>
-                        <li><a href="sub-categories.html"><i class="ti ti-carousel-vertical fs-16 me-2"></i><span>Sub Category</span></a></li>
-                        <li><a href="{{route('admin.brand.index')}}"><i class="ti ti-triangles fs-16 me-2"></i><span>Brands</span></a></li>
-                        <li><a href="{{route('admin.unit.index')}}"><i class="ti ti-brand-unity fs-16 me-2"></i><span>Units</span></a></li> --}}
-                         {{-- <li><a href="storage-settings.html"><i class="ti ti-certificate fs-16 me-2"></i><span>Storage</span></a></li> --}}
-                        {{-- <li><a href="{{route('admin.variant-attributes.index')}}"><i class="ti ti-checklist fs-16 me-2"></i><span>Variant Attributes</span></a></li>
-                        <li><a href="{{route('admin.warranty.index')}}"><i class="ti ti-certificate fs-16 me-2"></i><span>Warranties</span></a></li>
-                        <li><a href="{{route('admin.products.index')}}"><i data-feather="box"></i><span>Products</span></a></li>
-                        <li><a href="{{route('admin.products.create')}}"><i class="ti ti-table-plus fs-16 me-2"></i><span>Create Product</span></a></li> --}}
-
-                        {{-- <li><a href="barcode.html"><i class="ti ti-barcode fs-16 me-2"></i><span>Print Barcode</span></a></li> --}}
-                        <li><a href="qrcode.html"><i class="ti ti-qrcode fs-16 me-2"></i><span>Print QR Code</span></a></li>
+                        <li><a href="{{ route('admin.brand.index') }}" class="{{ Route::is('admin.brand.*') ? 'active' : '' }}"><i class="ti ti-tag fs-16 me-2"></i><span>Brands</span></a></li>
+                        <li><a href="{{ route('admin.category.index') }}" class="{{ Route::is('admin.category.*') ? 'active' : '' }}"><i class="ti ti-category fs-16 me-2"></i><span>Vehicle Types</span></a></li>
+                        <li><a href="{{ route('admin.document-types.index') }}" class="{{ Route::is('admin.document-types.*') ? 'active' : '' }}"><i class="ti ti-file-text fs-16 me-2"></i><span>Document Types</span></a></li>
+                        <li><a href="{{ route('admin.vehicle-pricing.index') }}" class="{{ Route::is('admin.vehicle-pricing.*') ? 'active' : '' }}"><i class="ti ti-coin fs-16 me-2"></i><span>Pricing</span></a></li>
                     </ul>
                 </li>
 
                 <li class="submenu-open">
-                    <h6 class="submenu-hdr">Sales</h6>
+                    <h6 class="submenu-hdr">Fleet</h6>
                     <ul>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-layout-grid fs-16 me-2"></i><span>Sales</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="online-orders.html">Online Orders</a></li>
-                                <li><a href="pos-orders.html">POS Orders</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="invoice.html"><i class="ti ti-file-invoice fs-16 me-2"></i><span>Invoices</span></a></li>
-                        <li><a href="sales-returns.html"><i class="ti ti-receipt-refund fs-16 me-2"></i><span>Sales Return</span></a></li>
-                        <li><a href="quotation-list.html"><i class="ti ti-files fs-16 me-2"></i><span>Quotation</span></a></li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-device-laptop fs-16 me-2"></i><span>POS</span></a>
-                            <ul>
-                                <li><a href="pos.html">POS </a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">Promo</h6>
-                    <ul>
-                        {{-- <li><a href="coupons.html"><i class="ti ti-ticket fs-16 me-2"></i><span>Coupons</span></a></li>
-                        <li><a href="gift-cards.html"><i class="ti ti-cards fs-16 me-2"></i><span>Gift Cards</span></a></li> --}}
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-file-percent fs-16 me-2"></i><span>Discount</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="discount-plan.html">Discount Plan</a></li>
-                                <li><a href="discount.html">Discount</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">Purchases</h6>
-                    <ul>
-                        <li><a href="purchase-list.html"><i class="ti ti-shopping-bag fs-16 me-2"></i><span>Purchases</span></a></li>
-                        <li><a href="purchase-order-report.html"><i class="ti ti-file-unknown fs-16 me-2"></i><span>Purchase Order</span></a></li>
-                        <li><a href="purchase-returns.html"><i class="ti ti-file-upload fs-16 me-2"></i><span>Purchase Return</span></a></li>
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">Finance & Accounts</h6>
-                    <ul>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-file-stack fs-16 me-2"></i><span>Expenses</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="expense-list.html">Expenses</a></li>
-                                <li><a href="expense-category.html">Expense Category</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-file-pencil fs-16 me-2"></i><span>Income</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="income.html">Income</a></li>
-                                <li><a href="income-category.html">Income Category</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="account-list.html"><i class="ti ti-building-bank fs-16 me-2"></i><span>Bank Accounts</span></a></li>
-                        <li><a href="money-transfer.html"><i class="ti ti-moneybag fs-16 me-2"></i><span>Money Transfer</span></a></li>
-                        <li><a href="balance-sheet.html"><i class="ti ti-report-money fs-16 me-2"></i><span>Balance Sheet</span></a></li>
-                        <li><a href="trial-balance.html"><i class="ti ti-alert-circle fs-16 me-2"></i><span>Trial Balance</span></a></li>
-                        <li><a href="cash-flow.html"><i class="ti ti-zoom-money fs-16 me-2"></i><span>Cash Flow</span></a></li>
-                        <li><a href="account-statement.html"><i class="ti ti-file-infinity fs-16 me-2"></i><span>Account Statement</span></a></li>
-
+                        <li><a href="{{ route('admin.vehicles.index') }}" class="{{ Route::is('admin.vehicles.*') ? 'active' : '' }}"><i class="ti ti-car fs-16 me-2"></i><span>Vehicles</span></a></li>
+                        <li><a href="{{ route('admin.vehicle-documents.index') }}" class="{{ Route::is('admin.vehicle-documents.*') ? 'active' : '' }}"><i class="ti ti-file-certificate fs-16 me-2"></i><span>Vehicle Documents</span></a></li>
                     </ul>
                 </li>
 
                 <li class="submenu-open">
-                    <h6 class="submenu-hdr">Reports</h6>
+                    <h6 class="submenu-hdr">Users</h6>
                     <ul>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-chart-bar fs-16 me-2"></i><span>Sales Report</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="sales-report.html">Sales Report</a></li>
-                                <li><a href="best-seller.html">Best Seller</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="purchase-report.html"><i class="ti ti-chart-pie-2 fs-16 me-2"></i><span>Purchase report</span></a></li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-triangle-inverted fs-16 me-2"></i><span>Inventory Report</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="inventory-report.html">Inventory Report</a></li>
-                                <li><a href="stock-history.html">Stock History</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="invoice-report.html"><i class="ti ti-businessplan fs-16 me-2"></i><span>Invoice Report</span></a></li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-user-star fs-16 me-2"></i><span>Supplier Report</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="supplier-report.html">Supplier Report</a></li>
-                                <li><a href="supplier-due-report.html">Supplier Due Report</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-report fs-16 me-2"></i><span>Customer Report</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="customer-report.html">Customer Report</a></li>
-                                <li><a href="customer-due-report.html">Customer Due Report</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-report-analytics fs-16 me-2"></i><span>Product Report</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="product-report.html">Product Report</a></li>
-                                <li><a href="product-expiry-report.html">Product Expiry Report</a></li>
-                                <li><a href="product-quantity-alert.html">Product Quantity Alert</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="expense-report.html"><i class="ti ti-file-vector fs-16 me-2"></i><span>Expense Report</span></a></li>
-                        <li><a href="income-report.html"><i class="ti ti-chart-ppf fs-16 me-2"></i><span>Income Report</span></a></li>
-                        <li><a href="tax-reports.html"><i class="ti ti-chart-dots-2 fs-16 me-2"></i><span>Tax Report</span></a></li>
-                        <li><a href="profit-and-loss.html"><i class="ti ti-chart-donut fs-16 me-2"></i><span>Profit & Loss</span></a></li>
-                        <li><a href="annual-report.html"><i class="ti ti-report-search fs-16 me-2"></i><span>Annual Report</span></a></li>
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">Content (CMS)</h6>
-                    <ul>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-page-break fs-16 me-2"></i><span>Pages</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="pages.html">Pages</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-wallpaper fs-16 me-2"></i><span>Blog</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="all-blog.html">All Blog</a></li>
-                                <li><a href="blog-tag.html">Blog Tags</a></li>
-                                <li><a href="blog-categories.html">Categories</a></li>
-                                <li><a href="blog-comments.html">Blog Comments</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-map-pin fs-16 me-2"></i><span>Location</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="countries.html">Countries</a></li>
-                                <li><a href="states.html">States</a></li>
-                                <li><a href="cities.html">Cities</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="testimonials.html"><i class="ti ti-star fs-16 me-2"></i><span>Testimonials</span></a></li>
-                        <li><a href="faq.html"><i class="ti ti-help-circle fs-16 me-2"></i><span>FAQ</span></a></li>
-
-                    </ul>
-                </li>
-                <li class="submenu-open">
-                    <h6 class="submenu-hdr">User Management</h6>
-                    <ul>
-                        <li><a href="users.html"><i class="ti ti-shield-up fs-16 me-2"></i><span>Users</span></a></li>
-                        <li><a href="roles-permissions.html"><i class="ti ti-jump-rope fs-16 me-2"></i><span>Roles & Permissions</span></a></li>
-                        <li><a href="delete-account.html"><i class="ti ti-trash-x fs-16 me-2"></i><span>Delete Account Request</span></a></li>
+                        <li><a href="{{ route('admin.users.index') }}" class="{{ Route::is('admin.users.*') ? 'active' : '' }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Users</span></a></li>
+                        <li><a href="{{ route('admin.admin.index') }}" class="{{ Route::is('admin.admin.*') ? 'active' : '' }}"><i class="ti ti-user-dollar fs-16 me-2"></i><span>Admins</span></a></li>
                     </ul>
                 </li>
 
                 <li class="submenu-open">
-                    <h6 class="submenu-hdr">Settings</h6>
+                    <h6 class="submenu-hdr">Drivers</h6>
                     <ul>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-settings fs-16 me-2"></i><span>General Settings</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="general-settings.html">Profile</a></li>
-                                <li><a href="security-settings.html">Security</a></li>
-                                <li><a href="notification.html">Notifications</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-world fs-16 me-2"></i><span>Website Settings</span><span class="menu-arrow"></span></a>
-                            <ul>
-                                <li><a href="company-settings.html">Company Settings </a></li>
-                                <li><a href="localization-settings.html">Localization</a></li>
-                                <li><a href="preference.html">Preference</a></li>
-                                <li><a href="appearance.html">Appearance</a></li>
-                                <li><a href="social-authentication.html">Social Authentication</a></li>
-                                <li><a href="language-settings.html">Language</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-device-desktop fs-16 me-2"></i>
-                                <span>System Settings</span><span class="menu-arrow"></span>
-                            </a>
-                            <ul>
-                                <li class="submenu submenu-two"><a href="javascript:void(0);">Email<span class="menu-arrow inside-submenu"></span></a>
-                                    <ul>
-                                        <li><a href="email-settings.html">Email Settings</a></li>
-                                        <li><a href="email-template.html">Email Template</a></li>
-                                    </ul>
-                                </li>
-                                <li class="submenu submenu-two"><a href="javascript:void(0);">SMS<span class="menu-arrow inside-submenu"></span></a>
-                                    <ul>
-                                        <li><a href="sms-settings.html">SMS Settings</a></li>
-                                        <li><a href="sms-template.html">SMS Template</a></li>
-                                    </ul>
-                                </li>
-                                <li><a href="otp-settings.html">OTP</a></li>
-                                <li><a href="gdpr-settings.html">GDPR Cookies</a></li>
-                            </ul>
-                        </li>
-                        <li class="submenu">
-                            <a href="javascript:void(0);"><i class="ti ti-settings-dollar fs-16 me-2"></i>
-                                <span>Financial Settings</span><span class="menu-arrow"></span>
-                            </a>
-                            <ul>
-                                <li><a href="payment-gateway-settings.html">Payment Gateway</a></li>
-                                <li><a href="bank-settings-grid.html">Bank Accounts</a></li>
-                                <li><a href="tax-rates.html">Tax Rates</a></li>
-                                <li><a href="currency-settings.html">Currencies</a></li>
-                            </ul>
-                        </li>
-
-                        <li>
-                            <a href="signin.html"><i class="ti ti-logout fs-16 me-2"></i><span>Logout</span> </a>
-                        </li>
+                        <li><a href="{{ route('admin.drivers.index') }}" class="{{ Route::is('admin.drivers.*') ? 'active' : '' }}"><i class="ti ti-user-up fs-16 me-2"></i><span>Drivers</span></a></li>
+                        <li><a href="{{ route('admin.driver-documents.index') }}" class="{{ Route::is('admin.driver-documents.*') ? 'active' : '' }}"><i class="ti ti-id fs-16 me-2"></i><span>Driver Documents</span></a></li>
                     </ul>
                 </li>
-
             </ul>
+
         </div>
     </div>
 </div>

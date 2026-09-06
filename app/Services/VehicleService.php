@@ -2,13 +2,44 @@
 
 namespace App\Services;
 
-use App\Repositories\VehicleRepository;
+use App\Interfaces\VehicleInterface;
 use Illuminate\Support\Collection;
 
 class VehicleService
 {
-    public function __construct(protected VehicleRepository $vehicleRepository)
+    public function __construct(protected VehicleInterface $vehicleRepository)
     {
+    }
+
+    public function create(array $data)
+    {
+        if (!empty($data['driver_id'])) {
+            \App\Models\Vehicle::where('driver_id', $data['driver_id'])->update(['driver_id' => null]);
+        }
+        return $this->vehicleRepository->create($data);
+    }
+
+    public function update($id, array $data)
+    {
+        if (array_key_exists('driver_id', $data) && !empty($data['driver_id'])) {
+            \App\Models\Vehicle::where('driver_id', $data['driver_id'])->where('id', '!=', $id)->update(['driver_id' => null]);
+        }
+        return $this->vehicleRepository->update($id, $data);
+    }
+
+    public function delete($id)
+    {
+        return $this->vehicleRepository->delete($id);
+    }
+
+    public function getAll()
+    {
+        return $this->vehicleRepository->all();
+    }
+
+    public function getById($id)
+    {
+        return $this->vehicleRepository->find($id);
     }
 
     public function getVehicles(array $filters = []): Collection

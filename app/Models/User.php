@@ -40,6 +40,7 @@ class User extends Authenticatable
         'emergency_contact_relation',
         'wallet_balance',
         'device_token',
+        'fcm_token',
     ];
 
     /**

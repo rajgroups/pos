@@ -17,8 +17,8 @@
     <div class="page-header">
         <div class="add-item d-flex">
             <div class="page-title">
-                <h4 class="fw-bold">Create new Category</h4>
-                <h6>Add a new product category to organize your inventory</h6>
+                <h4 class="fw-bold">Vehicle Types</h4>
+                <h6>Manage vehicle types and categories</h6>
             </div>
         </div>
         <ul class="table-top-head">
@@ -38,8 +38,9 @@
                         class="ti ti-chevron-up"></i></a>
             </li>
         </ul>
-        <div class="page-btn">
-            <a href="{{ route('admin.category.create') }}" class="btn btn-primary"><i class="ti ti-circle-plus me-1"></i>Add Category</a>
+        <div class="page-btn d-flex gap-2">
+            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#treeModal" class="btn btn-secondary"><i class="ti ti-git-merge me-1"></i>View Tree</a>
+            <a href="{{ route('admin.category.create') }}" class="btn btn-primary"><i class="ti ti-circle-plus me-1"></i>Add Vehicle Type</a>
         </div>
     </div>
 
@@ -96,15 +97,17 @@
                                     <span class="checkmarks"></span>
                                 </label>
                             </th>
-                            <th>Category Name</th>
+                            <th>Vehicle Type Name</th>
                             <th>Slug</th>
-                            <th>Created at</th>
+                            <th>Service Mode</th>
+                            <th>Starting Fare</th>
+                            <th>Capacity</th>
                             <th>Status</th>
                             <th class="no-sort"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($categorys as $category)
+                        @foreach ($categorys as $category)
                         <tr>
                             <td>
                                 <label class="checkboxs">
@@ -112,11 +115,15 @@
                                     <span class="checkmarks"></span>
                                 </label>
                             </td>
-                            <td class="text-gray-9">{{ $category->name }}</td>
+                            <td class="text-gray-9">
+                                <span class="text-muted">{{ $category->prefix }}</span>{{ $category->name }}
+                            </td>
                             <td>{{ $category->slug }}</td>
-                            <td>{{ \Carbon\Carbon::parse($category->created_at)->format('d M Y') }}</td>
+                            <td><span class="badge bg-secondary text-uppercase">{{ $category->service_mode ?? 'instant' }}</span></td>
+                            <td>{{ $category->starting_fare ?: 'N/A' }}</td>
+                            <td>{{ $category->max_capacity ?: 'N/A' }}</td>
                             <td>
-                                @if($category->status == 1)
+                                @if($category->is_active == 1)
                                     <span class="badge table-badge bg-success fw-medium fs-10">Active</span>
                                 @else
                                     <span class="badge table-badge bg-danger fw-medium fs-10">Inactive</span>
@@ -141,9 +148,7 @@
 
                             </td>
                         </tr>
-                        @empty
-
-                        @endforelse
+                        @endforeach
 
                     </tbody>
                 </table>
@@ -151,4 +156,38 @@
         </div>
     </div>
 </div>
+
+<!-- Tree Modal -->
+<div class="modal fade" id="treeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vehicle Category Tree</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="category-tree">
+                    <ul class="list-unstyled">
+                        @foreach($treeCategories as $category)
+                            @include('admin.category.partials.tree_item', ['category' => $category])
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+    // Simple toggle for tree view if we want to expand/collapse
+    $(document).ready(function() {
+        $('.tree-toggle').click(function() {
+            $(this).parent().siblings('ul').slideToggle(200);
+            $(this).toggleClass('ti-chevron-down ti-chevron-right');
+        });
+    });
+</script>
+@endpush

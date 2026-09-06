@@ -19,6 +19,56 @@ class DriverService
         $this->driverRepository = $driverRepository;
     }
 
+    public function create(array $data)
+    {
+        // Add default values for new driver
+        $data['is_verified'] = false;
+        $data['is_online'] = false;
+        $data['wallet_balance'] = 0;
+        
+        $vehicleId = $data['vehicle_id'] ?? null;
+        unset($data['vehicle_id']);
+        
+        $driver = $this->driverRepository->create($data);
+
+        if ($vehicleId) {
+            \App\Models\Vehicle::where('id', $vehicleId)->update(['driver_id' => $driver->id]);
+        }
+
+        return $driver;
+    }
+
+    public function update($id, array $data)
+    {
+        if (array_key_exists('vehicle_id', $data)) {
+            $vehicleId = $data['vehicle_id'];
+            unset($data['vehicle_id']);
+            
+            // Unassign current vehicle if any
+            \App\Models\Vehicle::where('driver_id', $id)->update(['driver_id' => null]);
+            // Assign new vehicle
+            if ($vehicleId) {
+                \App\Models\Vehicle::where('id', $vehicleId)->update(['driver_id' => $id]);
+            }
+        }
+        return $this->driverRepository->update($id, $data);
+    }
+
+    public function delete($id)
+    {
+        return $this->driverRepository->delete($id);
+    }
+
+    public function getAll()
+    {
+        return $this->driverRepository->all();
+    }
+
+    public function getById($id)
+    {
+        return $this->driverRepository->find($id);
+    }
+
     /**
      * Find driver by mobile number
      *

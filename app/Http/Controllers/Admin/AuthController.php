@@ -14,6 +14,22 @@ class AuthController extends Controller
         return view('admin.authentication.login');
     }
 
+    public function adminLoginSubmit(Request $request){
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required'
+        ]);
+
+        if (\Illuminate\Support\Facades\Auth::guard('admin')->attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->route('admin.home');
+        }
+
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ])->onlyInput('email');
+    }
+
     // Verfiy Otp Login Form
     public function adminVerifyOtpForm(){
 

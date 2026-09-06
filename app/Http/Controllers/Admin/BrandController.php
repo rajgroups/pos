@@ -70,7 +70,7 @@ class BrandController extends Controller
 
         if($validate['status'] == KeywordHelper::ERROR){
             NotifyHelper::errorMessage($validate['message']);
-            return redirect()->route('admin.category.index');
+            return redirect()->route('admin.brand.index');
         }
 
         $brand = $this->service->getById($id);
@@ -125,7 +125,7 @@ class BrandController extends Controller
         // Delete Brand
         $this->service->delete($id);
 
-        NotifyHelper::successMessage('brand.deleted_success');
+        NotifyHelper::success('brand.deleted_success');
         return redirect()->route('admin.brand.index');
     }
 

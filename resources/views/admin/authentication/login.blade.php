@@ -13,7 +13,8 @@
 				<div class="row login-wrapper m-0">
                     <div class="col-lg-6 p-0">
                         <div class="login-content">
-                            <form action="https://dreamspos.dreamstechnologies.com/html/template/index.html">
+                            <form action="{{ route('admin.login.submit') }}" method="POST">
+                                @csrf
                                 <div class="login-userset">
                                     <div class="login-logo logo-normal">
                                     <img src="{{ asset('resource/admin/assets/img/logo.svg')}}" alt="img">
@@ -25,10 +26,21 @@
                                     <h3>Sign In</h3>
                                     <h4>Access the Dreamspos panel using your email and passcode.</h4>
                                 </div>
+                                
+                                @if ($errors->any())
+                                    <div class="alert alert-danger">
+                                        <ul class="mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+
                                 <div class="mb-3">
                                         <label class="form-label">Email Address</label>
                                         <div class="input-group">
-                                            <input type="text" value="" class="form-control border-end-0">
+                                            <input type="email" name="email" value="{{ old('email') }}" class="form-control border-end-0" required autofocus>
                                             <span class="input-group-text border-start-0">
                                                 <i class="ti ti-mail"></i>
                                             </span>
@@ -37,7 +49,7 @@
                                     <div class="mb-3">
                                         <label class="form-label">Password</label>
                                         <div class="pass-group">
-                                            <input type="password" class="pass-input form-control">
+                                            <input type="password" name="password" class="pass-input form-control" required>
                                             <span class="ti toggle-password ti-eye-off text-gray-9"></span>
                                         </div>
                                     </div>

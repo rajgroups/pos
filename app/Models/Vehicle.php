@@ -75,15 +75,5 @@ class Vehicle extends Model
         return $this->hasOne(VehicleLocation::class)->latestOfMany('location_updated_at');
     }
 
-    public function driverAssignments(): HasMany
-    {
-        return $this->hasMany(DriverVehicleAssignment::class);
-    }
 
-    public function drivers(): BelongsToMany
-    {
-        return $this->belongsToMany(Driver::class, 'driver_vehicle_assignments')
-            ->withPivot(['assigned_from', 'assigned_to', 'is_current'])
-            ->withTimestamps();
-    }
 }

@@ -3,37 +3,37 @@
 namespace App\Repositories;
 
 use App\Interfaces\CategoryInterface;
-use App\Models\Category;
+use App\Models\VehicleCategory;
 
 class CategoryRepository implements CategoryInterface
 {
     public function all()
     {
-        return Category::orderBy('id', 'desc')->get();
+        return VehicleCategory::orderBy('id', 'desc')->get();
     }
 
     public function find($id)
     {
-        return Category::findOrFail($id);
+        return VehicleCategory::findOrFail($id);
     }
 
     public function create(array $data)
     {
-        return Category::create($data);
+        return VehicleCategory::create($data);
     }
 
     public function update($id, array $data)
     {
-        return Category::where('id', $id)->update($data);
+        return VehicleCategory::where('id', $id)->update($data);
     }
 
     public function delete($id)
     {
-        return Category::destroy($id);
+        return VehicleCategory::destroy($id);
     }
 
     public function getActiveCategories()
     {
-        return Category::where('status', 1)->get();
+        return VehicleCategory::where('is_active', 1)->get();
     }
 }

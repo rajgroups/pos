@@ -578,6 +578,7 @@ class BookingService
             $status = $booking->status;
 
             $notificationTitles = [
+                Booking::STATUS_ASSIGNED => 'Driver Assigned',
                 Booking::STATUS_ACCEPTED => 'Ride Accepted',
                 Booking::STATUS_ARRIVED => 'Driver Arrived',
                 Booking::STATUS_STARTED => 'Ride Started',
@@ -586,6 +587,7 @@ class BookingService
             ];
 
             $notificationBodies = [
+                Booking::STATUS_ASSIGNED => 'A driver has been assigned to your ride.',
                 Booking::STATUS_ACCEPTED => 'Your ride request has been accepted.',
                 Booking::STATUS_ARRIVED => 'The driver has arrived at the pickup location.',
                 Booking::STATUS_STARTED => 'The ride has started.',

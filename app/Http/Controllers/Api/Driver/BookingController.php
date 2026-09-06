@@ -48,13 +48,6 @@ class BookingController extends Controller
         $vehicleId = $validated['data']['vehicle_id'] ?? null;
 
         if ($vehicleId === null) {
-            $vehicleId = $driver->vehicleAssignments()
-                ->where('is_current', true)
-                ->orderByDesc('assigned_from')
-                ->value('vehicle_id');
-        }
-
-        if ($vehicleId === null) {
             $vehicleId = Vehicle::query()
                 ->where('driver_id', $driver->id)
                 ->where('status', 'active')

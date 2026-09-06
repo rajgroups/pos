@@ -59,6 +59,11 @@ class VehicleCategory extends Model
         return $this->children()->orderBy('sort_order');
     }
 
+    public function childrenRecursive(): HasMany
+    {
+        return $this->children()->with('childrenRecursive');
+    }
+
     public function pricing(): HasOne
     {
         return $this->hasOne(VehicleCategoryPricing::class, 'vehicle_category_id');

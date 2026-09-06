@@ -104,7 +104,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($brands as $category)
+                        @forelse ($brands as $brand)
                         <tr>
                             <td>
                                 <label class="checkboxs">
@@ -112,11 +112,11 @@
                                     <span class="checkmarks"></span>
                                 </label>
                             </td>
-                            <td class="text-gray-9">{{ $category->name }}</td>
-                            <td>{{ $category->slug }}</td>
-                            <td>{{ \Carbon\Carbon::parse($category->created_at)->format('d M Y') }}</td>
+                            <td class="text-gray-9">{{ $brand->name }}</td>
+                            <td>{{ $brand->slug }}</td>
+                            <td>{{ \Carbon\Carbon::parse($brand->created_at)->format('d M Y') }}</td>
                             <td>
-                                @if($category->status == 1)
+                                @if($brand->status == 1)
                                     <span class="badge table-badge bg-success fw-medium fs-10">Active</span>
                                 @else
                                     <span class="badge table-badge bg-danger fw-medium fs-10">Inactive</span>
@@ -124,17 +124,17 @@
                             </td>
                             <td class="action-table-data">
                                 <div class="edit-delete-action">
-                                    <a class="me-2 p-2" href="{{route('admin.brand.edit',$category->id)}}">
+                                    <a class="me-2 p-2" href="{{route('admin.brand.edit',$brand->id)}}">
                                         <i data-feather="edit" class="feather-edit"></i>
                                     </a>
-                                    <form action="{{ route('admin.brand.destroy', $category->id) }}" method="POST" id="delete_unit_frm_{{ $category->id }}" style="display: none;">
+                                    <form action="{{ route('admin.brand.destroy', $brand->id) }}" method="POST" id="delete_brand_frm_{{ $brand->id }}" style="display: none;">
                                         @csrf
                                         @method('DELETE')
-                                        <input type="hidden" name="category_ids[]" value="{{ $category->id }}">
+                                        <input type="hidden" name="brand_ids[]" value="{{ $brand->id }}">
                                     </form>
 
                                     <a href="javascript:void(0);" class="p-2" id="delete_cate_single"
-                                       onclick="if(confirm('Are you sure you want to delete this unit?')) { document.getElementById('delete_unit_frm_{{ $category->id }}').submit(); }">
+                                       onclick="if(confirm('Are you sure you want to delete this brand?')) { document.getElementById('delete_brand_frm_{{ $brand->id }}').submit(); }">
                                         <i data-feather="trash-2" class="feather-trash-2"></i>
                                     </a>
                                 </div>

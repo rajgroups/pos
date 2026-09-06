@@ -31,7 +31,7 @@
             </li>
         </ul>
         <div class="page-btn">
-            <a href="{{ route('admin.category.index') }}" class="btn btn-outline-primary">
+            <a href="{{ route('admin.brand.index') }}" class="btn btn-outline-primary">
                 <i class="ti ti-arrow-left me-1"></i>Back to Brand
             </a>
         </div>
@@ -277,7 +277,7 @@
             </div>
 
             <div class="card-footer bg-light py-3 d-flex justify-content-between">
-                <a href="{{ route('admin.category.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('admin.brand.index') }}" class="btn btn-outline-secondary">
                     <i class="ti ti-x me-1"></i>Cancel
                 </a>
                 <button type="submit" id="add_unit_btn" class="btn btn-primary">
