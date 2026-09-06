@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('v1/config', [\App\Http\Controllers\Api\ConfigController::class, 'index']);
+Route::get('v1/cms/{slug}', [\App\Http\Controllers\Api\CmsController::class, 'show']);
 
 Route::prefix('v1/sms-gateway')->group(function () {
     Route::post('/register', [SmsGatewayController::class, 'register']);

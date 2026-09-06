@@ -125,6 +125,15 @@
                     <ul>
                         <li><a href="{{ route('admin.drivers.index') }}" class="{{ Route::is('admin.drivers.*') ? 'active' : '' }}"><i class="ti ti-user-up fs-16 me-2"></i><span>Drivers</span></a></li>
                         <li><a href="{{ route('admin.driver-documents.index') }}" class="{{ Route::is('admin.driver-documents.*') ? 'active' : '' }}"><i class="ti ti-id fs-16 me-2"></i><span>Driver Documents</span></a></li>
+                        <li><a href="{{ route('admin.enquiries.index') }}" class="{{ Route::is('admin.enquiries.*') ? 'active' : '' }}"><i class="ti ti-user-plus fs-16 me-2"></i><span>Register Requests</span></a></li>
+                        <li><a href="{{ route('admin.recharge-requests.index') }}" class="{{ Route::is('admin.recharge-requests.*') ? 'active' : '' }}"><i class="ti ti-wallet fs-16 me-2"></i><span>Wallet Recharges</span></a></li>
+                    </ul>
+                </li>
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">CMS Management</h6>
+                    <ul>
+                        <li><a href="{{ route('admin.cms-pages.index') }}" class="{{ Route::is('admin.cms-pages.*') ? 'active' : '' }}"><i class="ti ti-file-text fs-16 me-2"></i><span>Content Pages</span></a></li>
                     </ul>
                 </li>
             </ul>

@@ -58,6 +58,10 @@ Route::prefix('admin')->name('admin.')->group(function(){
 
         // For Drivers Management Routes
         Route::resource('drivers', DriverController::class);
+        Route::resource('enquiries', \App\Http\Controllers\Admin\EnquiryController::class)->only(['index', 'destroy']);
+
+        // CMS Management
+        Route::resource('cms-pages', \App\Http\Controllers\Admin\CmsPageController::class);
 
         // For Vehicles Management Routes
         Route::get('vehicles/{vehicle}/location', [VehicleController::class, 'location'])->name('vehicles.location');

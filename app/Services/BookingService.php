@@ -198,12 +198,12 @@ class BookingService
         return $this->calculateFare($category, Arr::get($payload, 'usage', []));
     }
 
-    public function cancelBooking(Booking $booking): Booking
+    public function cancelBooking(Booking $booking, bool $isAdmin = false): Booking
     {
-        $booking = DB::transaction(function () use ($booking) {
+        $booking = DB::transaction(function () use ($booking, $isAdmin) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-            if ($booking->status === Booking::STATUS_STARTED) {
+            if (! $isAdmin && $booking->status === Booking::STATUS_STARTED) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'Trip is already in progress and cannot be cancelled.',
                 ]);
@@ -432,18 +432,18 @@ class BookingService
         return $booking;
     }
 
-    public function completeBooking(Booking $booking, array $payload = []): Booking
+    public function completeBooking(Booking $booking, array $payload = [], bool $isAdmin = false): Booking
     {
-        $booking = DB::transaction(function () use ($booking, $payload) {
+        $booking = DB::transaction(function () use ($booking, $payload, $isAdmin) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-            if ($booking->status !== Booking::STATUS_STARTED) {
+            if (! $isAdmin && $booking->status !== Booking::STATUS_STARTED) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'Only started bookings can be completed.',
                 ]);
             }
 
-            if (($booking->start_otp ?? null) !== ($payload['end_otp'] ?? null)) {
+            if (! $isAdmin && ($booking->start_otp ?? null) !== ($payload['end_otp'] ?? null)) {
                 throw ValidationException::withMessages([
                     'end_otp' => 'The OTP is invalid.',
                 ]);

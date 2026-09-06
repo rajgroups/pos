@@ -40,12 +40,12 @@
                     <div class="col-lg-6">
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Driver Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                            <input type="text" name="name" class="form-control" value="{{ old('name', request('name')) }}" required>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
-                            <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" required>
+                            <input type="text" name="phone" class="form-control" value="{{ old('phone', request('phone')) }}" required>
                         </div>
                         
                         <div class="mb-4">

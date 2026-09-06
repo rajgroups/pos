@@ -161,15 +161,11 @@ class RideController extends Controller
     {
         $booking = Booking::findOrFail($id);
         
-        $booking->update([
-            'status' => Booking::STATUS_COMPLETED,
-            'completed_at' => now(),
-            'final_amount' => $booking->final_amount ?: $booking->estimated_amount,
-            'payment_status' => 'pending'
-        ]);
-
-        $booking->loadMissing(['user', 'driver', 'vehicle', 'category', 'pickupLocation', 'dropLocation']);
-        app(\App\Services\BookingService::class)->broadcastBookingUpdate($booking);
+        try {
+            app(\App\Services\BookingService::class)->completeBooking($booking, [], true);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Ride manually marked as completed.');
     }
@@ -178,13 +174,11 @@ class RideController extends Controller
     {
         $booking = Booking::findOrFail($id);
         
-        $booking->update([
-            'status' => Booking::STATUS_CANCELLED,
-            'cancelled_at' => now()
-        ]);
-
-        $booking->loadMissing(['user', 'driver', 'vehicle', 'category', 'pickupLocation', 'dropLocation']);
-        app(\App\Services\BookingService::class)->broadcastBookingUpdate($booking);
+        try {
+            app(\App\Services\BookingService::class)->cancelBooking($booking, true);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Ride successfully cancelled.');
     }

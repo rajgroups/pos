@@ -92,6 +92,19 @@ class DriverAuthController extends Controller
 
             $token = $driver->createToken('auth_token')->plainTextToken;
 
+            $driver->load('vehicle.category'); // Eager load vehicle and vehicle category
+
+            $vehicleData = null;
+            if ($driver->vehicle) {
+                $vehicleData = [
+                    'id' => $driver->vehicle->id,
+                    'registration_number' => $driver->vehicle->vehicle_number,
+                    'color' => $driver->vehicle->color,
+                    'status' => $driver->vehicle->status,
+                    'type_name' => $driver->vehicle->category ? $driver->vehicle->category->name : null,
+                ];
+            }
+
             $formatData = [
                 'id' => $driver->id,
                 'name' => $driver->name ?? null,
@@ -99,6 +112,7 @@ class DriverAuthController extends Controller
                 'mobile' => $driver->phone ?? null,
                 'fcm_token' => $driver->fcm_token ?? null,
                 'wallet_balance' => (float) ($driver->wallet_balance ?? 0),
+                'vehicle' => $vehicleData,
             ];
 
             return ApiResponseHelper::success(__('string.common.login_success'), [
