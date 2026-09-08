@@ -4,6 +4,7 @@
 @section('content')
 
 @php
+    $googleMapsApiKey = config('services.google_maps.api_key');
     // Determine header theme based on status
     $headerBg = 'bg-primary text-white';
     if(in_array($booking->status, ['completed'])) $headerBg = 'bg-success text-white';
@@ -77,7 +78,7 @@
                         style="border:0"
                         loading="lazy"
                         allowfullscreen
-                        src="https://www.google.com/maps/embed/v1/directions?key=AIzaSyDaf37zM3dVX_Th1HwkfQXPdJmam7Epn4c&origin={{ $booking->pickupLocation->latitude }},{{ $booking->pickupLocation->longitude }}&destination={{ $booking->dropLocation->latitude }},{{ $booking->dropLocation->longitude }}">
+                        src="https://www.google.com/maps/embed/v1/directions?key={{ $googleMapsApiKey }}&origin={{ $booking->pickupLocation->latitude }},{{ $booking->pickupLocation->longitude }}&destination={{ $booking->dropLocation->latitude }},{{ $booking->dropLocation->longitude }}">
                     </iframe>
                 @elseif($booking->pickupLocation && $booking->pickupLocation->latitude)
                     <iframe
@@ -86,7 +87,7 @@
                         style="border:0"
                         loading="lazy"
                         allowfullscreen
-                        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDaf37zM3dVX_Th1HwkfQXPdJmam7Epn4c&q={{ $booking->pickupLocation->latitude }},{{ $booking->pickupLocation->longitude }}&zoom=15">
+                        src="https://www.google.com/maps/embed/v1/place?key={{ $googleMapsApiKey }}&q={{ $booking->pickupLocation->latitude }},{{ $booking->pickupLocation->longitude }}&zoom=15">
                     </iframe>
                 @else
                     <div class="d-flex flex-column align-items-center justify-content-center bg-light" style="height: 400px;">

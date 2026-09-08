@@ -2,6 +2,7 @@
 @section('title', 'Vehicle Details')
 
 @section('content')
+@php($googleMapsApiKey = config('services.google_maps.api_key'))
 <div class="card mb-4 shadow-sm border-0">
     <div class="card-body p-0">
         <div class="profile-banner position-relative" style="height: 140px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-top-left-radius: 8px; border-top-right-radius: 8px;">
@@ -184,7 +185,9 @@
 @endsection
 
 @push('scripts')
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY', 'AIzaSyDaf37zM3dVX_Th1HwkfQXPdJmam7Epn4c') }}&callback=initMap" async defer></script>
+@if($googleMapsApiKey)
+<script src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsApiKey }}&callback=initMap" async defer></script>
+@endif
 <script>
     let map;
     let marker;

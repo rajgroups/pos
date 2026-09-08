@@ -2,6 +2,7 @@
 @section('title', 'Emergency Control Room')
 
 @section('content')
+    @php($googleMapsApiKey = config('services.google_maps.api_key'))
     <!-- Top Emergency Banner -->
     <div class="card mb-4 border-0 {{ $alert->status == 'active' ? 'bg-danger text-white pulse-border' : 'bg-success text-white' }}">
         <div class="card-body d-flex justify-content-between align-items-center p-4">
@@ -45,14 +46,14 @@
                 <div class="card-body p-0">
                     @if($alert->latitude && $alert->longitude)
                         <iframe
-                            width="100%"
-                            height="500"
-                            style="border:0"
-                            loading="lazy"
-                            allowfullscreen
-                            src="https://www.google.com/maps/embed/v1/place?key=AIzaSyDaf37zM3dVX_Th1HwkfQXPdJmam7Epn4c&q={{ $alert->latitude }},{{ $alert->longitude }}&zoom=16">
-                        </iframe>
-                    @else
+                        width="100%"
+                        height="500"
+                        style="border:0"
+                        loading="lazy"
+                        allowfullscreen
+                        src="https://www.google.com/maps/embed/v1/place?key={{ $googleMapsApiKey }}&q={{ $alert->latitude }},{{ $alert->longitude }}&zoom=16">
+                    </iframe>
+                @else
                         <div class="d-flex flex-column align-items-center justify-content-center bg-light" style="height: 500px;">
                             <i class="ti ti-map-pin-off fs-48 text-muted mb-3"></i>
                             <h5 class="text-muted">No exact GPS coordinates provided.</h5>

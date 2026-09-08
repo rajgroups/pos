@@ -35,6 +35,10 @@ return [
         'url' => env('SOCKET_SERVER_URL', 'http://127.0.0.1:9502'),
     ],
 
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
     'fcm' => [
         'server_key' => env('FCM_SERVER_KEY'),
         'service_account_file' => env('FCM_SERVICE_ACCOUNT_FILE', storage_path('app/firebase/firebase-service-account.json')),
