@@ -96,7 +96,7 @@ class BookingService
                 : Booking::STATUS_PENDING;
 
             $booking = Booking::create([
-                'booking_no' => (string) Str::ulid(),
+                'booking_no' => (string) Str::ulid(), // Temporary to satisfy unique constraint
                 'user_id' => $payload['user_id'],
                 'driver_id' => $payload['driver_id'] ?? null,
                 'vehicle_id' => $payload['vehicle_id'] ?? null,
@@ -111,6 +111,10 @@ class BookingService
                 'payment_method' => $payload['payment_method'] ?? null,
                 'payment_status' => 'pending',
             ]);
+
+            // Update booking_no to a short format based on the generated ID
+            $booking->booking_no = 'INDBK' . str_pad($booking->id, 5, '0', STR_PAD_LEFT);
+            $booking->save();
 
             $this->syncLocations($booking, Arr::get($payload, 'locations', []));
             $this->syncUsage($booking, Arr::get($payload, 'usage', []));
