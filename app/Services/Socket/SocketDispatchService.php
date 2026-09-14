@@ -215,10 +215,15 @@ class SocketDispatchService
                     'passenger_name' => (string) ($booking->user?->name ?? ''),
                     'pickup_address' => (string) ($booking->pickupLocation?->address ?? ''),
                     'drop_address' => (string) ($booking->dropLocation?->address ?? ''),
+                    'pickup_latitude' => (string) ($booking->pickupLocation?->latitude ?? ''),
+                    'pickup_longitude' => (string) ($booking->pickupLocation?->longitude ?? ''),
+                    'drop_latitude' => (string) ($booking->dropLocation?->latitude ?? ''),
+                    'drop_longitude' => (string) ($booking->dropLocation?->longitude ?? ''),
                     'estimated_amount' => (string) ($booking->estimated_amount ?? 0),
                     'booking_mode' => (string) ($booking->service_mode ?? ''),
                     'vehicle_name' => (string) ($booking->vehicle?->model ?? ''),
                     'vehicle_number' => (string) ($booking->vehicle?->vehicle_number ?? ''),
+                    'category_name' => (string) ($booking->category?->name ?? ''),
                     'notes' => (string) ($booking->notes ?? ''),
                 ];
                 $fcmService->sendToTokens($fcmTokens, $title, $body, $data);
