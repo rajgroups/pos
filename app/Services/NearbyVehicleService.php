@@ -33,25 +33,30 @@ class NearbyVehicleService
         $subCategoryIds = VehicleCategory::where('parent_id', $vehicleCategoryId)->pluck('id')->toArray();
         $categoryIds = array_merge($categoryIds, $subCategoryIds);
 
-        // 3. Find nearby driver IDs using Redis
-        $redisDriverIds = $this->presenceStore->findNearbyDriverIds($latitude, $longitude, $radiusKm);
+        // 3. Find nearby driver IDs using Redis (Bypassed in Economy mode)
+        $redisDriverIds = [];
+        if (!app(\App\Services\IndicabModeService::class)->isEconomy()) {
+            $redisDriverIds = $this->presenceStore->findNearbyDriverIds($latitude, $longitude, $radiusKm);
+        }
 
         // Fetch location details from Redis and check staleness (threshold of 2 minutes / 120 seconds)
         $staleThreshold = 120; // seconds
         $nearbyDrivers = [];
 
-        foreach ($redisDriverIds as $driverId) {
-            $locationData = Redis::get("driver:location:{$driverId}");
-            if ($locationData) {
-                $location = json_decode($locationData, true);
-                if ($location && isset($location['updated_at'])) {
-                    $updatedAt = \Carbon\Carbon::parse($location['updated_at']);
-                    if (now()->diffInSeconds($updatedAt) <= $staleThreshold) {
-                        $nearbyDrivers[$driverId] = [
-                            'latitude' => (float) $location['latitude'],
-                            'longitude' => (float) $location['longitude'],
-                            'updated_at' => $updatedAt,
-                        ];
+        if (!app(\App\Services\IndicabModeService::class)->isEconomy()) {
+            foreach ($redisDriverIds as $driverId) {
+                $locationData = Redis::get("driver:location:{$driverId}");
+                if ($locationData) {
+                    $location = json_decode($locationData, true);
+                    if ($location && isset($location['updated_at'])) {
+                        $updatedAt = \Carbon\Carbon::parse($location['updated_at']);
+                        if (now()->diffInSeconds($updatedAt) <= $staleThreshold) {
+                            $nearbyDrivers[$driverId] = [
+                                'latitude' => (float) $location['latitude'],
+                                'longitude' => (float) $location['longitude'],
+                                'updated_at' => $updatedAt,
+                            ];
+                        }
                     }
                 }
             }
