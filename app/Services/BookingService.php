@@ -259,12 +259,16 @@ class BookingService
         }
 
         $lockKey = "booking_lock:{$booking->id}";
-        $lock = Redis::set($lockKey, $driverId, 'EX', 10, 'NX');
+        $isEconomy = app(\App\Services\IndicabModeService::class)->isEconomy();
 
-        if (! $lock) {
-            return ApiResponseHelper::error(
-                'This booking has already been accepted by another driver.'
-            );
+        if (!$isEconomy) {
+            $lock = Redis::set($lockKey, $driverId, 'EX', 10, 'NX');
+
+            if (! $lock) {
+                return ApiResponseHelper::error(
+                    'This booking has already been accepted by another driver.'
+                );
+            }
         }
 
         try {
@@ -345,7 +349,9 @@ class BookingService
             );
         } finally {
 
-            Redis::del($lockKey);
+            if (!$isEconomy) {
+                Redis::del($lockKey);
+            }
         }
     }
     public function arrivedAtPickup(Booking $booking): Booking

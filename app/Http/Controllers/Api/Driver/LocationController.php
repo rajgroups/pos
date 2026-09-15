@@ -34,9 +34,11 @@ class LocationController extends Controller
         $longitude = (float) $validated['longitude'];
 
         try {
-            // Update presence store if needed, though in economy mode it relies on DB
-            $presenceStore = app(\App\Services\Socket\DriverPresenceStore::class);
-            $presenceStore->updateDriverLocation($driver->id, $latitude, $longitude);
+            // Update presence store if needed (bypassed in economy mode as it relies entirely on DB)
+            if (!app(\App\Services\IndicabModeService::class)->isEconomy()) {
+                $presenceStore = app(\App\Services\Socket\DriverPresenceStore::class);
+                $presenceStore->updateDriverLocation($driver->id, $latitude, $longitude);
+            }
 
             // Persist to database vehicle_locations table
             $vehicle = Vehicle::where('driver_id', $driver->id)->where('status', 'active')->first();
