@@ -53,24 +53,33 @@
                             <td>{{ $driver->email ?? 'N/A' }}</td>
                             <td><span class="badge bg-secondary text-uppercase">{{ $driver->driver_type }}</span></td>
                             <td>
-                                @if($driver->status === 'active')
-                                    <span class="badge bg-success">Active</span>
-                                @elseif($driver->status === 'inactive')
-                                    <span class="badge bg-danger">Inactive</span>
-                                @else
-                                    <span class="badge bg-warning">{{ ucfirst($driver->status) }}</span>
-                                @endif
+                                <form action="{{ route('admin.drivers.toggle-status', $driver->id) }}" method="POST" class="m-0">
+                                    @csrf
+                                    <div class="form-check form-switch" title="Toggle Active Status">
+                                        <input class="form-check-input" style="cursor: pointer;" type="checkbox" role="switch" id="statusSwitch{{$driver->id}}" onchange="this.form.submit()" {{ $driver->status === 'active' ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-medium {{ $driver->status === 'active' ? 'text-success' : 'text-warning' }}" for="statusSwitch{{$driver->id}}" style="cursor: pointer;">
+                                            {{ ucfirst($driver->status) }}
+                                        </label>
+                                    </div>
+                                </form>
                             </td>
                             <td>
-                                @if($driver->is_verified)
-                                    <span class="badge bg-success"><i class="ti ti-check"></i> Verified</span>
-                                @else
-                                    <span class="badge bg-light text-dark"><i class="ti ti-x"></i> Unverified</span>
-                                @endif
+                                <form action="{{ route('admin.drivers.toggle-verify', $driver->id) }}" method="POST" class="m-0">
+                                    @csrf
+                                    <div class="form-check form-switch" title="Toggle Verification">
+                                        <input class="form-check-input" style="cursor: pointer;" type="checkbox" role="switch" id="verifySwitch{{$driver->id}}" onchange="this.form.submit()" {{ $driver->is_verified ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-medium {{ $driver->is_verified ? 'text-primary' : 'text-muted' }}" for="verifySwitch{{$driver->id}}" style="cursor: pointer;">
+                                            {{ $driver->is_verified ? 'Verified' : 'Unverified' }}
+                                        </label>
+                                    </div>
+                                </form>
                             </td>
                             <td class="action-table-data">
                                 <div class="edit-delete-action">
-                                    <a class="me-2 p-2" href="{{route('admin.drivers.edit',$driver->id)}}">
+                                    <a class="me-2 p-2" href="{{route('admin.drivers.show',$driver->id)}}" title="View">
+                                        <i data-feather="eye" class="feather-eye"></i>
+                                    </a>
+                                    <a class="me-2 p-2" href="{{route('admin.drivers.edit',$driver->id)}}" title="Edit">
                                         <i data-feather="edit" class="feather-edit"></i>
                                     </a>
                                     <form action="{{ route('admin.drivers.destroy', $driver->id) }}" method="POST" id="delete_frm_{{ $driver->id }}" style="display: none;">

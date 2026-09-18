@@ -19,8 +19,14 @@ class VehicleDocumentController extends Controller
 
     public function index()
     {
-        $documents = $this->documentService->getAll();
-        return view('admin.vehicle_documents.index', compact('documents'));
+        $vehicles = Vehicle::has('documents')->withCount('documents')->latest()->paginate(15);
+        return view('admin.vehicle_documents.index', compact('vehicles'));
+    }
+
+    public function show($id)
+    {
+        $vehicle = Vehicle::with(['documents.documentType'])->findOrFail($id);
+        return view('admin.vehicle_documents.show', compact('vehicle'));
     }
 
     public function create()

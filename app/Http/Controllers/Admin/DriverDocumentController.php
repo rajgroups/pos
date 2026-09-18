@@ -19,8 +19,14 @@ class DriverDocumentController extends Controller
 
     public function index()
     {
-        $documents = $this->documentService->getAll();
-        return view('admin.driver_documents.index', compact('documents'));
+        $drivers = Driver::has('documents')->withCount('documents')->latest()->paginate(15);
+        return view('admin.driver_documents.index', compact('drivers'));
+    }
+
+    public function show($id)
+    {
+        $driver = Driver::with(['documents.documentType'])->findOrFail($id);
+        return view('admin.driver_documents.show', compact('driver'));
     }
 
     public function create()

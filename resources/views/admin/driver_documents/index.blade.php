@@ -36,68 +36,59 @@
                 <table class="table datatable">
                     <thead class="thead-light">
                         <tr>
-                            <th>Driver</th>
-                            <th>Document Type</th>
-                            <th>Document Number</th>
-                            <th>Expiry Date</th>
+                            <th>Driver Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
                             <th>Status</th>
+                            <th>Uploaded Documents</th>
                             <th class="no-sort">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($documents as $document)
+                        @forelse ($drivers as $driver)
                         <tr>
-                            <td>{{ $document->driver->name ?? 'N/A' }}</td>
-                            <td>{{ $document->documentType->name ?? 'N/A' }}</td>
-                            <td>{{ $document->document_number ?? 'N/A' }}</td>
                             <td>
-                                @if($document->expiry_date)
-                                    {{ $document->expiry_date->format('d M Y') }}
-                                    @if($document->expiry_date->isPast())
-                                        <span class="badge bg-danger ms-2">Expired</span>
+                                <div class="d-flex align-items-center">
+                                    @if($driver->profile_image)
+                                        <img src="{{ asset('storage/'.$driver->profile_image) }}" class="avatar avatar-sm me-2 rounded-circle" alt="img">
+                                    @else
+                                        <div class="avatar avatar-sm me-2 rounded-circle bg-primary-transparent d-flex align-items-center justify-content-center">
+                                            <span class="text-primary fw-bold">{{ substr($driver->name, 0, 1) }}</span>
+                                        </div>
                                     @endif
-                                @else
-                                    N/A
-                                @endif
-                            </td>
-                            <td>
-                                @if($document->status === 'approved')
-                                    <span class="badge bg-success">Approved</span>
-                                @elseif($document->status === 'rejected')
-                                    <span class="badge bg-danger">Rejected</span>
-                                @else
-                                    <span class="badge bg-warning">Pending</span>
-                                @endif
-                            </td>
-                            <td class="action-table-data">
-                                <div class="edit-delete-action">
-                                    <a class="me-2 p-2" href="{{route('admin.driver-documents.edit',$document->id)}}">
-                                        <i data-feather="edit" class="feather-edit"></i>
-                                    </a>
-                                    @if($document->file_path)
-                                        <a class="me-2 p-2 text-primary" href="{{ asset($document->file_path) }}" target="_blank" title="View Document">
-                                            <i data-feather="eye" class="feather-eye"></i>
-                                        </a>
-                                    @endif
-                                    <form action="{{ route('admin.driver-documents.destroy', $document->id) }}" method="POST" id="delete_frm_{{ $document->id }}" style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                    <a href="javascript:void(0);" class="p-2 text-danger"
-                                       onclick="if(confirm('Are you sure you want to delete this document?')) { document.getElementById('delete_frm_{{ $document->id }}').submit(); }">
-                                        <i data-feather="trash-2" class="feather-trash-2"></i>
-                                    </a>
+                                    <span class="fw-medium">{{ $driver->name ?? 'N/A' }}</span>
                                 </div>
                             </td>
+                            <td>{{ $driver->phone ?? 'N/A' }}</td>
+                            <td>{{ $driver->email ?? 'N/A' }}</td>
+                            <td>
+                                @if($driver->status === 'active')
+                                    <span class="badge bg-success-transparent text-success">Active</span>
+                                @else
+                                    <span class="badge bg-danger-transparent text-danger">Inactive</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="badge bg-primary rounded-pill px-3">{{ $driver->documents_count }} Document(s)</span>
+                            </td>
+                            <td class="action-table-data">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.driver-documents.show', $driver->id) }}">
+                                    <i class="ti ti-eye me-1"></i> View Documents
+                                </a>
+                            </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4">No drivers with uploaded documents found.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
             
-            @if($documents->hasPages())
+            @if($drivers->hasPages())
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $documents->links() }}
+                    {{ $drivers->links() }}
                 </div>
             @endif
         </div>

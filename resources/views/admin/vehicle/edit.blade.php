@@ -8,9 +8,15 @@
             </div>
         </div>
         <div class="page-btn">
-            <a href="{{ route('admin.vehicles.index') }}" class="btn btn-outline-primary">
+            <a href="{{ route('admin.vehicles.index') }}" class="btn btn-outline-primary shadow-sm">
                 <i class="ti ti-arrow-left me-1"></i>Back to Vehicles
             </a>
+        </div>
+    </div>
+    
+    <div class="profile-banner position-relative rounded-3 mb-4 shadow-sm" style="height: 100px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+        <div class="position-absolute bottom-0 start-0 p-4 text-white">
+            <h5 class="mb-0 fw-bold d-flex align-items-center"><i class="ti ti-car fs-24 me-2"></i> Edit Vehicle Registration</h5>
         </div>
     </div>
 
@@ -39,11 +45,11 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Registration Number <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-id me-1 text-muted"></i> Registration Number <span class="text-danger">*</span></label>
                                 <input type="text" name="vehicle_number" class="form-control text-uppercase" value="{{ old('vehicle_number', $vehicle->vehicle_number) }}" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Vehicle Category <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-category me-1 text-muted"></i> Vehicle Category <span class="text-danger">*</span></label>
                                 <select name="vehicle_category_id" class="form-select" required>
                                     <option value="">-- Select Category --</option>
                                     @foreach($categories as $category)
@@ -64,27 +70,27 @@
                                 </select>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Brand <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-tag me-1 text-muted"></i> Brand <span class="text-danger">*</span></label>
                                 <input type="text" name="brand" class="form-control" value="{{ old('brand', $vehicle->brand) }}" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Model <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-car-turbine me-1 text-muted"></i> Model <span class="text-danger">*</span></label>
                                 <input type="text" name="model" class="form-control" value="{{ old('model', $vehicle->model) }}" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Color <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-color-swatch me-1 text-muted"></i> Color <span class="text-danger">*</span></label>
                                 <input type="text" name="color" class="form-control" value="{{ old('color', $vehicle->color) }}" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Manufacture Year <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-calendar me-1 text-muted"></i> Manufacture Year <span class="text-danger">*</span></label>
                                 <input type="number" name="manufacture_year" class="form-control" value="{{ old('manufacture_year', $vehicle->manufacture_year) }}" min="1900" max="{{ date('Y') + 1 }}" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Seating Capacity <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold"><i class="ti ti-users me-1 text-muted"></i> Seating Capacity <span class="text-danger">*</span></label>
                                 <input type="number" name="seating_capacity" class="form-control" value="{{ old('seating_capacity', $vehicle->seating_capacity) }}" min="1" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Load Capacity (Tons)</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-weight me-1 text-muted"></i> Load Capacity (Tons)</label>
                                 <input type="number" step="0.01" name="load_capacity" class="form-control" value="{{ old('load_capacity', $vehicle->load_capacity) }}">
                             </div>
                         </div>
@@ -100,41 +106,41 @@
                         <div class="row">
                             <!-- RC -->
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">RC Number</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-file-certificate me-1 text-muted"></i> RC Number</label>
                                 <input type="text" name="rc_number" class="form-control text-uppercase" value="{{ old('rc_number', $vehicle->rc_number) }}">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">RC Expiry</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-calendar-due me-1 text-muted"></i> RC Expiry</label>
                                 <input type="date" name="rc_expiry" class="form-control" value="{{ old('rc_expiry', $vehicle->rc_expiry ? \Carbon\Carbon::parse($vehicle->rc_expiry)->format('Y-m-d') : '') }}">
                             </div>
                             
                             <!-- Insurance -->
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Insurance Number</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-shield-check me-1 text-muted"></i> Insurance Number</label>
                                 <input type="text" name="insurance_number" class="form-control text-uppercase" value="{{ old('insurance_number', $vehicle->insurance_number) }}">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Insurance Expiry</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-calendar-due me-1 text-muted"></i> Insurance Expiry</label>
                                 <input type="date" name="insurance_expiry" class="form-control" value="{{ old('insurance_expiry', $vehicle->insurance_expiry ? \Carbon\Carbon::parse($vehicle->insurance_expiry)->format('Y-m-d') : '') }}">
                             </div>
 
                             <!-- Permit -->
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Permit Number</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-file-text me-1 text-muted"></i> Permit Number</label>
                                 <input type="text" name="permit_number" class="form-control text-uppercase" value="{{ old('permit_number', $vehicle->permit_number) }}">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Permit Expiry</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-calendar-due me-1 text-muted"></i> Permit Expiry</label>
                                 <input type="date" name="permit_expiry" class="form-control" value="{{ old('permit_expiry', $vehicle->permit_expiry ? \Carbon\Carbon::parse($vehicle->permit_expiry)->format('Y-m-d') : '') }}">
                             </div>
 
                             <!-- Fitness -->
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Fitness Certificate Number</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-activity me-1 text-muted"></i> Fitness Certificate Number</label>
                                 <input type="text" name="fitness_certificate_number" class="form-control text-uppercase" value="{{ old('fitness_certificate_number', $vehicle->fitness_certificate_number) }}">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label class="form-label fw-semibold">Fitness Expiry</label>
+                                <label class="form-label fw-semibold"><i class="ti ti-calendar-due me-1 text-muted"></i> Fitness Expiry</label>
                                 <input type="date" name="fitness_expiry" class="form-control" value="{{ old('fitness_expiry', $vehicle->fitness_expiry ? \Carbon\Carbon::parse($vehicle->fitness_expiry)->format('Y-m-d') : '') }}">
                             </div>
                         </div>
@@ -151,7 +157,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold"><i class="ti ti-toggle-right me-1 text-muted"></i> Status <span class="text-danger">*</span></label>
                             <select name="status" class="form-select" required>
                                 <option value="active" {{ old('status', $vehicle->status) == 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $vehicle->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
@@ -160,7 +166,7 @@
                             </select>
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Assign Driver</label>
+                            <label class="form-label fw-semibold"><i class="ti ti-steering-wheel me-1 text-muted"></i> Assign Driver</label>
                             <select name="driver_id" class="form-select">
                                 <option value="">-- No Driver Assigned --</option>
                                 @foreach($drivers as $driver)
@@ -170,9 +176,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" name="is_verified" id="is_verified" value="1" {{ old('is_verified', $vehicle->is_verified) ? 'checked' : '' }}>
-                            <label class="form-check-label fw-semibold" for="is_verified">Verified</label>
+                        <div class="form-check form-switch form-switch-md mb-0">
+                            <input class="form-check-input cursor-pointer" type="checkbox" name="is_verified" id="is_verified" value="1" {{ old('is_verified', $vehicle->is_verified) ? 'checked' : '' }}>
+                            <label class="form-check-label fw-semibold cursor-pointer" for="is_verified">Officially Verified</label>
                         </div>
                     </div>
                 </div>
@@ -184,7 +190,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Front Image</label>
+                            <label class="form-label fw-semibold"><i class="ti ti-photo me-1 text-muted"></i> Front Image</label>
                             <input type="file" name="front_image" class="form-control" accept="image/*">
                             @if($vehicle->front_image)
                                 <div class="mt-2">
@@ -193,7 +199,7 @@
                             @endif
                         </div>
                         <div class="mb-4">
-                            <label class="form-label fw-semibold">Back Image</label>
+                            <label class="form-label fw-semibold"><i class="ti ti-photo me-1 text-muted"></i> Back Image</label>
                             <input type="file" name="back_image" class="form-control" accept="image/*">
                             @if($vehicle->back_image)
                                 <div class="mt-2">
@@ -202,7 +208,7 @@
                             @endif
                         </div>
                         <div class="mb-0">
-                            <label class="form-label fw-semibold">Side Image</label>
+                            <label class="form-label fw-semibold"><i class="ti ti-photo me-1 text-muted"></i> Side Image</label>
                             <input type="file" name="side_image" class="form-control" accept="image/*">
                             @if($vehicle->side_image)
                                 <div class="mt-2">

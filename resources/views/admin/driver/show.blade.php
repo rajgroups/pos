@@ -27,7 +27,27 @@
                     @endif
                 </p>
             </div>
-            <div class="ms-auto pb-2">
+            <div class="ms-auto pb-2 d-flex align-items-center gap-3">
+                <form action="{{ route('admin.drivers.toggle-verify', $driver->id) }}" method="POST" class="m-0">
+                    @csrf
+                    <div class="form-check form-switch" title="Toggle Verification">
+                        <input class="form-check-input" style="cursor: pointer;" type="checkbox" role="switch" id="verifySwitch" onchange="this.form.submit()" {{ $driver->is_verified ? 'checked' : '' }}>
+                        <label class="form-check-label fw-medium {{ $driver->is_verified ? 'text-primary' : 'text-muted' }}" for="verifySwitch" style="cursor: pointer;">
+                            {{ $driver->is_verified ? 'Verified' : 'Unverified' }}
+                        </label>
+                    </div>
+                </form>
+
+                <form action="{{ route('admin.drivers.toggle-status', $driver->id) }}" method="POST" class="m-0 border-end pe-3">
+                    @csrf
+                    <div class="form-check form-switch" title="Toggle Active Status">
+                        <input class="form-check-input" style="cursor: pointer;" type="checkbox" role="switch" id="statusSwitch" onchange="this.form.submit()" {{ $driver->status === 'active' ? 'checked' : '' }}>
+                        <label class="form-check-label fw-medium {{ $driver->status === 'active' ? 'text-success' : 'text-warning' }}" for="statusSwitch" style="cursor: pointer;">
+                            {{ ucfirst($driver->status) }}
+                        </label>
+                    </div>
+                </form>
+
                 <a href="{{ route('admin.drivers.edit', $driver->id) }}" class="btn btn-primary"><i class="ti ti-edit me-2"></i>Edit Profile</a>
             </div>
         </div>
@@ -196,6 +216,142 @@
                         </li>
                     @endforelse
                 </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card bg-white">
+            <div class="card-header border-bottom">
+                <ul class="nav nav-tabs nav-tabs-bottom mb-0" id="driver-details-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-medium" id="bookings-tab" data-bs-toggle="tab" data-bs-target="#bookings" type="button" role="tab">Bookings ({{ $bookings->total() }})</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-medium" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">Reviews ({{ $reviews->total() }})</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-medium" id="recharges-tab" data-bs-toggle="tab" data-bs-target="#recharges" type="button" role="tab">Recharges ({{ $recharges->total() }})</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="driver-details-tabContent">
+                    
+                    <!-- Bookings Tab -->
+                    <div class="tab-pane fade show active" id="bookings" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Booking No</th>
+                                        <th>Date</th>
+                                        <th>Mode</th>
+                                        <th>Amount</th>
+                                        <th>Payment</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($bookings as $booking)
+                                        <tr>
+                                            <td><a href="#" class="fw-medium text-primary">{{ $booking->booking_no }}</a></td>
+                                            <td>{{ $booking->created_at->format('d M Y, h:i A') }}</td>
+                                            <td>{{ ucfirst($booking->service_mode) }}</td>
+                                            <td>₹{{ $booking->final_amount ?? '0.00' }}</td>
+                                            <td><span class="badge bg-{{ $booking->payment_status == 'completed' ? 'success' : 'warning' }}">{{ ucfirst($booking->payment_status) }}</span></td>
+                                            <td><span class="badge bg-{{ $booking->status == 'completed' ? 'success' : ($booking->status == 'cancelled' ? 'danger' : 'warning') }}">{{ ucfirst($booking->status) }}</span></td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="6" class="text-center py-4 text-muted">No bookings found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        @if($bookings->hasPages())
+                            <div class="d-flex justify-content-end mt-3">
+                                {{ $bookings->appends(request()->except('bookings_page'))->links() }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Reviewer</th>
+                                        <th>Rating</th>
+                                        <th>Comment</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($reviews as $review)
+                                        <tr>
+                                            <td>{{ $review->user->name ?? 'Unknown' }}</td>
+                                            <td>
+                                                <div class="text-warning">
+                                                    @for($i=1; $i<=5; $i++)
+                                                        <i class="ti ti-star{{ $i <= $review->rating ? '-filled' : '' }}"></i>
+                                                    @endfor
+                                                </div>
+                                            </td>
+                                            <td>{{ \Illuminate\Support\Str::limit($review->comment, 50) }}</td>
+                                            <td>{{ $review->created_at->format('d M Y') }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4" class="text-center py-4 text-muted">No reviews found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        @if($reviews->hasPages())
+                            <div class="d-flex justify-content-end mt-3">
+                                {{ $reviews->appends(request()->except('reviews_page'))->links() }}
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Recharges Tab -->
+                    <div class="tab-pane fade" id="recharges" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Amount</th>
+                                        <th>Reference No</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($recharges as $recharge)
+                                        <tr>
+                                            <td>#{{ $recharge->id }}</td>
+                                            <td class="fw-medium">₹{{ $recharge->amount }}</td>
+                                            <td>{{ $recharge->transaction_id ?? 'N/A' }}</td>
+                                            <td><span class="badge bg-{{ $recharge->status == 'approved' ? 'success' : ($recharge->status == 'rejected' ? 'danger' : 'warning') }}">{{ ucfirst($recharge->status) }}</span></td>
+                                            <td>{{ $recharge->created_at->format('d M Y, h:i A') }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="5" class="text-center py-4 text-muted">No recharge requests found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                        @if($recharges->hasPages())
+                            <div class="d-flex justify-content-end mt-3">
+                                {{ $recharges->appends(request()->except('recharges_page'))->links() }}
+                            </div>
+                        @endif
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>

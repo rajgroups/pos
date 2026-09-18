@@ -17,7 +17,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ request()->url() }}" method="GET" class="row align-items-end g-3">
-                <div class="col-lg-5 col-md-6">
+                <div class="col-lg-{{ $type == 'All' ? '4' : '5' }} col-md-6">
                     <label class="form-label text-muted fs-13">Search Booking</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="ti ti-search text-muted"></i></span>
@@ -25,7 +25,19 @@
                     </div>
                 </div>
                 
-                <div class="col-lg-3 col-md-4">
+                @if($type == 'All')
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label text-muted fs-13">Filter by Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        @foreach(['pending', 'requested', 'assigned', 'accepted', 'arrived', 'started', 'in_progress', 'completed', 'cancelled', 'expired', 'timeout'] as $status)
+                            <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+                
+                <div class="col-lg-{{ $type == 'All' ? '2' : '3' }} col-md-4">
                     <label class="form-label text-muted fs-13">Filter by Date</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="ti ti-calendar text-muted"></i></span>
@@ -33,9 +45,9 @@
                     </div>
                 </div>
                 
-                <div class="col-lg-4 col-md-2 d-flex gap-2">
+                <div class="col-lg-3 col-md-2 d-flex gap-2">
                     <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-2"></i>Apply Filter</button>
-                    @if(request()->hasAny(['search', 'date']))
+                    @if(request()->hasAny(['search', 'date', 'status']))
                         <a href="{{ request()->url() }}" class="btn btn-light border w-100">Clear</a>
                     @endif
                 </div>
@@ -139,13 +151,14 @@
                     </div>
                     <h4 class="fw-bold text-dark mb-2">No {{ $type }} Rides Found</h4>
                     <p class="text-muted mb-4" style="max-width: 400px;">
-                        @if(request()->hasAny(['search', 'date']))
-                            We couldn't find any {{ strtolower($type) }} rides matching your filter criteria. Try adjusting your search or clearing the filters.
+                        @php $rideTypeLabel = $type == 'All' ? '' : strtolower($type) . ' '; @endphp
+                        @if(request()->hasAny(['search', 'date', 'status']))
+                            We couldn't find any {{ $rideTypeLabel }}rides matching your filter criteria. Try adjusting your search or clearing the filters.
                         @else
-                            There are currently no {{ strtolower($type) }} rides in the system. When new rides are booked, they will appear here.
+                            There are currently no {{ $rideTypeLabel }}rides in the system. When new rides are booked, they will appear here.
                         @endif
                     </p>
-                    @if(request()->hasAny(['search', 'date']))
+                    @if(request()->hasAny(['search', 'date', 'status']))
                         <a href="{{ request()->url() }}" class="btn btn-primary"><i class="ti ti-filter-off me-2"></i>Clear Filters</a>
                     @endif
                 </div>

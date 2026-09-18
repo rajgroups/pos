@@ -52,9 +52,8 @@ class ImageHelper
             @unlink(public_path($path . $oldImage));
         }
 
-        // Return FULL URL
-        return self::BASE_PATH.$directory.$imageName;
-        // return self::fullUrl($directory, $imageName);
+        // Return correct path with trailing slash
+        return $path . $imageName;
     }
 
     /**

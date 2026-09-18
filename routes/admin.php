@@ -58,6 +58,8 @@ Route::prefix('admin')->name('admin.')->group(function(){
 
         // For Drivers Management Routes
         Route::resource('drivers', DriverController::class);
+        Route::post('drivers/{driver}/toggle-status', [DriverController::class, 'toggleStatus'])->name('drivers.toggle-status');
+        Route::post('drivers/{driver}/toggle-verify', [DriverController::class, 'toggleVerify'])->name('drivers.toggle-verify');
         Route::resource('enquiries', \App\Http\Controllers\Admin\EnquiryController::class)->only(['index', 'destroy']);
 
         // CMS Management
@@ -90,6 +92,7 @@ Route::prefix('admin')->name('admin.')->group(function(){
         // For Admin Management Routes
         // Route::resource('ride', AdminController::class);
         Route::prefix('ride')->name('ride.')->group(function () {
+            Route::get('all', [RideController::class, 'index'])->name('index');
             Route::get('upcoming', [RideController::class, 'upcoming'])->name('upcoming');
             Route::get('active', [RideController::class, 'active'])->name('active');
             Route::get('completed', [RideController::class, 'completed'])->name('complete');

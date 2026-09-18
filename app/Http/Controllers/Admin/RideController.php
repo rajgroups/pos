@@ -10,14 +10,20 @@ use App\Models\Vehicle;
 
 class RideController extends Controller
 {
-    private function getRides(Request $request, $statusGroup)
+    private function getRides(Request $request, $statusGroup = null)
     {
         $query = Booking::with(['user', 'driver', 'fare', 'pickupLocation', 'dropLocation']);
         
-        if (is_array($statusGroup)) {
-            $query->whereIn('status', $statusGroup);
-        } else {
-            $query->where('status', $statusGroup);
+        if ($statusGroup !== null) {
+            if (is_array($statusGroup)) {
+                $query->whereIn('status', $statusGroup);
+            } else {
+                $query->where('status', $statusGroup);
+            }
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         if ($request->filled('search')) {
@@ -38,6 +44,13 @@ class RideController extends Controller
         }
 
         return $query->latest()->paginate(15);
+    }
+
+    public function index(Request $request)
+    {
+        $rides = $this->getRides($request, null);
+        $type = 'All';
+        return view('admin.ride.list', compact('rides', 'type'));
     }
 
     public function upcoming(Request $request)

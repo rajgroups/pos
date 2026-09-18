@@ -31,7 +31,16 @@ class VehicleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'driver_id'      => 'nullable|exists:drivers,id',
+            'driver_id' => [
+                'nullable',
+                'exists:drivers,id',
+                function ($attribute, $value, $fail) {
+                    $exists = \App\Models\Vehicle::where('driver_id', $value)->exists();
+                    if ($exists) {
+                        $fail('This driver is already assigned to another vehicle. Please release the driver first before assigning them to this vehicle.');
+                    }
+                }
+            ],
             'vehicle_number' => 'required|string|unique:vehicles,vehicle_number',
             'brand'          => 'required|string|max:255',
             'model'          => 'required|string|max:255',
@@ -104,7 +113,18 @@ class VehicleController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'driver_id'      => 'nullable|exists:drivers,id',
+            'driver_id' => [
+                'nullable',
+                'exists:drivers,id',
+                function ($attribute, $value, $fail) use ($id) {
+                    $exists = \App\Models\Vehicle::where('driver_id', $value)
+                                ->where('id', '!=', $id)
+                                ->exists();
+                    if ($exists) {
+                        $fail('This driver is already assigned to another vehicle. Please release the driver first before assigning them to this vehicle.');
+                    }
+                }
+            ],
             'vehicle_number' => 'required|string|unique:vehicles,vehicle_number,' . $id,
             'brand'          => 'required|string|max:255',
             'model'          => 'required|string|max:255',
