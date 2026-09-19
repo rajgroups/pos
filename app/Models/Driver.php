@@ -45,6 +45,9 @@ class Driver extends Authenticatable
         'police_verification_file',
         'medical_certificate',
         'remarks',
+        'referral_code',
+        'referred_by_id',
+        'referred_by_type',
     ];
 
     protected $casts = [
@@ -86,5 +89,20 @@ class Driver extends Authenticatable
     {
         $avg = $this->reviews()->avg('rating');
         return $avg ? round((float) $avg, 2) : 4.9;
+    }
+
+    public function walletTransactions(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(WalletTransaction::class, 'user');
+    }
+
+    public function referralsMade(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Referral::class, 'referrer');
+    }
+
+    public function referralReceived(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Referral::class, 'referred');
     }
 }

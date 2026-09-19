@@ -59,6 +59,14 @@ class UserAuthController extends Controller
                 'mobile' => $request->mobile,
             ]);
             $isNewUser = true;
+
+            if ($request->filled('referral_code')) {
+                try {
+                    app(\App\Services\ReferralService::class)->applyReferral($userExist, $request->referral_code);
+                } catch (\Throwable $e) {
+                    \Log::error('Failed to apply referral code during registration: ' . $e->getMessage());
+                }
+            }
         }
 
         // Generate 4 digit OTP

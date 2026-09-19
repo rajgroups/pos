@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\User\VehicleCategoryController;
 use App\Http\Controllers\Api\User\VehicleController;
 use App\Http\Controllers\Api\User\VehicleTypeController;
 use App\Http\Controllers\Api\User\NearbyVehicleController;
+use App\Http\Controllers\Api\User\ReferralController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,14 @@ Route::name('api.user.')->group(function () {
             // Review routes
             Route::post('/{booking}/review', [ReviewController::class, 'store'])->name('review.store');
             Route::get('/{booking}/review', [ReviewController::class, 'show'])->name('review.show');
+        });
+
+        // Referral routes
+        Route::prefix('referrals')->name('referrals.')->group(function () {
+            Route::get('/summary', [ReferralController::class, 'summary'])->name('summary');
+            Route::get('/code', [ReferralController::class, 'code'])->name('code');
+            Route::post('/validate', [ReferralController::class, 'validateCode'])->name('validate');
+            Route::get('/history', [ReferralController::class, 'history'])->name('history');
         });
     });
 });

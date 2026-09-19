@@ -35,12 +35,12 @@ class User extends Authenticatable
         'city',
         'state',
         'postal_code',
-        'emergency_contact_name',
-        'emergency_contact_mobile',
-        'emergency_contact_relation',
         'wallet_balance',
         'device_token',
         'fcm_token',
+        'referral_code',
+        'referred_by',
+        'referred_by_type',
     ];
 
     /**
@@ -66,5 +66,20 @@ class User extends Authenticatable
     public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function walletTransactions(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(WalletTransaction::class, 'user');
+    }
+
+    public function referralsMade(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(Referral::class, 'referrer');
+    }
+
+    public function referralReceived(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Referral::class, 'referred');
     }
 }

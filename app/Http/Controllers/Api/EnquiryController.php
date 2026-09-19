@@ -38,6 +38,7 @@ class EnquiryController extends Controller
                 'name'         => $request->input('name'),
                 'mobile'       => $request->input('mobile'),
                 'contact_note' => $request->input('contact_note'),
+                'referral_code'=> $request->input('referral_code'),
             ]);
 
             return ApiResponseHelper::success(

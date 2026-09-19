@@ -489,9 +489,17 @@ class BookingService
                 'vehicle',
                 'user',
             ]);
-        });
-
         $this->broadcastBookingUpdate($booking);
+
+        try {
+            // Qualify the User (if they were referred and this is their first ride)
+            app(\App\Services\ReferralService::class)->qualifyReferral($booking->user);
+            
+            // Qualify the Driver (if they were referred and this is their first completed ride)
+            app(\App\Services\ReferralService::class)->qualifyReferral($booking->driver);
+        } catch (\Throwable $e) {
+            \Log::error('Referral qualification failed after booking: ' . $e->getMessage());
+        }
 
         return $booking;
     }

@@ -15,5 +15,6 @@ class Enquiry extends Model
         'name',
         'mobile',
         'contact_note',
+        'referral_code',
     ];
 }

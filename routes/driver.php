@@ -30,6 +30,14 @@ Route::name('api.driver.')->group(function () {
             Route::post('/{booking}/start', [BookingController::class, 'start'])->name('start');
             Route::post('/{booking}/complete', [BookingController::class, 'complete'])->name('complete');
         });
+
+        // Referral routes
+        Route::prefix('referrals')->name('referrals.')->group(function () {
+            Route::get('/summary', [\App\Http\Controllers\Api\Driver\ReferralController::class, 'summary'])->name('summary');
+            Route::get('/code', [\App\Http\Controllers\Api\Driver\ReferralController::class, 'code'])->name('code');
+            Route::post('/validate', [\App\Http\Controllers\Api\Driver\ReferralController::class, 'validateCode'])->name('validate');
+            Route::get('/history', [\App\Http\Controllers\Api\Driver\ReferralController::class, 'history'])->name('history');
+        });
     });
 });
 
