@@ -489,6 +489,8 @@ class BookingService
                 'vehicle',
                 'user',
             ]);
+        });
+
         $this->broadcastBookingUpdate($booking);
 
         try {
