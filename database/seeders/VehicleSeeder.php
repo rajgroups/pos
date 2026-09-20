@@ -46,7 +46,13 @@ class VehicleSeeder extends Seeder
             ['slug' => 'tractor-farm-tractor', 'brand' => 'John Deere', 'model' => '5310', 'color' => 'Green', 'seating_capacity' => 1, 'load_capacity' => 1800.00, 'status' => 'maintenance', 'is_verified' => true],
         ];
 
-        $driverByType = Driver::query()->pluck('id', 'driver_type')->toArray();
+        $driversGrouped = Driver::query()->get()->groupBy('driver_type');
+        $driverQueues = [];
+        $driverIndexes = [];
+        foreach ($driversGrouped as $type => $drivers) {
+            $driverQueues[$type] = $drivers->pluck('id')->toArray();
+            $driverIndexes[$type] = 0;
+        }
 
         for ($i = 0; $i < 50; $i++) {
             $template = $vehicleTemplates[$i % count($vehicleTemplates)];
@@ -59,12 +65,19 @@ class VehicleSeeder extends Seeder
 
             $targetDriverId = null;
             $slug = $template['slug'];
+            $type = null;
+            
             if (str_starts_with($slug, 'cab-')) {
-                $targetDriverId = $driverByType['car'] ?? ($driverIds->first() ?? null);
+                $type = 'car';
             } elseif (str_starts_with($slug, 'auto-')) {
-                $targetDriverId = $driverByType['auto'] ?? ($driverIds->last() ?? null);
+                $type = 'auto';
             } elseif (str_starts_with($slug, 'bike-') || str_starts_with($slug, 'parcel-')) {
-                $targetDriverId = $driverByType['bike'] ?? ($driverIds[1] ?? null);
+                $type = 'bike';
+            }
+
+            if ($type && !empty($driverQueues[$type])) {
+                $targetDriverId = $driverQueues[$type][$driverIndexes[$type] % count($driverQueues[$type])];
+                $driverIndexes[$type]++;
             } else {
                 $targetDriverId = $driverIds->isNotEmpty() ? $driverIds[$i % $driverIds->count()] : null;
             }
