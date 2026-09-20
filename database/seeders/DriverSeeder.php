@@ -17,6 +17,26 @@ class DriverSeeder extends Seeder
             ['name' => 'Chetan Raj', 'phone' => '9000000003', 'email' => 'chetan.driver@example.com', 'city' => 'Bengaluru', 'state' => 'Karnataka', 'driver_type' => 'auto', 'license_categories' => ['LMV', '3W'], 'status' => 'active', 'is_verified' => true],
         ];
 
+        // Generate additional 22 drivers to make it 25 total
+        for ($i = 4; $i <= 25; $i++) {
+            $types = ['car', 'bike', 'auto'];
+            $type = $types[array_rand($types)];
+            
+            $licenseCats = ['car' => ['LMV', 'TR'], 'bike' => ['Bike'], 'auto' => ['LMV', '3W']];
+
+            $drivers[] = [
+                'name' => 'Driver ' . $i,
+                'phone' => '9000000' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'email' => 'driver' . $i . '@example.com',
+                'city' => 'City ' . $i,
+                'state' => 'State ' . $i,
+                'driver_type' => $type,
+                'license_categories' => $licenseCats[$type],
+                'status' => 'active',
+                'is_verified' => true
+            ];
+        }
+
         foreach ($drivers as $index => $driver) {
             Driver::query()->updateOrCreate(
                 ['phone' => $driver['phone']],
