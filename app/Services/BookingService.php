@@ -657,7 +657,6 @@ class BookingService
             ->whereKey($vehicleCategoryId)
             ->with([
                 'children.children',
-                'parent.children',
             ])
             ->first();
 
@@ -666,15 +665,6 @@ class BookingService
         }
 
         $ids = [$category->id];
-
-        if ($category->parent_id) {
-            $ids[] = (int) $category->parent_id;
-            if ($category->parent) {
-                foreach ($category->parent->children ?? [] as $sibling) {
-                    $ids[] = (int) $sibling->id;
-                }
-            }
-        }
 
         foreach ($category->children ?? [] as $child) {
             $ids = array_merge($ids, $this->collectCategoryIds($child));
