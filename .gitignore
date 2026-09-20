@@ -37,3 +37,8 @@ yarn-error.log
 # Homestead
 Homestead.json
 Homestead.yaml
+
+# Google Cloud Credentials
+storage/app/google/
+*-service-account.json
+*.json.key

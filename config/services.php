@@ -39,6 +39,21 @@ return [
         'api_key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'google_cloud' => [
+        'project_id' => env('GOOGLE_CLOUD_PROJECT_ID'),
+        'billing_account_id' => env('GOOGLE_CLOUD_BILLING_ACCOUNT_ID'),
+        'credentials' => env('GOOGLE_CLOUD_CREDENTIALS'),
+        'bigquery' => [
+            'project_id' => env('GOOGLE_CLOUD_BIGQUERY_PROJECT_ID'),
+            'dataset' => env('GOOGLE_CLOUD_BIGQUERY_DATASET'),
+            'billing_table' => env('GOOGLE_CLOUD_BIGQUERY_BILLING_TABLE'),
+        ],
+        'alerts' => [
+            'daily_inr' => env('GOOGLE_MAPS_DAILY_ALERT_INR', 500),
+            'monthly_inr' => env('GOOGLE_MAPS_MONTHLY_ALERT_INR', 10000),
+        ],
+    ],
+
     'fcm' => [
         'server_key' => env('FCM_SERVER_KEY'),
         'service_account_file' => env('FCM_SERVICE_ACCOUNT_FILE', storage_path('app/firebase/firebase-service-account.json')),

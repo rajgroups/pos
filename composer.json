@@ -7,6 +7,8 @@
     "require": {
         "php": "^8.1",
         "ccinn/geohash": "^1.0",
+        "google/cloud-billing": "^2.3",
+        "google/cloud-monitoring": "^2.3",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/octane": "^2.17",

@@ -367,4 +367,15 @@ class BookingRepository
             'average_rating' => $avgRating,
         ];
     }
+
+    /**
+     * Find a booking by its booking number.
+     *
+     * @param string $bookingNo
+     * @return \App\Models\Booking|null
+     */
+    public function findByBookingNo(string $bookingNo): ?Booking
+    {
+        return $this->model->where('booking_no', $bookingNo)->first();
+    }
 }

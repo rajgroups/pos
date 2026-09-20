@@ -136,6 +136,15 @@
                         <li><a href="{{ route('admin.cms-pages.index') }}" class="{{ Route::is('admin.cms-pages.*') ? 'active' : '' }}"><i class="ti ti-file-text fs-16 me-2"></i><span>Content Pages</span></a></li>
                     </ul>
                 </li>
+
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Settings</h6>
+                    <ul>
+                        <li><a href="{{ route('admin.settings.mode') }}" class="{{ Route::is('admin.settings.mode') ? 'active' : '' }}"><i class="ti ti-settings fs-16 me-2"></i><span>System Mode</span></a></li>
+                        <li><a href="{{ route('admin.settings.app') }}" class="{{ Route::is('admin.settings.app') ? 'active' : '' }}"><i class="ti ti-device-mobile fs-16 me-2"></i><span>App Settings</span></a></li>
+                        <li><a href="{{ route('admin.google-maps.usage') }}" class="{{ Route::is('admin.google-maps.*') ? 'active' : '' }}"><i class="ti ti-map-pin fs-16 me-2"></i><span>Google Maps Usage</span></a></li>
+                    </ul>
+                </li>
             </ul>
 
         </div>

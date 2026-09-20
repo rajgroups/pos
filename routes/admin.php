@@ -114,5 +114,16 @@ Route::prefix('admin')->name('admin.')->group(function(){
         // For System Settings
         Route::get('/settings/mode', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'mode'])->name('settings.mode');
         Route::post('/settings/mode', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMode'])->name('settings.mode.update');
+        Route::get('/settings/app', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'appSettings'])->name('settings.app');
+        Route::post('/settings/app', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'updateAppSettings'])->name('settings.app.update');
+
+        // Google Maps Usage Dashboard
+        Route::prefix('google-maps')->name('google-maps.')->group(function () {
+            Route::get('/usage', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'index'])->name('usage');
+            Route::get('/usage/summary', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'summary'])->name('usage.summary');
+            Route::get('/usage/daily', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'daily'])->name('usage.daily');
+            Route::get('/usage/apis', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'apis'])->name('usage.apis');
+            Route::post('/usage/refresh', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'refresh'])->name('usage.refresh');
+        });
 
 });

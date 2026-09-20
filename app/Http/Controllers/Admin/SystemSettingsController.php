@@ -45,4 +45,39 @@ class SystemSettingsController extends Controller
 
         return back()->with('success', 'System mode updated successfully.');
     }
+
+    public function appSettings()
+    {
+        $settings = \App\Models\AppSetting::all()->pluck('value', 'key')->toArray();
+        return view('admin.settings.app_settings', compact('settings'));
+    }
+
+    public function updateAppSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'user_app_latest_version' => 'required|string',
+            'user_app_min_version' => 'required|string',
+            'user_app_force_update' => 'required|boolean',
+            'user_app_url_android' => 'required|url',
+            'user_app_url_ios' => 'required|url',
+            'user_app_update_title' => 'required|string',
+            'user_app_update_message' => 'required|string',
+
+            'driver_app_latest_version' => 'required|string',
+            'driver_app_min_version' => 'required|string',
+            'driver_app_force_update' => 'required|boolean',
+            'driver_app_url_android' => 'required|url',
+            'driver_app_url_ios' => 'required|url',
+            'driver_app_update_title' => 'required|string',
+            'driver_app_update_message' => 'required|string',
+
+            'driver_waiting_time' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            \App\Models\AppSetting::where('key', $key)->update(['value' => $value]);
+        }
+
+        return back()->with('success', 'App settings updated successfully.');
+    }
 }

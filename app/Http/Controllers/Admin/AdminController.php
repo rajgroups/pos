@@ -3,22 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\UserService;
+use App\Models\Admin;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-   protected $userService;
-
-    public function __construct(UserService $userService)
-    {
-        $this->userService = $userService;
-    }
-
     public function index()
     {
-        $users = $this->userService->getAllUsers();
-        return view('admin.admin.index', compact('users'));
+        $admins = Admin::all();
+        return view('admin.admin.index', compact('admins'));
     }
 
     public function create()
@@ -30,49 +24,62 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'mobile'   => 'nullable|string|max:20|unique:users,mobile',
+            'email'    => 'required|email|unique:admins,email',
+            'phone'    => 'nullable|string|max:20|unique:admins,phone',
             'password' => 'required|string|min:8',
+            'status'   => 'required|in:active,inactive',
         ]);
 
-        $this->userService->createUser($validated);
+        $validated['password'] = Hash::make($validated['password']);
 
-        return redirect()->route('admin.users.index')
-                         ->with('success', 'User created successfully.');
+        Admin::create($validated);
+
+        return redirect()->route('admin.admin.index')
+                         ->with('success', 'Admin created successfully.');
     }
 
     public function show($id)
     {
-        $user = $this->userService->getUserById($id);
-        return view('admin.admin.show', compact('user'));
+        $admin = Admin::findOrFail($id);
+        return view('admin.admin.show', compact('admin'));
     }
 
     public function edit($id)
     {
-        $user = $this->userService->getUserById($id);
-        return view('admin.admin.edit', compact('user'));
+        $admin = Admin::findOrFail($id);
+        return view('admin.admin.edit', compact('admin'));
     }
 
     public function update(Request $request, $id)
     {
+        $admin = Admin::findOrFail($id);
+        
         $validated = $request->validate([
-            'name'     => 'nullable|string|max:255',
-            'email'    => 'nullable|email|unique:users,email,' . $id,
-            'mobile'   => 'nullable|string|max:20|unique:users,mobile,' . $id,
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:admins,email,' . $id,
+            'phone'    => 'nullable|string|max:20|unique:admins,phone,' . $id,
             'password' => 'nullable|string|min:8',
+            'status'   => 'required|in:active,inactive',
         ]);
 
-        $this->userService->updateUser($id, $validated);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
 
-        return redirect()->route('admin.users.index')
-                         ->with('success', 'User updated successfully.');
+        $admin->update($validated);
+
+        return redirect()->route('admin.admin.index')
+                         ->with('success', 'Admin updated successfully.');
     }
 
     public function destroy($id)
     {
-        $this->userService->deleteUser($id);
+        $admin = Admin::findOrFail($id);
+        $admin->delete();
 
-        return redirect()->route('admin.users.index')
-                         ->with('success', 'User deleted successfully.');
+        return redirect()->route('admin.admin.index')
+                         ->with('success', 'Admin deleted successfully.');
     }
 }
