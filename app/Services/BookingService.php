@@ -651,33 +651,91 @@ class BookingService
         $this->socketDispatchService->dispatchBooking($booking);
     }
 
+    /**
+     * Resolve ALL vehicle category IDs eligible to receive a dispatch for a given booking category.
+     *
+     * Strategy:
+     *  1. Walk UP the hierarchy to find the root parent of the booked category.
+     *  2. Collect the root + ALL its descendants (children, grandchildren, etc.).
+     *
+     * Example:
+     *   Cab (ID=1)
+     *     ├── Sedan  (ID=2)  ← user booked this
+     *     ├── SUV    (ID=3)
+     *     └── Hatchback (ID=4)
+     *
+     *   resolveDispatchCategoryIds(2) → [1, 2, 3, 4]
+     *   → ALL drivers under Cab (any sub-type) receive the ride request.
+     *
+     * @param int $vehicleCategoryId The vehicle_category_id stored on the booking.
+     * @return int[]
+     */
     public function resolveDispatchCategoryIds(int $vehicleCategoryId): array
     {
+        // Step 1: Load the booked category with its full ancestry (parent chain)
         $category = VehicleCategory::query()
             ->whereKey($vehicleCategoryId)
-            ->with([
-                'children.children',
-            ])
             ->first();
 
         if (! $category) {
             return [$vehicleCategoryId];
         }
 
-        $ids = [$category->id];
+        // Step 2: Walk UP to find the root ancestor
+        $root = $this->resolveRootCategory($category);
 
-        foreach ($category->children ?? [] as $child) {
-            $ids = array_merge($ids, $this->collectCategoryIds($child));
-        }
+        // Step 3: Load the root with all recursive children
+        $root->load('childrenRecursive');
+
+        // Step 4: Collect the root ID + all descendant IDs
+        $ids = $this->collectCategoryIds($root);
+
+        \Illuminate\Support\Facades\Log::info('resolveDispatchCategoryIds: resolved category tree', [
+            'booked_category_id'   => $vehicleCategoryId,
+            'root_category_id'     => $root->id,
+            'root_category_name'   => $root->name,
+            'eligible_category_ids' => $ids,
+        ]);
 
         return array_values(array_unique(array_map('intval', $ids)));
     }
 
+    /**
+     * Walk up the parent chain to find the root ancestor of a category.
+     * Stops at the first category with no parent_id.
+     */
+    protected function resolveRootCategory(VehicleCategory $category): VehicleCategory
+    {
+        // If this category has no parent, it is already the root
+        if (! $category->parent_id) {
+            return $category;
+        }
+
+        // Walk up recursively (max depth protection via visited tracking)
+        $visited = [];
+        $current = $category;
+
+        while ($current->parent_id && ! in_array($current->parent_id, $visited, true)) {
+            $visited[] = $current->id;
+            $parent = VehicleCategory::find($current->parent_id);
+            if (! $parent) {
+                break;
+            }
+            $current = $parent;
+        }
+
+        return $current;
+    }
+
+    /**
+     * Recursively collect IDs of a category and all its descendants.
+     * Works with the 'childrenRecursive' eager-loaded relationship.
+     */
     protected function collectCategoryIds(VehicleCategory $category): array
     {
         $ids = [(int) $category->id];
 
-        foreach ($category->children ?? [] as $child) {
+        foreach ($category->childrenRecursive ?? [] as $child) {
             $ids = array_merge($ids, $this->collectCategoryIds($child));
         }
 
