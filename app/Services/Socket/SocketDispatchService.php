@@ -131,16 +131,6 @@ class SocketDispatchService
         // Dispatch delayed job for expiry
         \App\Jobs\ExpireDriverBookingRequest::dispatch($booking->id)->delay($expiresAt);
 
-        // Debug: Log the moves (locations) of eligible drivers at the time of dispatch
-        foreach ($eligibleDriverIds as $did) {
-            $locData = \Illuminate\Support\Facades\Redis::get("driver:location:{$did}");
-            Log::info("Driver Move Debug [Dispatch]: Driver ID {$did} Location", [
-                'driver_id' => $did,
-                'location_data' => $locData ? json_decode($locData, true) : 'Not found in Redis',
-                'booking_id' => $booking->id,
-            ]);
-        }
-
         if (app(\App\Services\IndicabModeService::class)->isPrime()) {
             $socketUrl = rtrim(config('services.socket.url', 'http://127.0.0.1:9502'), '/');
 
