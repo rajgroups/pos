@@ -126,4 +126,21 @@ Route::prefix('admin')->name('admin.')->group(function(){
             Route::post('/usage/refresh', [\App\Http\Controllers\Admin\GoogleMapsUsageController::class, 'refresh'])->name('usage.refresh');
         });
 
+        // Developer / System Management
+        Route::prefix('developer')->name('developer.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\DeveloperController::class, 'index'])->name('index');
+            
+            Route::get('/migrations', [\App\Http\Controllers\Admin\DeveloperController::class, 'migrations'])->name('migrations');
+            Route::post('/migrations/run', [\App\Http\Controllers\Admin\DeveloperController::class, 'runMigration'])->name('migrations.run');
+            
+            Route::get('/cache', [\App\Http\Controllers\Admin\DeveloperController::class, 'cache'])->name('cache');
+            Route::post('/cache/clear', [\App\Http\Controllers\Admin\DeveloperController::class, 'clearCache'])->name('cache.clear');
+            
+            Route::get('/logs', [\App\Http\Controllers\Admin\DeveloperController::class, 'logs'])->name('logs');
+            Route::post('/logs/clear', [\App\Http\Controllers\Admin\DeveloperController::class, 'clearLog'])->name('logs.clear');
+            
+            Route::get('/artisan', [\App\Http\Controllers\Admin\DeveloperController::class, 'artisan'])->name('artisan');
+            Route::post('/artisan/run', [\App\Http\Controllers\Admin\DeveloperController::class, 'runArtisan'])->name('artisan.run');
+        });
+
 });

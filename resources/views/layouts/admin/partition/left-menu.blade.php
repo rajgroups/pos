@@ -145,6 +145,16 @@
                         <li><a href="{{ route('admin.google-maps.usage') }}" class="{{ Route::is('admin.google-maps.*') ? 'active' : '' }}"><i class="ti ti-map-pin fs-16 me-2"></i><span>Google Maps Usage</span></a></li>
                     </ul>
                 </li>
+                <li class="submenu-open">
+                    <h6 class="submenu-hdr">Developer Tools</h6>
+                    <ul>
+                        <li><a href="{{ route('admin.developer.index') }}" class="{{ Route::is('admin.developer.index') ? 'active' : '' }}"><i class="ti ti-server fs-16 me-2"></i><span>System Overview</span></a></li>
+                        <li><a href="{{ route('admin.developer.migrations') }}" class="{{ Route::is('admin.developer.migrations*') ? 'active' : '' }}"><i class="ti ti-database fs-16 me-2"></i><span>Migrations</span></a></li>
+                        <li><a href="{{ route('admin.developer.cache') }}" class="{{ Route::is('admin.developer.cache*') ? 'active' : '' }}"><i class="ti ti-bolt fs-16 me-2"></i><span>Optimization</span></a></li>
+                        <li><a href="{{ route('admin.developer.logs') }}" class="{{ Route::is('admin.developer.logs*') ? 'active' : '' }}"><i class="ti ti-file-description fs-16 me-2"></i><span>System Logs</span></a></li>
+                        <li><a href="{{ route('admin.developer.artisan') }}" class="{{ Route::is('admin.developer.artisan*') ? 'active' : '' }}"><i class="ti ti-terminal fs-16 me-2"></i><span>Artisan Tools</span></a></li>
+                    </ul>
+                </li>
             </ul>
 
         </div>
