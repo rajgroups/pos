@@ -672,7 +672,7 @@ class BookingService
      */
     public function resolveDispatchCategoryIds(int $vehicleCategoryId): array
     {
-        // Step 1: Load the booked category with its full ancestry (parent chain)
+        // Step 1: Load the booked category
         $category = VehicleCategory::query()
             ->whereKey($vehicleCategoryId)
             ->first();
@@ -681,50 +681,18 @@ class BookingService
             return [$vehicleCategoryId];
         }
 
-        // Step 2: Walk UP to find the root ancestor
-        $root = $this->resolveRootCategory($category);
+        // Step 2: Load the category with all recursive children (walk DOWN only)
+        $category->load('childrenRecursive');
 
-        // Step 3: Load the root with all recursive children
-        $root->load('childrenRecursive');
-
-        // Step 4: Collect the root ID + all descendant IDs
-        $ids = $this->collectCategoryIds($root);
+        // Step 3: Collect the category ID + all descendant IDs
+        $ids = $this->collectCategoryIds($category);
 
         \Illuminate\Support\Facades\Log::info('resolveDispatchCategoryIds: resolved category tree', [
-            'booked_category_id'   => $vehicleCategoryId,
-            'root_category_id'     => $root->id,
-            'root_category_name'   => $root->name,
+            'booked_category_id'    => $vehicleCategoryId,
             'eligible_category_ids' => $ids,
         ]);
 
         return array_values(array_unique(array_map('intval', $ids)));
-    }
-
-    /**
-     * Walk up the parent chain to find the root ancestor of a category.
-     * Stops at the first category with no parent_id.
-     */
-    protected function resolveRootCategory(VehicleCategory $category): VehicleCategory
-    {
-        // If this category has no parent, it is already the root
-        if (! $category->parent_id) {
-            return $category;
-        }
-
-        // Walk up recursively (max depth protection via visited tracking)
-        $visited = [];
-        $current = $category;
-
-        while ($current->parent_id && ! in_array($current->parent_id, $visited, true)) {
-            $visited[] = $current->id;
-            $parent = VehicleCategory::find($current->parent_id);
-            if (! $parent) {
-                break;
-            }
-            $current = $parent;
-        }
-
-        return $current;
     }
 
     /**

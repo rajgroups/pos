@@ -176,6 +176,14 @@ class SocketServer
 
                     Log::info("Processing driver {$driverId}");
 
+                    // Debug: Log the moves (locations) of drivers when sending a ride request
+                    $locData = \Illuminate\Support\Facades\Redis::get("driver:location:{$driverId}");
+                    Log::info("Driver Move Debug [SocketServer]: Driver ID {$driverId} Location", [
+                        'driver_id' => $driverId,
+                        'location_data' => $locData ? json_decode($locData, true) : 'Not found in Redis',
+                        'booking_id' => $payload['booking']['id'] ?? 'unknown',
+                    ]);
+
                     $driverFd = $this->presenceStore->getDriverFd($driverId);
 
                     Log::info('Driver FD lookup', [
