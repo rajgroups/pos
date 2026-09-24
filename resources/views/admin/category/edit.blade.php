@@ -141,6 +141,25 @@
                             <input type="number" name="sort_order" class="form-control" value="{{ old('sort_order', $category->sort_order) }}" min="0">
                         </div>
 
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                Driver Search Radius (KM)
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0.1" max="500"
+                                       name="driver_search_radius_km"
+                                       class="form-control"
+                                       value="{{ old('driver_search_radius_km', $category->driver_search_radius_km ?? 5.00) }}"
+                                       placeholder="e.g. 5.00"
+                                       required>
+                                <span class="input-group-text">KM</span>
+                            </div>
+                            <small class="text-muted">
+                                Maximum radius to search for drivers for this category.
+                            </small>
+                        </div>
+
                         <h6 class="mb-3 border-bottom pb-2 mt-4">UI/Styling</h6>
 
                         <div class="row">

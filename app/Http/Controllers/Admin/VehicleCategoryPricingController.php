@@ -37,20 +37,32 @@ class VehicleCategoryPricingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'vehicle_category_id' => 'required|exists:vehicle_categories,id',
-            'pricing_type' => 'required|in:standard,premium',
-            'base_fare' => 'required|numeric|min:0',
-            'minimum_fare' => 'required|numeric|min:0',
-            'per_km_rate' => 'required|numeric|min:0',
-            'per_hour_rate' => 'required|numeric|min:0',
-            'per_day_rate' => 'required|numeric|min:0',
-            'per_acre_rate' => 'required|numeric|min:0',
-            'per_ton_rate' => 'required|numeric|min:0',
-            'waiting_charge_per_hour' => 'required|numeric|min:0',
-            'night_charge_percentage' => 'required|numeric|min:0|max:100',
-            'surge_multiplier' => 'required|numeric|min:1',
-            'is_active' => 'boolean',
+            'vehicle_category_id'    => 'required|exists:vehicle_categories,id',
+            'pricing_type'           => 'required|in:standard,premium,distance,hourly,daily,acre,weight,fixed',
+            'base_fare'              => 'required|numeric|min:0',
+            'minimum_fare'           => 'required|numeric|min:0',
+            'per_km_rate'            => 'required|numeric|min:0',
+            'per_hour_rate'          => 'required|numeric|min:0',
+            'per_day_rate'           => 'required|numeric|min:0',
+            'per_acre_rate'          => 'required|numeric|min:0',
+            'per_ton_rate'           => 'required|numeric|min:0',
+            'waiting_charge_per_hour'=> 'required|numeric|min:0',
+            'night_charge_percentage'=> 'required|numeric|min:0|max:100',
+            'surge_multiplier'       => 'required|numeric|min:1',
+            // Commission
+            'commission_type'        => 'required|in:percentage,fixed',
+            'commission_value'       => 'required|numeric|min:0|max:999999',
+            // Tax/GST
+            'tax_percentage'         => 'required|numeric|min:0|max:100',
+            'is_active'              => 'boolean',
         ]);
+
+        // Extra validation: percentage commission must not exceed 100
+        if ($validated['commission_type'] === 'percentage' && $validated['commission_value'] > 100) {
+            return back()->withErrors([
+                'commission_value' => 'Commission percentage cannot exceed 100%.',
+            ])->withInput();
+        }
 
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
@@ -77,19 +89,24 @@ class VehicleCategoryPricingController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'vehicle_category_id' => 'nullable|exists:vehicle_categories,id',
-            'pricing_type' => 'nullable|in:standard,premium',
-            'base_fare' => 'nullable|numeric|min:0',
-            'minimum_fare' => 'nullable|numeric|min:0',
-            'per_km_rate' => 'nullable|numeric|min:0',
-            'per_hour_rate' => 'nullable|numeric|min:0',
-            'per_day_rate' => 'nullable|numeric|min:0',
-            'per_acre_rate' => 'nullable|numeric|min:0',
-            'per_ton_rate' => 'nullable|numeric|min:0',
-            'waiting_charge_per_hour' => 'nullable|numeric|min:0',
-            'night_charge_percentage' => 'nullable|numeric|min:0|max:100',
-            'surge_multiplier' => 'nullable|numeric|min:1',
-            'is_active' => 'boolean',
+            'vehicle_category_id'    => 'nullable|exists:vehicle_categories,id',
+            'pricing_type'           => 'nullable|in:standard,premium,distance,hourly,daily,acre,weight,fixed',
+            'base_fare'              => 'nullable|numeric|min:0',
+            'minimum_fare'           => 'nullable|numeric|min:0',
+            'per_km_rate'            => 'nullable|numeric|min:0',
+            'per_hour_rate'          => 'nullable|numeric|min:0',
+            'per_day_rate'           => 'nullable|numeric|min:0',
+            'per_acre_rate'          => 'nullable|numeric|min:0',
+            'per_ton_rate'           => 'nullable|numeric|min:0',
+            'waiting_charge_per_hour'=> 'nullable|numeric|min:0',
+            'night_charge_percentage'=> 'nullable|numeric|min:0|max:100',
+            'surge_multiplier'       => 'nullable|numeric|min:1',
+            // Commission
+            'commission_type'        => 'nullable|in:percentage,fixed',
+            'commission_value'       => 'nullable|numeric|min:0|max:999999',
+            // Tax/GST
+            'tax_percentage'         => 'nullable|numeric|min:0|max:100',
+            'is_active'              => 'boolean',
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? 1 : 0;

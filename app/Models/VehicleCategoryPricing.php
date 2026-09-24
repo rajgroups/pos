@@ -26,20 +26,27 @@ class VehicleCategoryPricing extends Model
         'night_charge_percentage',
         'surge_multiplier',
         'is_active',
+        // Commission configuration (added 2026-09-24)
+        'commission_type',   // 'percentage' | 'fixed'
+        'commission_value',  // % (0-100) for percentage, INR for fixed
+        // Tax/GST configuration (added 2026-09-24)
+        'tax_percentage',    // GST/tax % applied to fare subtotal
     ];
 
     protected $casts = [
-        'base_fare' => 'decimal:2',
-        'minimum_fare' => 'decimal:2',
-        'per_km_rate' => 'decimal:2',
-        'per_hour_rate' => 'decimal:2',
-        'per_day_rate' => 'decimal:2',
-        'per_acre_rate' => 'decimal:2',
-        'per_ton_rate' => 'decimal:2',
+        'base_fare'               => 'decimal:2',
+        'minimum_fare'            => 'decimal:2',
+        'per_km_rate'             => 'decimal:2',
+        'per_hour_rate'           => 'decimal:2',
+        'per_day_rate'            => 'decimal:2',
+        'per_acre_rate'           => 'decimal:2',
+        'per_ton_rate'            => 'decimal:2',
         'waiting_charge_per_hour' => 'decimal:2',
         'night_charge_percentage' => 'decimal:2',
-        'surge_multiplier' => 'decimal:2',
-        'is_active' => 'boolean',
+        'surge_multiplier'        => 'decimal:2',
+        'is_active'               => 'boolean',
+        'commission_value'        => 'decimal:2',
+        'tax_percentage'          => 'decimal:2',
     ];
 
     public function vehicleCategory(): BelongsTo

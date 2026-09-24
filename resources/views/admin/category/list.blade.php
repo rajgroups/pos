@@ -101,6 +101,7 @@
                             <th>Slug</th>
                             <th>Service Mode</th>
                             <th>Starting Fare</th>
+                            <th>Search Radius</th>
                             <th>Capacity</th>
                             <th>Status</th>
                             <th class="no-sort"></th>
@@ -121,6 +122,13 @@
                             <td>{{ $category->slug }}</td>
                             <td><span class="badge bg-secondary text-uppercase">{{ $category->service_mode ?? 'instant' }}</span></td>
                             <td>{{ $category->starting_fare ?: 'N/A' }}</td>
+                            <td>
+                                @if($category->driver_search_radius_km)
+                                    <span class="badge bg-info text-white">{{ $category->driver_search_radius_km }} KM</span>
+                                @else
+                                    <span class="badge bg-secondary">5 KM</span>
+                                @endif
+                            </td>
                             <td>{{ $category->max_capacity ?: 'N/A' }}</td>
                             <td>
                                 @if($category->is_active == 1)

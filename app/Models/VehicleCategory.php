@@ -34,14 +34,16 @@ class VehicleCategory extends Model
         'sort_order',
         'is_active',
         'drop_location_required',
+        'driver_search_radius_km',
     ];
 
     protected $casts = [
-        'service_mode' => 'string',
-        'is_active' => 'boolean',
-        'drop_location_required' => 'boolean',
-        'max_capacity' => 'integer',
-        'sort_order' => 'integer',
+        'service_mode'             => 'string',
+        'is_active'                => 'boolean',
+        'drop_location_required'   => 'boolean',
+        'max_capacity'             => 'integer',
+        'sort_order'               => 'integer',
+        'driver_search_radius_km'  => 'decimal:2',
     ];
 
     public function parent(): BelongsTo

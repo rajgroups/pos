@@ -36,6 +36,7 @@ class VehicleCategoryResource extends JsonResource
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
             'drop_location_required' => (bool) ($this->drop_location_required ?? true),
+            'driver_search_radius_km' => $this->driver_search_radius_km ? (float) $this->driver_search_radius_km : 5.0,
             'pricing' => new VehicleCategoryPricingResource($this->whenLoaded('pricing')),
             'children' => $this->relationLoaded('children')
                 ? VehicleCategoryResource::collection($this->children)

@@ -57,6 +57,8 @@ class ValidationHelper
             'max_capacity' => 'nullable|integer|min:1',
             'sort_order' => 'nullable|integer|min:0',
             'drop_location_required' => 'boolean',
+            // Driver search radius — configurable per category
+            'driver_search_radius_km' => 'nullable|numeric|min:0.1|max:500',
 
             'image'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'icon'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',

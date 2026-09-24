@@ -54,6 +54,7 @@ class BookingDispatchTest extends TestCase
 
         // Set default driver_waiting_time setting
         AppSetting::set('driver_waiting_time', '3', 'dispatch');
+        AppSetting::set('indicab_mode', 'prime', 'general');
 
         // Setup base context
         $this->user = User::factory()->create(['device_token' => 'user_device_token_abc']);

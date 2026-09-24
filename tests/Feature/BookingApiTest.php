@@ -32,6 +32,8 @@ class BookingApiTest extends TestCase
         Redis::shouldReceive('set')->byDefault()->andReturnTrue();
         Redis::shouldReceive('del')->byDefault()->andReturn(1);
         Redis::shouldReceive('georadius')->byDefault()->andReturn([]);
+        
+        app(\App\Services\IndicabModeService::class)->setMode('prime');
     }
 
     public function test_vehicle_categories_can_be_listed(): void
@@ -139,7 +141,7 @@ class BookingApiTest extends TestCase
 
         $summaryResponse->assertOk()
             ->assertJsonPath('status', true)
-            ->assertJsonPath('data.total_amount', 160);
+            ->assertJsonPath('data.fare.total', 160);
 
         $storeResponse = $this->postJson('/api/user/bookings', [
             'vehicle_category_id' => $category->id,

@@ -4,7 +4,7 @@
         <div class="add-item d-flex">
             <div class="page-title">
                 <h4 class="fw-bold">Vehicle Category Pricing</h4>
-                <h6>Manage pricing rules for different vehicle categories</h6>
+                <h6>Manage pricing rules, commission & tax for each vehicle category</h6>
             </div>
         </div>
         <ul class="table-top-head">
@@ -37,10 +37,13 @@
                     <thead class="thead-light">
                         <tr>
                             <th>Category</th>
+                            <th>Search Radius</th>
                             <th>Pricing Type</th>
                             <th>Base Fare</th>
                             <th>Min Fare</th>
-                            <th>Per Km</th>
+                            <th>Per KM</th>
+                            <th>Commission</th>
+                            <th>GST</th>
                             <th>Status</th>
                             <th class="no-sort">Actions</th>
                         </tr>
@@ -49,10 +52,25 @@
                         @foreach ($pricings as $pricing)
                         <tr>
                             <td>{{ $pricing->vehicleCategory->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($pricing->vehicleCategory && $pricing->vehicleCategory->driver_search_radius_km)
+                                    <span class="badge bg-info text-white">{{ $pricing->vehicleCategory->driver_search_radius_km }} KM</span>
+                                @else
+                                    <span class="badge bg-secondary">5 KM</span>
+                                @endif
+                            </td>
                             <td><span class="badge bg-secondary text-uppercase">{{ $pricing->pricing_type }}</span></td>
-                            <td>{{ $pricing->base_fare }}</td>
-                            <td>{{ $pricing->minimum_fare }}</td>
-                            <td>{{ $pricing->per_km_rate }}</td>
+                            <td>₹{{ number_format($pricing->base_fare, 2) }}</td>
+                            <td>₹{{ number_format($pricing->minimum_fare, 2) }}</td>
+                            <td>₹{{ number_format($pricing->per_km_rate, 2) }}</td>
+                            <td>
+                                @if($pricing->commission_type === 'fixed')
+                                    <span class="badge bg-warning text-dark">₹{{ number_format($pricing->commission_value ?? 0, 2) }} fixed</span>
+                                @else
+                                    <span class="badge bg-warning text-dark">{{ $pricing->commission_value ?? 0 }}%</span>
+                                @endif
+                            </td>
+                            <td>{{ $pricing->tax_percentage ?? 0 }}%</td>
                             <td>
                                 @if($pricing->is_active)
                                     <span class="badge bg-success">Active</span>

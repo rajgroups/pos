@@ -25,7 +25,8 @@ class BookingService
 {
     public function __construct(
         protected BookingRepository $bookingRepository,
-        protected SocketDispatchService $socketDispatchService
+        protected SocketDispatchService $socketDispatchService,
+        protected FareCalculationService $fareCalculationService
     ) {}
 
     public function createBooking(array $payload): Booking
@@ -199,7 +200,9 @@ class BookingService
             ]);
         }
 
-        return $this->calculateFare($category, Arr::get($payload, 'usage', []));
+        $fare = $this->fareCalculationService->calculate($category, Arr::get($payload, 'usage', []));
+
+        return $this->fareCalculationService->toApiResponse($fare);
     }
 
     public function cancelBooking(Booking $booking, bool $isAdmin = false): Booking
@@ -535,19 +538,7 @@ class BookingService
 
     protected function syncFare(Booking $booking, array $fare, VehicleCategory $category): BookingFare
     {
-        return BookingFare::updateOrCreate(
-            ['booking_id' => $booking->id],
-            [
-                'pricing_type' => $category->pricing?->pricing_type ?? 'fixed',
-                'base_fare' => $fare['base_fare'],
-                'unit_rate' => $fare['unit_rate'],
-                'usage_amount' => $fare['usage_amount'],
-                'extra_charge' => $fare['extra_charge'],
-                'discount' => $fare['discount'],
-                'total_amount' => $fare['total_amount'],
-                'snapshot' => $fare['snapshot'],
-            ]
-        );
+        return $this->fareCalculationService->syncFare($booking, $category, $fare);
     }
 
     protected function resolveServiceMode(VehicleCategory $category, array $payload): string
@@ -712,87 +703,7 @@ class BookingService
 
     protected function calculateFare(VehicleCategory $category, array $usage): array
     {
-        $pricing = $category->pricing;
-        $pricingType = $pricing?->pricing_type ?? 'fixed';
-
-        $distance = (float) ($usage['distance_km'] ?? 0);
-        $hours = (float) ($usage['hours_used'] ?? 0);
-        $acres = (float) ($usage['acre_used'] ?? 0);
-        $tons = (float) ($usage['weight_ton'] ?? 0);
-
-        $usageAmount = 0.0;
-        $unitRate = 0.0;
-        $baseFare = (float) ($pricing?->base_fare ?? 0);
-        $extraCharge = 0.0;
-        $discount = 0.0;
-
-        switch ($pricingType) {
-            case 'distance':
-                $usageAmount = $distance;
-                $unitRate = (float) ($pricing?->per_km_rate ?? 0);
-                break;
-            case 'hourly':
-                $usageAmount = $hours;
-                $unitRate = (float) ($pricing?->per_hour_rate ?? 0);
-                break;
-            case 'daily':
-                $usageAmount = $hours > 0 ? max(1, ceil($hours / 24)) : 1;
-                $unitRate = (float) ($pricing?->per_day_rate ?? 0);
-                break;
-            case 'acre':
-                $usageAmount = $acres;
-                $unitRate = (float) ($pricing?->per_acre_rate ?? 0);
-                break;
-            case 'weight':
-                $usageAmount = $tons;
-                $unitRate = (float) ($pricing?->per_ton_rate ?? 0);
-                break;
-            case 'fixed':
-            default:
-                $usageAmount = 1;
-                $unitRate = 0;
-                break;
-        }
-
-        $totalAmount = $baseFare + ($usageAmount * $unitRate) + $extraCharge - $discount;
-        $minimumFare = (float) ($pricing?->minimum_fare ?? 0);
-
-        if ($minimumFare > 0) {
-            $totalAmount = max($totalAmount, $minimumFare);
-        }
-
-        $totalAmount = round($totalAmount, 2);
-
-        return [
-            'pricing_type' => $pricingType,
-            'base_fare' => round($baseFare, 2),
-            'unit_rate' => round($unitRate, 2),
-            'usage_amount' => round($usageAmount, 2),
-            'extra_charge' => round($extraCharge, 2),
-            'discount' => round($discount, 2),
-            'total_amount' => $totalAmount,
-            'snapshot' => [
-                'pricing_type' => $pricingType,
-                'pricing_id' => $pricing?->id,
-                'category_id' => $category->id,
-                'category_name' => $category->name,
-                'usage' => [
-                    'distance_km' => $distance,
-                    'hours_used' => $hours,
-                    'acre_used' => $acres,
-                    'weight_ton' => $tons,
-                ],
-                'calculation' => [
-                    'base_fare' => round($baseFare, 2),
-                    'unit_rate' => round($unitRate, 2),
-                    'usage_amount' => round($usageAmount, 2),
-                    'extra_charge' => round($extraCharge, 2),
-                    'discount' => round($discount, 2),
-                    'minimum_fare' => round($minimumFare, 2),
-                    'total_amount' => $totalAmount,
-                ],
-            ],
-        ];
+        return $this->fareCalculationService->calculate($category, $usage);
     }
 
     /**

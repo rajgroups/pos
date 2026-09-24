@@ -138,12 +138,18 @@ class SocketDispatchService
                 'url' => $socketUrl . '/send_booking',
             ]);
 
+            // Read the category-specific search radius — fixes the hardcoded radius=5 bug
+            $bookingCategory = $booking->category ?? \App\Models\VehicleCategory::find($booking->vehicle_category_id);
+            $categoryRadiusKm = isset($bookingCategory->driver_search_radius_km)
+                ? max(0.1, (float) $bookingCategory->driver_search_radius_km)
+                : 5.0;
+
             $payload = [
-                'latitude' => $pickup->latitude,
-                'longitude' => $pickup->longitude,
-                'radius' => 5,
+                'latitude'   => $pickup->latitude,
+                'longitude'  => $pickup->longitude,
+                'radius'     => $categoryRadiusKm, // category-specific, NOT hardcoded 5
                 'driver_ids' => $eligibleDriverIds,
-                'booking' => (new BookingResource($booking))->resolve(),
+                'booking'    => (new BookingResource($booking))->resolve(),
             ];
 
             Log::info('Socket request payload', $payload);
