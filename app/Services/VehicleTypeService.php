@@ -30,6 +30,7 @@ class VehicleTypeService
                     'tagline' => $vehicleType->tagline,
                     'starting_fare' => $vehicleType->starting_fare,
                     'description' => $vehicleType->description,
+                    'drop_location_required' => (bool) ($vehicleType->drop_location_required ?? true),
                     'sub_categories' => $vehicleType->subCategories->map(function ($subCategory) {
                         return [
                             'id' => $subCategory->id,
