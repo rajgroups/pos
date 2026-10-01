@@ -40,11 +40,16 @@ class VehicleCategory extends Model
     protected $casts = [
         'service_mode'             => 'string',
         'is_active'                => 'boolean',
+        // Strictly 0 or 1 — NOT NULL DEFAULT 1.
+        // 0 = drop location is optional for this service.
+        // 1 = drop location is required for this service.
         'drop_location_required'   => 'boolean',
         'max_capacity'             => 'integer',
         'sort_order'               => 'integer',
         'driver_search_radius_km'  => 'decimal:2',
     ];
+
+    // ─── Relationships ────────────────────────────────────────────────────────
 
     public function parent(): BelongsTo
     {
@@ -90,4 +95,17 @@ class VehicleCategory extends Model
     {
         return $this->hasMany(VehicleTypeDocumentMap::class, 'vehicle_type_id');
     }
+
+    // ─── Accessors ────────────────────────────────────────────────────────────
+
+    /**
+     * Guarantee drop_location_required is always a bool (never NULL),
+     * even if the DB row were somehow corrupted.
+     * Column is NOT NULL DEFAULT 1, so this is a safety net only.
+     */
+    public function getDropLocationRequiredAttribute($value): bool
+    {
+        return (bool) ($value ?? 1);
+    }
 }
+

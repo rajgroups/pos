@@ -75,7 +75,10 @@ class BookingStoreRequest extends FormRequest
                     $locations = $this->input('locations', []);
                     $hasDrop = collect($locations)->contains(fn ($l) => ($l['location_type'] ?? '') === 'drop');
                     if (! $hasDrop) {
-                        $validator->errors()->add('locations', 'Drop location is required for this vehicle category.');
+                        $validator->errors()->add(
+                            'drop_location',
+                            'Drop location is required for this vehicle/service.'
+                        );
                     }
                 }
             }

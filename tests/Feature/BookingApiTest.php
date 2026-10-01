@@ -638,7 +638,8 @@ class BookingApiTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonPath('status', 'error')
-            ->assertJsonPath('message', 'Drop location is required for this vehicle category.');
+            ->assertJsonPath('message', 'Drop location is required for this vehicle/service.');
+
     }
 
     public function test_category_drop_location_required_false_without_drop_succeeds(): void

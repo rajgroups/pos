@@ -25,7 +25,7 @@ class BookingResource extends JsonResource
             'duration_hours' => $this->duration_hours,
             'pickup_address' => $this->pickup_address,
             'drop_address' => $this->drop_address,
-            'requires_drop_location' => in_array($this->category?->type_key, ['cab', 'auto', 'bike', 'truck', 'parcel'], true),
+            'requires_drop_location' => (bool) ($this->category?->drop_location_required ?? true),
             'start_otp' => $this->when($request->boolean('include_otp', false), $this->start_otp),
             'estimated_amount' => $this->estimated_amount,
             'final_amount' => $this->final_amount,

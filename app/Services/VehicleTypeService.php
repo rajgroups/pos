@@ -7,9 +7,7 @@ use Illuminate\Support\Collection;
 
 class VehicleTypeService
 {
-    public function __construct(protected VehicleTypeRepository $vehicleTypeRepository)
-    {
-    }
+    public function __construct(protected VehicleTypeRepository $vehicleTypeRepository) {}
 
     public function getVehicleTypesWithSubCategories(bool $activeOnly = true): Collection
     {
@@ -30,7 +28,8 @@ class VehicleTypeService
                     'tagline' => $vehicleType->tagline,
                     'starting_fare' => $vehicleType->starting_fare,
                     'description' => $vehicleType->description,
-                    'drop_location_required' => (bool) ($vehicleType->drop_location_required ?? true),
+                    // Strictly 0 or 1 — NOT NULL DEFAULT 1.
+                    'drop_location_required' => (bool) $vehicleType->drop_location_required,
                     'sub_categories' => $vehicleType->subCategories->map(function ($subCategory) {
                         return [
                             'id' => $subCategory->id,
@@ -40,6 +39,8 @@ class VehicleTypeService
                             'description' => $subCategory->description,
                             'eta' => $subCategory->eta,
                             'seats' => $subCategory->max_capacity,
+                            // Strictly 0 or 1 — NOT NULL DEFAULT 1.
+                            'drop_location_required' => (bool) $subCategory->drop_location_required,
                         ];
                     })->values(),
                 ];

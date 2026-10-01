@@ -383,9 +383,9 @@ class ValidationHelper
                 if (! $hasDropLocation) {
                     return [
                         KeywordHelper::STATUS  => KeywordHelper::ERROR,
-                        KeywordHelper::MESSAGE => 'Drop location is required for this vehicle category.',
+                        KeywordHelper::MESSAGE => 'Drop location is required for this vehicle/service.',
                         KeywordHelper::ERRORS  => [
-                            'locations' => ['Drop location is required for this vehicle category.'],
+                            'drop_location' => ['Drop location is required for this vehicle/service.'],
                         ],
                     ];
                 }

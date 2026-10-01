@@ -71,10 +71,11 @@ class BookingService
 
                 if (! $hasDropLocation) {
                     throw ValidationException::withMessages([
-                        'locations' => 'Drop location is required for this vehicle category.',
+                        'drop_location' => 'Drop location is required for this vehicle/service.',
                     ]);
                 }
             }
+
 
             $serviceMode = $this->resolveServiceMode($category, $payload);
 

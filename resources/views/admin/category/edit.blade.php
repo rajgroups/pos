@@ -214,11 +214,13 @@
                         <div class="mb-3 d-flex justify-content-between align-items-center bg-light p-3 rounded">
                             <div>
                                 <span class="fw-semibold d-block">Drop Location Required</span>
-                                <span class="text-muted small">Require destination on booking</span>
+                                <span class="text-muted small">Require destination on booking (default: ON)</span>
                             </div>
                             <div class="form-check form-switch">
                                 <input type="hidden" name="drop_location_required" value="0">
-                                <input type="checkbox" class="form-check-input" name="drop_location_required" value="1" {{ old('drop_location_required', $category->drop_location_required) == 1 ? 'checked' : '' }}>
+                                <input type="checkbox" class="form-check-input" id="drop_location_required"
+                                    name="drop_location_required" value="1"
+                                    {{ old('drop_location_required', $category->drop_location_required) ? 'checked' : '' }}>
                             </div>
                         </div>
                     </div>

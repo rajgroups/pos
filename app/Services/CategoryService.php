@@ -24,7 +24,6 @@ class CategoryService
         }catch(Exception $e){
             Log::info($e->getMessage());
         }
-        // dd($data);
         return $this->repo->create($data);
     }
 
@@ -50,9 +49,9 @@ class CategoryService
                 ImageHelper::CATEGORY
             );
         }
-
         return $this->repo->update($id, $data);
     }
+
     public function delete($id)
     {
         $category = $this->repo->find($id);
