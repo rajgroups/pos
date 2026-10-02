@@ -84,8 +84,36 @@ class BookingResource extends JsonResource
             'user_review' => $this->relationLoaded('userReview') && $this->userReview
                 ? new ReviewResource($this->userReview)
                 : null,
+
+            // ── Financial settlement snapshot (populated after ride completion) ─
+            'financial' => $this->when(
+                $this->relationLoaded('rideTransaction') && $this->rideTransaction,
+                function () {
+                    $txn = $this->rideTransaction;
+                    return [
+                        'transaction_ref'  => $txn->transaction_ref,
+                        'transaction_uuid' => $txn->transaction_uuid,
+                        'currency'         => $txn->currency,
+                        'gross_fare'       => (float) $txn->subtotal,
+                        'discount'         => (float) $txn->discount_amount,
+                        'tax'              => (float) $txn->tax_amount,
+                        'tax_rate'         => (float) $txn->tax_rate,
+                        'commission'       => (float) $txn->commission_amount,
+                        'driver_earning'   => (float) $txn->driver_earning,
+                        'platform_earning' => (float) $txn->platform_earning,
+                        'final_amount'     => (float) $txn->final_amount,
+                        'paid_amount'      => (float) $txn->paid_amount,
+                        'payment_method'   => $txn->payment_method,
+                        'payment_status'   => $txn->payment_status,
+                        'transaction_status' => $txn->transaction_status,
+                        'settled_at'       => $txn->settled_at?->toIso8601String(),
+                    ];
+                }
+            ),
+
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }
+

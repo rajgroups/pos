@@ -176,6 +176,11 @@ class Booking extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function rideTransaction(): HasOne
+    {
+        return $this->hasOne(RideTransaction::class);
+    }
+
     public function userReview(): HasOne
     {
         return $this->hasOne(Review::class)->where('reviewed_by', 'user');

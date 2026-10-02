@@ -24,55 +24,50 @@ class DriverController extends Controller
     public function create()
     {
         $vehicles = \App\Models\Vehicle::whereNull('driver_id')->get();
-        return view('admin.driver.create', compact('vehicles'));
+        $vehicleCategories = \App\Models\VehicleCategory::all();
+        return view('admin.driver.create', compact('vehicles', 'vehicleCategories'));
     }
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\Admin\DriverOnboardRequest $request)
     {
-        $validated = $request->validate([
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'name'     => 'required|string|max:255',
-            'phone'    => 'required|string|max:20|unique:drivers,phone',
-            'email'    => 'nullable|email|unique:drivers,email',
-            'dob'      => 'nullable|date',
-            'gender'   => 'nullable|in:male,female,other',
-            'address'  => 'nullable|string',
-            'city'     => 'nullable|string|max:255',
-            'state'    => 'nullable|string|max:255',
-            'pincode'  => 'nullable|string|max:20',
-            
-            'aadhaar_number' => 'nullable|string|max:20',
-            'pan_number'     => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:255|unique:drivers,license_number',
-            'license_expiry' => 'nullable|date',
-            'license_categories' => 'nullable|array',
-            'license_categories.*' => 'string',
-            
-            'driver_type' => 'nullable|in:car,bike,auto,borewell,tractor,harvester,lorry,mini_van,bus,other',
-            'status'      => 'nullable|in:active,inactive,blocked',
-            'remarks'     => 'nullable|string',
-
-            'profile_photo' => 'nullable|image|max:5120',
-            'license_front' => 'nullable|image|max:5120',
-            'license_back' => 'nullable|image|max:5120',
-            'aadhaar_front' => 'nullable|image|max:5120',
-            'aadhaar_back' => 'nullable|image|max:5120',
-            'pan_card_file' => 'nullable|image|max:5120',
-            'police_verification_file' => 'nullable|file|max:5120',
-            'medical_certificate' => 'nullable|file|max:5120',
-        ]);
+        $validated = $request->validated();
 
         foreach (['profile_photo', 'license_front', 'license_back', 'aadhaar_front', 'aadhaar_back', 'pan_card_file', 'police_verification_file', 'medical_certificate'] as $fileField) {
             if ($request->hasFile($fileField)) {
-                $path = $request->file($fileField)->store('drivers', 'public');
-                $validated[$fileField] = $path;
+                $validated[$fileField] = $request->file($fileField)->store('drivers', 'public');
             }
         }
 
-        $this->driverService->create($validated);
+        // Handle Vehicle Files if any
+        foreach (['front_image', 'back_image'] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $validated[$fileField] = $request->file($fileField)->store('vehicles', 'public');
+            }
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request) {
+            $driverData = \Illuminate\Support\Arr::except($validated, [
+                'register_vehicle', 'vehicle_category_id', 'vehicle_number', 'brand', 'model', 
+                'color', 'manufacture_year', 'rc_number', 'seating_capacity', 'front_image', 'back_image'
+            ]);
+            
+            // Generate OTP for new driver if not set (could be handled in service, but adding for completeness)
+            $driverData['otp'] = random_int(1000, 9999);
+            
+            $driver = $this->driverService->create($driverData);
+
+            if ($request->filled('register_vehicle') && $request->register_vehicle) {
+                $vehicleData = \Illuminate\Support\Arr::only($validated, [
+                    'vehicle_category_id', 'vehicle_number', 'brand', 'model', 
+                    'color', 'manufacture_year', 'rc_number', 'seating_capacity', 'front_image', 'back_image'
+                ]);
+                $vehicleData['driver_id'] = $driver->id;
+                \App\Models\Vehicle::create($vehicleData);
+            }
+        });
 
         return redirect()->route('admin.drivers.index')
-                         ->with('success', 'Driver created successfully.');
+                         ->with('success', 'Driver onboarded successfully.');
     }
 
     public function show($id)
@@ -94,55 +89,54 @@ class DriverController extends Controller
     {
         $driver = $this->driverService->getById($id);
         $vehicles = \App\Models\Vehicle::whereNull('driver_id')->orWhere('driver_id', $id)->get();
-        return view('admin.driver.edit', compact('driver', 'vehicles'));
+        $vehicleCategories = \App\Models\VehicleCategory::all();
+        return view('admin.driver.edit', compact('driver', 'vehicles', 'vehicleCategories'));
     }
 
-    public function update(Request $request, $id)
+    public function update(\App\Http\Requests\Admin\DriverOnboardRequest $request, $id)
     {
-        $validated = $request->validate([
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'name'     => 'nullable|string|max:255',
-            'phone'    => 'nullable|string|max:20|unique:drivers,phone,' . $id,
-            'email'    => 'nullable|email|unique:drivers,email,' . $id,
-            'dob'      => 'nullable|date',
-            'gender'   => 'nullable|in:male,female,other',
-            'address'  => 'nullable|string',
-            'city'     => 'nullable|string|max:255',
-            'state'    => 'nullable|string|max:255',
-            'pincode'  => 'nullable|string|max:20',
-            
-            'aadhaar_number' => 'nullable|string|max:20',
-            'pan_number'     => 'nullable|string|max:20',
-            'license_number' => 'nullable|string|max:255|unique:drivers,license_number,' . $id,
-            'license_expiry' => 'nullable|date',
-            'license_categories' => 'nullable|array',
-            'license_categories.*' => 'string',
-            
-            'driver_type' => 'nullable|in:car,bike,auto,borewell,tractor,harvester,lorry,mini_van,bus,other',
-            'status'      => 'nullable|in:active,inactive,blocked',
-            'remarks'     => 'nullable|string',
-
-            'profile_photo' => 'nullable|image|max:5120',
-            'license_front' => 'nullable|image|max:5120',
-            'license_back' => 'nullable|image|max:5120',
-            'aadhaar_front' => 'nullable|image|max:5120',
-            'aadhaar_back' => 'nullable|image|max:5120',
-            'pan_card_file' => 'nullable|image|max:5120',
-            'police_verification_file' => 'nullable|file|max:5120',
-            'medical_certificate' => 'nullable|file|max:5120',
-        ]);
+        $validated = $request->validated();
 
         foreach (['profile_photo', 'license_front', 'license_back', 'aadhaar_front', 'aadhaar_back', 'pan_card_file', 'police_verification_file', 'medical_certificate'] as $fileField) {
             if ($request->hasFile($fileField)) {
-                $path = $request->file($fileField)->store('drivers', 'public');
-                $validated[$fileField] = $path;
+                $validated[$fileField] = $request->file($fileField)->store('drivers', 'public');
             }
         }
 
-        $this->driverService->update($id, $validated);
+        // Handle Vehicle Files if any
+        foreach (['front_image', 'back_image'] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $validated[$fileField] = $request->file($fileField)->store('vehicles', 'public');
+            }
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request, $id) {
+            $driverData = \Illuminate\Support\Arr::except($validated, [
+                'register_vehicle', 'vehicle_category_id', 'vehicle_number', 'brand', 'model', 
+                'color', 'manufacture_year', 'rc_number', 'seating_capacity', 'front_image', 'back_image'
+            ]);
+            
+            $this->driverService->update($id, $driverData);
+
+            if ($request->filled('register_vehicle') && $request->register_vehicle) {
+                $vehicleData = \Illuminate\Support\Arr::only($validated, [
+                    'vehicle_category_id', 'vehicle_number', 'brand', 'model', 
+                    'color', 'manufacture_year', 'rc_number', 'seating_capacity', 'front_image', 'back_image'
+                ]);
+                $vehicleData['driver_id'] = $id;
+                
+                // If driver already has a vehicle, update it, else create
+                $vehicle = \App\Models\Vehicle::where('driver_id', $id)->first();
+                if ($vehicle) {
+                    $vehicle->update($vehicleData);
+                } else {
+                    \App\Models\Vehicle::create($vehicleData);
+                }
+            }
+        });
 
         return redirect()->route('admin.drivers.index')
-                         ->with('success', 'Driver updated successfully.');
+                         ->with('success', 'Driver and vehicle updated successfully.');
     }
 
     public function destroy($id)

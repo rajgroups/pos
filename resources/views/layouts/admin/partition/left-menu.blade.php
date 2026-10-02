@@ -113,6 +113,13 @@
                 </li>
 
                 <li class="submenu-open">
+                    <h6 class="submenu-hdr">Finance</h6>
+                    <ul>
+                        <li><a href="{{ route('admin.transactions.index') }}" class="{{ Route::is('admin.transactions.*') ? 'active' : '' }}"><i class="ti ti-receipt fs-16 me-2"></i><span>Transactions</span></a></li>
+                    </ul>
+                </li>
+
+                <li class="submenu-open">
                     <h6 class="submenu-hdr">Users</h6>
                     <ul>
                         <li><a href="{{ route('admin.users.index') }}" class="{{ Route::is('admin.users.*') ? 'active' : '' }}"><i class="ti ti-users-group fs-16 me-2"></i><span>Users</span></a></li>

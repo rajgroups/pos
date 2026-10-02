@@ -5,7 +5,7 @@
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-2">
    <div class="mb-3">
       <h1 class="mb-1">Welcome, Admin</h1>
-      <p class="fw-medium">You have <span class="text-primary fw-bold">200+</span> Orders, Today</p>
+      <p class="fw-medium">You have <span class="text-primary fw-bold">{{ $bookingStats['today'] ?? 0 }}</span> Orders, Today</p>
    </div>
    <div class="input-icon-start position-relative mb-3">
       <span class="input-icon-addon fs-16 text-gray-9">
@@ -20,8 +20,8 @@
       <i class="ti ti-info-circle fs-14 text-success me-2"></i>
       Today's Commission
       </span>
-      <span class="text-success fw-semibold"> ₹3,358.69 </span>
-      earned from 16 rides today.
+      <span class="text-success fw-semibold"> ₹{{ number_format($today->commission ?? 0, 2) }} </span>
+      earned from {{ $today->total_rides ?? 0 }} rides today.
    </div>
    <button type="button" class="btn-close text-gray-9 fs-14" data-bs-dismiss="alert" aria-label="Close">
    <i class="ti ti-x"></i>
@@ -38,8 +38,8 @@
             <div class="ms-2">
                <p class="text-white mb-1">Today's Commission</p>
                <div class="d-inline-flex align-items-center flex-wrap gap-2">
-                  <h4 class="text-white">₹3,358.69</h4>
-                  <span class="badge badge-soft-primary">16 Rides</span>
+                  <h4 class="text-white">₹{{ number_format($today->commission ?? 0, 2) }}</h4>
+                  <span class="badge badge-soft-primary">{{ $today->total_rides ?? 0 }} Rides</span>
                </div>
             </div>
          </div>
@@ -55,8 +55,8 @@
             <div class="ms-2">
                <p class="text-white mb-1">Driver Earnings</p>
                <div class="d-inline-flex align-items-center flex-wrap gap-2">
-                  <h4 class="text-white">₹13,549.75</h4>
-                  <span class="badge badge-soft-success">After Tax</span>
+                  <h4 class="text-white">₹{{ number_format($today->driver_earnings ?? 0, 2) }}</h4>
+                  <span class="badge badge-soft-success">Today</span>
                </div>
             </div>
          </div>
@@ -70,10 +70,10 @@
             <i class="ti ti-clock-dollar fs-24"></i>
             </span>
             <div class="ms-2">
-               <p class="text-white mb-1">Pending Payouts</p>
+               <p class="text-white mb-1">Monthly Earnings</p>
                <div class="d-inline-flex align-items-center flex-wrap gap-2">
-                  <h4 class="text-white">₹0.00</h4>
-                  <span class="badge badge-soft-light">0 Pending</span>
+                  <h4 class="text-white">₹{{ number_format($thisMonth->platform_earnings ?? 0, 2) }}</h4>
+                  <span class="badge badge-soft-light">Platform</span>
                </div>
             </div>
          </div>
@@ -87,10 +87,10 @@
             <i class="ti ti-ticket fs-24"></i>
             </span>
             <div class="ms-2">
-               <p class="text-white mb-1">Today's Promo Uses</p>
+               <p class="text-white mb-1">Total Users</p>
                <div class="d-inline-flex align-items-center flex-wrap gap-2">
-                  <h4 class="text-white">0</h4>
-                  <span class="badge badge-soft-light">₹0 Discount</span>
+                  <h4 class="text-white">{{ $totalUsers ?? 0 }}</h4>
+                  <span class="badge badge-soft-light">{{ $totalDrivers ?? 0 }} Drivers</span>
                </div>
             </div>
          </div>
@@ -859,7 +859,7 @@
 
                             <p class="mb-1">Total Users</p>
 
-                            <h5>56</h5>
+                            <h5>{{ $totalUsers ?? 0 }}</h5>
 
                             <small class="text-muted">
                                 Active platform users
@@ -878,7 +878,7 @@
 
                             <p class="mb-1">Active Drivers</p>
 
-                            <h5>77</h5>
+                            <h5>{{ $totalDrivers ?? 0 }}</h5>
 
                             <small class="text-muted">
                                 Registered vehicle drivers
@@ -897,7 +897,7 @@
 
                             <p class="mb-1">Today's Bookings</p>
 
-                            <h5>56</h5>
+                            <h5>{{ $bookingStats['today'] ?? 0 }}</h5>
 
                             <small class="text-muted">
                                 Bookings made today
@@ -934,28 +934,28 @@
                 <div class="row text-center">
 
                     <div class="col-6 border-end">
-                        <h2 class="mb-1 text-success">₹14,999</h2>
+                        <h2 class="mb-1 text-success">₹{{ number_format($thisMonth->gross_revenue ?? 0, 0) }}</h2>
 
                         <p class="text-success mb-2">
-                            Credits
+                            Gross Revenue (Month)
                         </p>
 
                         <span class="badge badge-success badge-xs d-inline-flex align-items-center">
                             <i class="ti ti-arrow-up-left me-1"></i>
-                            +22%
+                            This Month
                         </span>
                     </div>
 
                     <div class="col-6">
-                        <h2 class="mb-1 text-warning">₹660</h2>
+                        <h2 class="mb-1 text-warning">₹{{ number_format($thisMonth->tax_collected ?? 0, 0) }}</h2>
 
                         <p class="text-warning mb-2">
-                            Debits
+                            Tax Collected (Month)
                         </p>
 
                         <span class="badge badge-danger badge-xs d-inline-flex align-items-center">
                             <i class="ti ti-arrow-down-right me-1"></i>
-                            -5%
+                            This Month
                         </span>
                     </div>
 
@@ -1116,10 +1116,10 @@
                                 <i class="ti ti-car text-primary fs-20"></i>
                             </div>
 
-                            <h3 class="mb-1">150</h3>
+                            <h3 class="mb-1">{{ $bookingStats['total'] ?? 0 }}</h3>
 
                             <span class="badge bg-success-subtle text-success">
-                                +12%
+                                All Time
                             </span>
                         </div>
                     </div>
@@ -1134,10 +1134,10 @@
                                 <i class="ti ti-currency-rupee text-success fs-20"></i>
                             </div>
 
-                            <h3 class="mb-1">₹14.9K</h3>
+                            <h3 class="mb-1">₹{{ number_format(($thisMonth->gross_revenue ?? 0) / 1000, 1) }}K</h3>
 
                             <span class="badge bg-success-subtle text-success">
-                                +18%
+                                This Month
                             </span>
                         </div>
                     </div>
@@ -1146,13 +1146,13 @@
                         <div class="border rounded p-3 bg-light">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="fs-13 text-muted">
-                                    Completed
+                                    Active Bookings
                                 </span>
 
                                 <i class="ti ti-circle-check text-success fs-20"></i>
                             </div>
 
-                            <h3 class="mb-1">89</h3>
+                            <h3 class="mb-1">{{ $bookingStats['active'] ?? 0 }}</h3>
 
                             <span class="badge bg-success-subtle text-success">
                                 Active
@@ -1245,147 +1245,46 @@
                         </thead>
 
                         <tbody>
-
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold text-primary">
-                                        BK2605278B71
-                                    </span>
-                                </td>
-
-                                <td>Dhruv</td>
-
-                                <td>
-                                    <span class="text-muted">Not Assigned</span>
-                                </td>
-
-                                <td>219 Green City Road, Bhatha...</td>
-
-                                <td>Surat International Airport...</td>
-
-                                <td>--</td>
-
-                                <td>
-                                    <span class="badge bg-danger-subtle text-danger">
-                                        Cancelled
-                                    </span>
-                                </td>
-
-                                <td>May 27, 2026 17:26</td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold text-primary">
-                                        BK260527A74D
-                                    </span>
-                                </td>
-
-                                <td>Asgar WRTeam</td>
-
-                                <td>
-                                    <span class="text-muted">Not Assigned</span>
-                                </td>
-
-                                <td>Hotel KBN, Station Road...</td>
-
-                                <td>Bhuj, Gujarat, India</td>
-
-                                <td>--</td>
-
-                                <td>
-                                    <span class="badge bg-warning-subtle text-warning">
-                                        Expired
-                                    </span>
-                                </td>
-
-                                <td>May 27, 2026 17:22</td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold text-primary">
-                                        BK2605272C9F
-                                    </span>
-                                </td>
-
-                                <td>Dhruv</td>
-
-                                <td>Dhruv Netsofters</td>
-
-                                <td>219 Green City Road...</td>
-
-                                <td>Vegetable Market...</td>
-
-                                <td class="fw-semibold text-success">
-                                    ₹360.70
-                                </td>
-
-                                <td>
-                                    <span class="badge bg-success-subtle text-success">
-                                        Completed
-                                    </span>
-                                </td>
-
-                                <td>May 27, 2026 17:02</td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold text-primary">
-                                        BK260527AC77
-                                    </span>
-                                </td>
-
-                                <td>Dhruv</td>
-
-                                <td>Dhruv Netsofters</td>
-
-                                <td>219 Green City Road...</td>
-
-                                <td>Surat International Airport...</td>
-
-                                <td class="fw-semibold text-success">
-                                    ₹375.30
-                                </td>
-
-                                <td>
-                                    <span class="badge bg-success-subtle text-success">
-                                        Completed
-                                    </span>
-                                </td>
-
-                                <td>May 27, 2026 17:00</td>
-                            </tr>
-
-                            <tr>
-                                <td>
-                                    <span class="fw-semibold text-primary">
-                                        BK260527D039
-                                    </span>
-                                </td>
-
-                                <td>Binal WRTeam</td>
-
-                                <td>
-                                    <span class="text-muted">Not Assigned</span>
-                                </td>
-
-                                <td>Uma Nagar, Bhuj...</td>
-
-                                <td>Jubilee Circle...</td>
-
-                                <td>--</td>
-
-                                <td>
-                                    <span class="badge bg-danger-subtle text-danger">
-                                        Cancelled
-                                    </span>
-                                </td>
-
-                                <td>May 27, 2026 16:57</td>
-                            </tr>
-
+                            @forelse($recentTransactions as $txn)
+                                <tr>
+                                    <td>
+                                        <a href="{{ route('admin.transactions.show', $txn->id) }}" class="fw-semibold text-primary">
+                                            {{ $txn->transaction_ref }}
+                                        </a>
+                                    </td>
+                                    <td>{{ $txn->booking->user->name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($txn->booking && $txn->booking->driver)
+                                            {{ $txn->booking->driver->name }}
+                                        @else
+                                            <span class="text-muted">Not Assigned</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-truncate" style="max-width: 150px;" title="{{ $txn->booking->pickup_location ?? 'N/A' }}">
+                                        {{ Str::limit($txn->booking->pickup_location ?? 'N/A', 20) }}
+                                    </td>
+                                    <td class="text-truncate" style="max-width: 150px;" title="{{ $txn->booking->drop_location ?? 'N/A' }}">
+                                        {{ Str::limit($txn->booking->drop_location ?? 'N/A', 20) }}
+                                    </td>
+                                    <td class="fw-semibold {{ $txn->transaction_status === 'completed' ? 'text-success' : '' }}">
+                                        ₹{{ number_format($txn->final_amount, 2) }}
+                                    </td>
+                                    <td>
+                                        @if($txn->transaction_status === 'completed')
+                                            <span class="badge bg-success-subtle text-success">Completed</span>
+                                        @elseif($txn->transaction_status === 'refunded')
+                                            <span class="badge bg-danger-subtle text-danger">Refunded</span>
+                                        @else
+                                            <span class="badge bg-warning-subtle text-warning">{{ ucfirst($txn->transaction_status) }}</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $txn->created_at->format('M d, Y H:i') }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">No recent transactions found.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
 
                     </table>

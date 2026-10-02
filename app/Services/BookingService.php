@@ -10,6 +10,7 @@ use App\Models\BookingFare;
 use App\Models\BookingLocation;
 use App\Models\BookingUsage;
 use App\Models\Driver;
+use App\Models\RideTransaction;
 use App\Models\Vehicle;
 use App\Models\VehicleCategory;
 use App\Repositories\BookingRepository;
@@ -26,7 +27,8 @@ class BookingService
     public function __construct(
         protected BookingRepository $bookingRepository,
         protected SocketDispatchService $socketDispatchService,
-        protected FareCalculationService $fareCalculationService
+        protected FareCalculationService $fareCalculationService,
+        protected RideSettlementService $rideSettlementService
     ) {}
 
     public function createBooking(array $payload): Booking
@@ -448,16 +450,23 @@ class BookingService
 
     public function completeBooking(Booking $booking, array $payload = [], bool $isAdmin = false): Booking
     {
+        // ── Idempotency guard (before DB transaction) ───────────────────────────
+        // If this booking is already financially settled, skip re-processing.
+        $alreadySettled = RideTransaction::where('booking_id', $booking->id)->exists();
+
         $booking = DB::transaction(function () use ($booking, $payload, $isAdmin) {
             $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
+            // Allow re-completion only when already completed (idempotent admin calls)
             if (! $isAdmin && $booking->status !== Booking::STATUS_STARTED) {
                 throw ValidationException::withMessages([
                     'booking_no' => 'Only started bookings can be completed.',
                 ]);
             }
 
-            if (! $isAdmin && ($booking->start_otp ?? null) !== ($payload['end_otp'] ?? null)) {
+            // Skip OTP check if already completed (idempotent)
+            if (! $isAdmin && $booking->status !== Booking::STATUS_COMPLETED
+                && ($booking->start_otp ?? null) !== ($payload['end_otp'] ?? null)) {
                 throw ValidationException::withMessages([
                     'end_otp' => 'The OTP is invalid.',
                 ]);
@@ -467,19 +476,40 @@ class BookingService
                 $this->syncUsage($booking, $payload['usage']);
             }
 
-            if (! empty($payload['final_amount'])) {
-                $finalAmount = (float) $payload['final_amount'];
-            } else {
-                $finalAmount = (float) ($booking->fare?->total_amount ?? $booking->estimated_amount);
+            if ($booking->status !== Booking::STATUS_COMPLETED) {
+                // Recalculate fare with actual usage if provided
+                if (! empty($payload['usage'])) {
+                    $category = $booking->category ?? \App\Models\VehicleCategory::with('pricing')
+                        ->find($booking->vehicle_category_id);
+                    if ($category && $category->pricing) {
+                        $recalculated = $this->fareCalculationService->calculate($category, $payload['usage']);
+                        $this->syncFare($booking, $recalculated, $category);
+                        $booking->refresh();
+                    }
+                }
+
+                if (! empty($payload['final_amount'])) {
+                    $finalAmount = (float) $payload['final_amount'];
+                } else {
+                    $finalAmount = (float) ($booking->fare?->user_total
+                        ?? $booking->fare?->total_amount
+                        ?? $booking->estimated_amount);
+                }
+
+                $booking->update([
+                    'status'         => Booking::STATUS_COMPLETED,
+                    'final_amount'   => $finalAmount,
+                    'payment_method' => $payload['payment_method'] ?? $booking->payment_method,
+                    'payment_status' => $payload['payment_status'] ?? 'pending',
+                    'completed_at'   => now(),
+                ]);
             }
 
-            $booking->update([
-                'status' => Booking::STATUS_COMPLETED,
-                'final_amount' => $finalAmount,
-                'payment_method' => $payload['payment_method'] ?? $booking->payment_method,
-                'payment_status' => $payload['payment_status'] ?? 'pending',
-                'completed_at' => now(),
-            ]);
+            // ── Financial settlement inside the same DB transaction ────────────
+            // settle() is idempotent — safe to call even if booking was already
+            // completed in a prior transaction.
+            $booking->load(['fare', 'category.pricing']);
+            $this->rideSettlementService->settle($booking);
 
             return $booking->fresh()->load([
                 'category.pricing',
@@ -492,6 +522,7 @@ class BookingService
                 'driver',
                 'vehicle',
                 'user',
+                'rideTransaction',
             ]);
         });
 
@@ -500,7 +531,7 @@ class BookingService
         try {
             // Qualify the User (if they were referred and this is their first ride)
             app(\App\Services\ReferralService::class)->qualifyReferral($booking->user);
-            
+
             // Qualify the Driver (if they were referred and this is their first completed ride)
             app(\App\Services\ReferralService::class)->qualifyReferral($booking->driver);
         } catch (\Throwable $e) {

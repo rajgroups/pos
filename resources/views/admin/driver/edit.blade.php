@@ -129,30 +129,99 @@
                 </div>
 
                 <hr class="my-4">
-                <h5 class="mb-4">Vehicle Assignment & Status</h5>
-                <div class="row">
-                    <div class="col-lg-6 mb-4">
-                        <label class="form-label fw-semibold">Assign Vehicle</label>
-                        <select name="vehicle_id" class="form-select">
-                            <option value="">-- No Vehicle Assigned --</option>
+                @php
+                    $hasVehicle = $driver->vehicle ? true : false;
+                @endphp
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="mb-0">{{ $hasVehicle ? 'Update Vehicle Details' : 'Vehicle Registration' }}</h5>
+                    <div class="form-check form-switch form-switch-md">
+                        <input class="form-check-input" type="checkbox" role="switch" id="registerVehicleToggle" name="register_vehicle" value="1" {{ old('register_vehicle', $hasVehicle) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-semibold" for="registerVehicleToggle">{{ $hasVehicle ? 'Edit Assigned Vehicle' : 'Register New Vehicle' }}</label>
+                    </div>
+                </div>
+
+                <div id="vehicleFormSection" class="p-4 bg-light rounded-3 mb-4 border" style="display: {{ old('register_vehicle', $hasVehicle) ? 'block' : 'none' }};">
+                    <p class="text-muted small mb-4"><i class="ti ti-info-circle me-1"></i> {{ $hasVehicle ? 'Update the details of the currently assigned vehicle.' : 'Fill these details to automatically register and assign a vehicle to this driver.' }}</p>
+                    <div class="row g-4">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Vehicle Category <span class="text-danger">*</span></label>
+                            <select name="vehicle_category_id" class="form-select">
+                                <option value="">Select Category</option>
+                                @foreach($vehicleCategories as $cat)
+                                    <option value="{{ $cat->id }}" {{ old('vehicle_category_id', optional($driver->vehicle)->vehicle_category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">e.g. Sedan, Auto, Bike</div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Vehicle Number <span class="text-danger">*</span></label>
+                            <input type="text" name="vehicle_number" class="form-control text-uppercase" value="{{ old('vehicle_number', optional($driver->vehicle)->vehicle_number) }}" placeholder="e.g. MH01AB1234">
+                            <div class="form-text">Number plate without spaces</div>
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Brand / Make</label>
+                            <input type="text" name="brand" class="form-control" value="{{ old('brand', optional($driver->vehicle)->brand) }}" placeholder="e.g. Maruti Suzuki">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Model</label>
+                            <input type="text" name="model" class="form-control" value="{{ old('model', optional($driver->vehicle)->model) }}" placeholder="e.g. Swift Dzire">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Color</label>
+                            <input type="text" name="color" class="form-control" value="{{ old('color', optional($driver->vehicle)->color) }}" placeholder="e.g. White">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Manufacturing Year</label>
+                            <input type="number" name="manufacture_year" class="form-control" value="{{ old('manufacture_year', optional($driver->vehicle)->manufacture_year) }}" placeholder="YYYY" min="1990" max="{{ date('Y') + 1 }}">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">RC Number</label>
+                            <input type="text" name="rc_number" class="form-control text-uppercase" value="{{ old('rc_number', optional($driver->vehicle)->rc_number) }}">
+                        </div>
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">Seating Capacity</label>
+                            <input type="number" name="seating_capacity" class="form-control" value="{{ old('seating_capacity', optional($driver->vehicle)->seating_capacity) }}" min="1">
+                        </div>
+                        <div class="col-lg-2 col-md-6">
+                            <label class="form-label fw-semibold">Front Image</label>
+                            <input type="file" name="front_image" class="form-control" accept="image/*">
+                            @if(optional($driver->vehicle)->front_image)
+                                <a href="{{ asset('storage/' . $driver->vehicle->front_image) }}" target="_blank" class="text-primary mt-1 d-block small"><i class="ti ti-eye"></i> View Current</a>
+                            @endif
+                        </div>
+                        <div class="col-lg-2 col-md-6">
+                            <label class="form-label fw-semibold">Back Image</label>
+                            <input type="file" name="back_image" class="form-control" accept="image/*">
+                            @if(optional($driver->vehicle)->back_image)
+                                <a href="{{ asset('storage/' . $driver->vehicle->back_image) }}" target="_blank" class="text-primary mt-1 d-block small"><i class="ti ti-eye"></i> View Current</a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Assign Existing Vehicle <small class="text-muted fw-normal">(If not editing/registering new)</small></label>
+                        <select name="vehicle_id" class="form-select" id="existingVehicleSelect">
+                            <option value="">-- Select Existing Vehicle --</option>
                             @foreach($vehicles as $vehicle)
-                                <option value="{{ $vehicle->id }}" {{ old('vehicle_id', $driver->vehicle?->id) == $vehicle->id ? 'selected' : '' }}>
+                                <option value="{{ $vehicle->id }}" {{ old('vehicle_id', optional($driver->vehicle)->id) == $vehicle->id ? 'selected' : '' }}>
                                     {{ $vehicle->vehicle_number }} - {{ $vehicle->brand }} {{ $vehicle->model }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-6 mb-4">
-                        <label class="form-label fw-semibold">Status</label>
+                    <div class="col-lg-6">
+                        <label class="form-label fw-semibold">Driver Status</label>
                         <select name="status" class="form-select">
                             <option value="active" {{ old('status', $driver->status) == 'active' ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ old('status', $driver->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
                             <option value="blocked" {{ old('status', $driver->status) == 'blocked' ? 'selected' : '' }}>Blocked</option>
                         </select>
                     </div>
-                    <div class="col-lg-12 mb-4">
+                    <div class="col-lg-12">
                         <label class="form-label fw-semibold">Remarks</label>
-                        <textarea name="remarks" class="form-control" rows="2">{{ old('remarks', $driver->remarks) }}</textarea>
+                        <textarea name="remarks" class="form-control" rows="3" placeholder="Any internal notes about this driver...">{{ old('remarks', $driver->remarks) }}</textarea>
                     </div>
                 </div>
 
@@ -225,3 +294,31 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('registerVehicleToggle');
+        const section = document.getElementById('vehicleFormSection');
+        const existingSelect = document.getElementById('existingVehicleSelect');
+
+        toggle.addEventListener('change', function() {
+            if (this.checked) {
+                section.style.display = 'block';
+                existingSelect.disabled = true;
+                // If they are registering a NEW vehicle, clear the existing selection so it's not submitted.
+                // But if they are just editing the currently assigned vehicle, it's fine.
+                // It's safer to clear it if they toggle this ON manually, though in edit mode it might start ON.
+            } else {
+                section.style.display = 'none';
+                existingSelect.disabled = false;
+            }
+        });
+
+        // Initialize on load
+        if (toggle.checked) {
+            existingSelect.disabled = true;
+        }
+    });
+</script>
+@endpush

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\HomeController;
+use App\Http\Controllers\Admin\TransactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DriverController;
@@ -101,6 +102,14 @@ Route::prefix('admin')->name('admin.')->group(function(){
             Route::post('{id}/assign', [RideController::class, 'assignDriver'])->name('action.assign');
             Route::post('{id}/complete', [RideController::class, 'completeRide'])->name('action.complete');
             Route::post('{id}/cancel', [RideController::class, 'cancelRide'])->name('action.cancel');
+        });
+
+        // Financial Transaction Ledger
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/', [TransactionController::class, 'index'])->name('index');
+            Route::get('/export', [TransactionController::class, 'export'])->name('export');
+            Route::get('/dashboard-summary', [TransactionController::class, 'dashboardSummary'])->name('dashboard.summary');
+            Route::get('/{transaction}', [TransactionController::class, 'show'])->name('show');
         });
     // });
 
