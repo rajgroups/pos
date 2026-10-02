@@ -23,6 +23,8 @@ class BookingCompleteRequest extends FormRequest
             'usage.hours_used' => ['nullable', 'numeric', 'min:0'],
             'usage.acre_used' => ['nullable', 'numeric', 'min:0'],
             'usage.weight_ton' => ['nullable', 'numeric', 'min:0'],
+            'actual_drop_lat' => ['nullable', 'numeric'],
+            'actual_drop_lng' => ['nullable', 'numeric'],
         ];
     }
 }

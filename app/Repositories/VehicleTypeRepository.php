@@ -17,6 +17,7 @@ class VehicleTypeRepository
                     ->when($activeOnly, fn ($subQuery) => $subQuery->where('is_active', true))
                     ->orderBy('sort_order')
                     ->orderBy('id'),
+                'subCategories.pricing'
             ])
             ->orderBy('sort_order')
             ->orderBy('id')

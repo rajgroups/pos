@@ -89,6 +89,12 @@
                     </div>
                     <div class="col-lg-4">
                         <div class="mb-4">
+                            <label class="form-label fw-semibold">Minimum Distance (KM) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="minimum_distance_km" class="form-control" value="{{ old('minimum_distance_km', 0) }}" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="mb-4">
                             <label class="form-label fw-semibold">Per KM Rate (₹) <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="per_km_rate" class="form-control" value="{{ old('per_km_rate', 0) }}" required>
                         </div>

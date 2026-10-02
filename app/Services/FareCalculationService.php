@@ -63,8 +63,14 @@ class FareCalculationService
         switch ($pricingType) {
             case 'distance':
                 $unitRate       = (float) ($pricing->per_km_rate ?? 0);
+                $minDistance    = (float) ($pricing->minimum_distance_km ?? 0);
                 $usageAmount    = $distanceKm;
-                $distanceCharge = $distanceKm * $unitRate;
+                
+                if ($minDistance > 0 && $distanceKm <= $minDistance) {
+                    $distanceCharge = (float) ($pricing->minimum_fare ?? 0);
+                } else {
+                    $distanceCharge = $distanceKm * $unitRate;
+                }
                 break;
 
             case 'hourly':
@@ -117,8 +123,16 @@ class FareCalculationService
         $discount    = 0.0;
 
         // ── Subtotal (before tax) ──────────────────────────────────────────────
-        $subtotal = $baseFare + $distanceCharge + $timeCharge + $waitingCharge
-                  + $nightSurge + $extraCharge - $discount;
+        // If distance-based pricing, use the higher of minimumFare or distanceCharge.
+        // Base fare is usually only applicable if not using distance-based logic,
+        // or as the minimum fare itself. We avoid adding base_fare to distance_charge.
+        if ($pricingType === 'distance') {
+            $baseSubtotal = $distanceCharge;
+        } else {
+            $baseSubtotal = $baseFare + $distanceCharge + $timeCharge;
+        }
+
+        $subtotal = $baseSubtotal + $waitingCharge + $nightSurge + $extraCharge - $discount;
 
         // Apply surge multiplier
         $subtotal = $subtotal * $surgeMultiplier;

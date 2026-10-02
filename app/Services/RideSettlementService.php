@@ -159,6 +159,7 @@ class RideSettlementService
                 'distance_km'        => $distanceKm,
                 'duration_minutes'   => $durationMinutes,
                 'waiting_minutes'    => $waitingMinutes,
+                'settlement_snapshot'=> $booking->final_fare_snapshot,
                 'settled_at'         => now(),
             ]);
 

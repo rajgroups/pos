@@ -7,13 +7,16 @@ use Illuminate\Support\Collection;
 
 class VehicleTypeService
 {
-    public function __construct(protected VehicleTypeRepository $vehicleTypeRepository) {}
+    public function __construct(
+        protected VehicleTypeRepository $vehicleTypeRepository,
+        protected FareCalculationService $fareCalculationService
+    ) {}
 
-    public function getVehicleTypesWithSubCategories(bool $activeOnly = true): Collection
+    public function getVehicleTypesWithSubCategories(bool $activeOnly = true, ?float $distanceKm = null): Collection
     {
         return $this->vehicleTypeRepository
             ->getMainCategoriesWithSubCategories($activeOnly)
-            ->map(function ($vehicleType) {
+            ->map(function ($vehicleType) use ($distanceKm) {
                 return [
                     'id' => $vehicleType->id,
                     'type_key' => $vehicleType->type_key,
@@ -30,7 +33,19 @@ class VehicleTypeService
                     'description' => $vehicleType->description,
                     // Strictly 0 or 1 — NOT NULL DEFAULT 1.
                     'drop_location_required' => (bool) $vehicleType->drop_location_required,
-                    'sub_categories' => $vehicleType->subCategories->map(function ($subCategory) {
+                    'sub_categories' => $vehicleType->subCategories->map(function ($subCategory) use ($distanceKm) {
+                        $calculatedFare = null;
+                        
+                        if ($distanceKm !== null && $distanceKm > 0 && $subCategory->pricing) {
+                            $fareBreakdown = $this->fareCalculationService->calculateFare(
+                                $subCategory->pricing,
+                                ['distance_km' => $distanceKm]
+                            );
+                            if (isset($fareBreakdown['user_total'])) {
+                                $calculatedFare = '₹' . number_format($fareBreakdown['user_total'], 0);
+                            }
+                        }
+
                         return [
                             'id' => $subCategory->id,
                             'name' => $subCategory->name,
@@ -39,6 +54,7 @@ class VehicleTypeService
                             'description' => $subCategory->description,
                             'eta' => $subCategory->eta,
                             'seats' => $subCategory->max_capacity,
+                            'calculated_fare' => $calculatedFare,
                             // Strictly 0 or 1 — NOT NULL DEFAULT 1.
                             'drop_location_required' => (bool) $subCategory->drop_location_required,
                         ];

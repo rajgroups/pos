@@ -41,6 +41,7 @@
                             <th>Pricing Type</th>
                             <th>Base Fare</th>
                             <th>Min Fare</th>
+                            <th>Min Dist</th>
                             <th>Per KM</th>
                             <th>Commission</th>
                             <th>GST</th>
@@ -62,6 +63,7 @@
                             <td><span class="badge bg-secondary text-uppercase">{{ $pricing->pricing_type }}</span></td>
                             <td>₹{{ number_format($pricing->base_fare, 2) }}</td>
                             <td>₹{{ number_format($pricing->minimum_fare, 2) }}</td>
+                            <td>{{ number_format($pricing->minimum_distance_km, 2) }} KM</td>
                             <td>₹{{ number_format($pricing->per_km_rate, 2) }}</td>
                             <td>
                                 @if($pricing->commission_type === 'fixed')

@@ -16,7 +16,8 @@ class VehicleTypeController extends Controller
     public function index(VehicleTypeIndexRequest $request): JsonResponse
     {
         $vehicleTypes = $this->vehicleTypeService->getVehicleTypesWithSubCategories(
-            $request->boolean('active_only', true)
+            $request->boolean('active_only', true),
+            $request->input('distance_km')
         );
 
         return response()->json([

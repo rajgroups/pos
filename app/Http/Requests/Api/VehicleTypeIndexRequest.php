@@ -15,6 +15,7 @@ class VehicleTypeIndexRequest extends FormRequest
     {
         return [
             'active_only' => ['nullable', 'boolean'],
+            'distance_km' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

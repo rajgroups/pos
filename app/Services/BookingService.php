@@ -28,7 +28,8 @@ class BookingService
         protected BookingRepository $bookingRepository,
         protected SocketDispatchService $socketDispatchService,
         protected FareCalculationService $fareCalculationService,
-        protected RideSettlementService $rideSettlementService
+        protected RideSettlementService $rideSettlementService,
+        protected GoogleDirectionsService $googleDirectionsService
     ) {}
 
     public function createBooking(array $payload): Booking
@@ -112,6 +113,10 @@ class BookingService
                 'status' => $initialStatus,
                 'estimated_amount' => $fare['total_amount'],
                 'final_amount' => 0,
+                'fare_estimate_snapshot' => array_merge($fare['snapshot'] ?? [], [
+                    'snapshot_type' => 'fare_estimate',
+                    'created_at' => now()->toIso8601String(),
+                ]),
                 'payment_method' => $payload['payment_method'] ?? null,
                 'payment_status' => 'pending',
             ]);
@@ -477,28 +482,54 @@ class BookingService
             }
 
             if ($booking->status !== Booking::STATUS_COMPLETED) {
-                // Recalculate fare with actual usage if provided
-                if (! empty($payload['usage'])) {
-                    $category = $booking->category ?? \App\Models\VehicleCategory::with('pricing')
-                        ->find($booking->vehicle_category_id);
-                    if ($category && $category->pricing) {
-                        $recalculated = $this->fareCalculationService->calculate($category, $payload['usage']);
-                        $this->syncFare($booking, $recalculated, $category);
-                        $booking->refresh();
-                    }
-                }
+                $finalAmount = 0;
+                $finalFareSnapshot = null;
+                $category = $booking->category ?? \App\Models\VehicleCategory::with('pricing')
+                    ->find($booking->vehicle_category_id);
 
-                if (! empty($payload['final_amount'])) {
-                    $finalAmount = (float) $payload['final_amount'];
+                if ($category && $category->pricing) {
+                    $usage = $payload['usage'] ?? [];
+
+                    // Override distance if actual drop coordinates are provided
+                    if (!empty($payload['actual_drop_lat']) && !empty($payload['actual_drop_lng'])) {
+                        $pickup = $booking->pickupLocation;
+                        if ($pickup) {
+                            $distanceMeters = $this->googleDirectionsService->getDistanceMeters(
+                                (float) $pickup->latitude,
+                                (float) $pickup->longitude,
+                                (float) $payload['actual_drop_lat'],
+                                (float) $payload['actual_drop_lng']
+                            );
+
+                            if ($distanceMeters !== null) {
+                                $usage['distance_km'] = round($distanceMeters / 1000, 3);
+                                $this->syncUsage($booking, $usage);
+                            }
+                        }
+                    }
+
+                    $recalculated = $this->fareCalculationService->calculate($category, $usage);
+                    $this->syncFare($booking, $recalculated, $category);
+                    
+                    $finalAmount = (float) $recalculated['user_total'];
+                    $finalFareSnapshot = array_merge($recalculated['snapshot'] ?? [], [
+                        'snapshot_type' => 'final_fare',
+                        'created_at' => now()->toIso8601String(),
+                    ]);
                 } else {
                     $finalAmount = (float) ($booking->fare?->user_total
                         ?? $booking->fare?->total_amount
                         ?? $booking->estimated_amount);
                 }
 
+                if (! empty($payload['final_amount'])) {
+                    $finalAmount = (float) $payload['final_amount'];
+                }
+
                 $booking->update([
-                    'status'         => Booking::STATUS_COMPLETED,
-                    'final_amount'   => $finalAmount,
+                    'status'              => Booking::STATUS_COMPLETED,
+                    'final_amount'        => $finalAmount,
+                    'final_fare_snapshot' => $finalFareSnapshot,
                     'payment_method' => $payload['payment_method'] ?? $booking->payment_method,
                     'payment_status' => $payload['payment_status'] ?? 'pending',
                     'completed_at'   => now(),

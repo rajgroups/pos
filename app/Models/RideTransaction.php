@@ -134,6 +134,7 @@ class RideTransaction extends Model
         'waiting_minutes',
         // Audit
         'notes',
+        'settlement_snapshot',
         'settled_at',
     ];
 
@@ -160,6 +161,7 @@ class RideTransaction extends Model
         'distance_km'       => 'decimal:3',
         'duration_minutes'  => 'decimal:2',
         'waiting_minutes'   => 'decimal:2',
+        'settlement_snapshot' => 'array',
         // Dates
         'settled_at'        => 'datetime',
     ];

@@ -17,6 +17,7 @@ class VehicleCategoryPricing extends Model
         'pricing_type',
         'base_fare',
         'minimum_fare',
+        'minimum_distance_km',
         'per_km_rate',
         'per_hour_rate',
         'per_day_rate',
@@ -36,6 +37,7 @@ class VehicleCategoryPricing extends Model
     protected $casts = [
         'base_fare'               => 'decimal:2',
         'minimum_fare'            => 'decimal:2',
+        'minimum_distance_km'     => 'decimal:2',
         'per_km_rate'             => 'decimal:2',
         'per_hour_rate'           => 'decimal:2',
         'per_day_rate'            => 'decimal:2',
