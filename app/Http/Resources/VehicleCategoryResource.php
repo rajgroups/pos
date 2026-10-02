@@ -23,11 +23,11 @@ class VehicleCategoryResource extends JsonResource
             'eta' => $this->eta,
             'image' => $this->image,
             'image_url' => $this->image
-                ? asset('storage/' . ltrim($this->image, '/'))
+                ? (str_starts_with($this->image, 'upload/') ? asset(ltrim($this->image, '/')) : asset('storage/' . ltrim($this->image, '/')))
                 : null,
             'icon' => $this->icon,
             'icon_url' => $this->icon && str_contains($this->icon, '/')
-                ? asset('storage/' . ltrim($this->icon, '/'))
+                ? (str_starts_with($this->icon, 'upload/') ? asset(ltrim($this->icon, '/')) : asset('storage/' . ltrim($this->icon, '/')))
                 : null,
             'accent_color' => $this->accent_color,
             'gradient_start' => $this->gradient_start,

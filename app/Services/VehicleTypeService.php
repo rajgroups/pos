@@ -23,6 +23,13 @@ class VehicleTypeService
                     'label' => $vehicleType->name,
                     'slug' => $vehicleType->slug,
                     'icon' => $vehicleType->icon,
+                    'icon_url' => $vehicleType->icon && str_contains($vehicleType->icon, '/')
+                        ? (str_starts_with($vehicleType->icon, 'upload/') ? asset(ltrim($vehicleType->icon, '/')) : asset('storage/' . ltrim($vehicleType->icon, '/')))
+                        : null,
+                    'image' => $vehicleType->image,
+                    'image_url' => $vehicleType->image
+                        ? (str_starts_with($vehicleType->image, 'upload/') ? asset(ltrim($vehicleType->image, '/')) : asset('storage/' . ltrim($vehicleType->image, '/')))
+                        : null,
                     'accent_color' => $vehicleType->accent_color,
                     'sheet_gradient' => array_values(array_filter([
                         $vehicleType->gradient_start,
@@ -50,6 +57,14 @@ class VehicleTypeService
                             'id' => $subCategory->id,
                             'name' => $subCategory->name,
                             'slug' => $subCategory->slug,
+                            'icon' => $subCategory->icon,
+                            'icon_url' => $subCategory->icon && str_contains($subCategory->icon, '/')
+                                ? (str_starts_with($subCategory->icon, 'upload/') ? asset(ltrim($subCategory->icon, '/')) : asset('storage/' . ltrim($subCategory->icon, '/')))
+                                : null,
+                            'image' => $subCategory->image,
+                            'image_url' => $subCategory->image
+                                ? (str_starts_with($subCategory->image, 'upload/') ? asset(ltrim($subCategory->image, '/')) : asset('storage/' . ltrim($subCategory->image, '/')))
+                                : null,
                             'price' => $subCategory->price_label,
                             'description' => $subCategory->description,
                             'eta' => $subCategory->eta,
