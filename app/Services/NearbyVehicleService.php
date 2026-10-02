@@ -174,8 +174,11 @@ class NearbyVehicleService
                 'latitude'           => $lat,
                 'longitude'          => $lng,
                 'distance_km'        => round($distance, 2),
-                'icon_url'           => $vehicle->category?->icon
-                    ? asset('storage/' . ltrim($vehicle->category->icon, '/'))
+                'icon_url'           => $vehicle->category?->icon && str_contains($vehicle->category->icon, '/')
+                    ? (str_starts_with($vehicle->category->icon, 'upload/') ? asset(ltrim($vehicle->category->icon, '/')) : asset('storage/' . ltrim($vehicle->category->icon, '/')))
+                    : null,
+                'image_url'          => $vehicle->category?->image
+                    ? (str_starts_with($vehicle->category->image, 'upload/') ? asset(ltrim($vehicle->category->image, '/')) : asset('storage/' . ltrim($vehicle->category->image, '/')))
                     : null,
                 'location_updated_at'=> $locUpdatedAt?->toIso8601String(),
             ];
@@ -188,8 +191,11 @@ class NearbyVehicleService
             'category' => [
                 'id'              => $category->id,
                 'name'            => $category->name,
-                'icon_url'        => $category->icon
-                    ? asset('storage/' . ltrim($category->icon, '/'))
+                'icon_url'        => $category->icon && str_contains($category->icon, '/')
+                    ? (str_starts_with($category->icon, 'upload/') ? asset(ltrim($category->icon, '/')) : asset('storage/' . ltrim($category->icon, '/')))
+                    : null,
+                'image_url'       => $category->image
+                    ? (str_starts_with($category->image, 'upload/') ? asset(ltrim($category->image, '/')) : asset('storage/' . ltrim($category->image, '/')))
                     : null,
                 'search_radius_km'=> $radiusKm,
             ],
