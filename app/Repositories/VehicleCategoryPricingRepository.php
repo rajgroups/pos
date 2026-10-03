@@ -13,7 +13,7 @@ class VehicleCategoryPricingRepository implements VehicleCategoryPricingInterfac
     }
 
     public function all(){
-        return $this->model->with('vehicleCategory')->latest()->paginate(10);
+        return $this->model->with('vehicleCategory')->latest()->get();
     }
 
     public function find($id)

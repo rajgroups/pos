@@ -101,11 +101,7 @@
                 </table>
             </div>
             
-            @if($pricings->hasPages())
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $pricings->links() }}
-                </div>
-            @endif
+
         </div>
     </div>
 @endsection

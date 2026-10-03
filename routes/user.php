@@ -43,6 +43,8 @@ Route::name('api.user.')->group(function () {
         Route::post('/delete-account/request-otp', [ProfileController::class, 'requestDeleteOtp'])->name('profile.delete.requestOtp');
         Route::post('/delete-account/confirm', [ProfileController::class, 'confirmDelete'])->name('profile.delete.confirm');
 
+        Route::get('/firebase-token', [UserAuthController::class, 'getFirebaseToken'])->name('firebaseToken');
+
         Route::get('/support/tickets', [HelpController::class, 'tickets'])->name('support.tickets');
         Route::post('/support/tickets', [HelpController::class, 'createTicket'])->name('support.createTicket');
 

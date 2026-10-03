@@ -19,6 +19,7 @@ Route::name('api.driver.')->group(function () {
         Route::post('/profile/online-status', [BookingController::class, 'toggleOnlineStatus'])->name('toggleOnlineStatus');
         Route::post('/location', [\App\Http\Controllers\Api\Driver\LocationController::class, 'update'])->name('location.update');
         Route::post('/wallet/recharge-request', [WalletController::class, 'requestRecharge'])->name('wallet.rechargeRequest');
+        Route::get('/firebase-token', [DriverAuthController::class, 'getFirebaseToken'])->name('firebaseToken');
 
         Route::prefix('bookings')->name('bookings.')->group(function () {
             Route::get('/', [BookingController::class, 'index'])->name('index');

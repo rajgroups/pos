@@ -29,7 +29,8 @@ class BookingService
         protected SocketDispatchService $socketDispatchService,
         protected FareCalculationService $fareCalculationService,
         protected RideSettlementService $rideSettlementService,
-        protected GoogleDirectionsService $googleDirectionsService
+        protected GoogleDirectionsService $googleDirectionsService,
+        protected ActiveRideLocationService $activeRideLocationService
     ) {}
 
     public function createBooking(array $payload): Booking
@@ -251,6 +252,7 @@ class BookingService
         });
 
         $this->broadcastBookingUpdate($booking);
+        $this->activeRideLocationService->cleanupActiveRide($booking);
 
         return $booking;
     }
@@ -348,6 +350,7 @@ class BookingService
             });
 
             $this->broadcastBookingUpdate($booking);
+            $this->activeRideLocationService->createActiveRide($booking);
 
             return ApiResponseHelper::success(
                 'Booking accepted successfully.',
@@ -396,6 +399,7 @@ class BookingService
         });
 
         $this->broadcastBookingUpdate($booking);
+        $this->activeRideLocationService->updateRideStatus($booking, Booking::STATUS_ARRIVED);
 
         return $booking;
     }
@@ -449,6 +453,7 @@ class BookingService
         });
 
         $this->broadcastBookingUpdate($booking);
+        $this->activeRideLocationService->updateRideStatus($booking, Booking::STATUS_STARTED);
 
         return $booking;
     }
@@ -568,6 +573,8 @@ class BookingService
         } catch (\Throwable $e) {
             \Log::error('Referral qualification failed after booking: ' . $e->getMessage());
         }
+
+        $this->activeRideLocationService->cleanupActiveRide($booking);
 
         return $booking;
     }

@@ -126,12 +126,6 @@ class DriverAuthController extends Controller
         }
     }
 
-    /**
-     * Update driver FCM token
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function updateFcmToken(Request $request): JsonResponse
     {
         $request->validate([
@@ -150,5 +144,25 @@ class DriverAuthController extends Controller
         return ApiResponseHelper::success('FCM token updated successfully.', [
             'fcm_token' => $request->fcm_token,
         ], 200);
+    }
+
+    /**
+     * Get Firebase Custom Token
+     */
+    public function getFirebaseToken(Request $request): JsonResponse
+    {
+        $driver = $request->user();
+        if (!$driver) {
+            return ApiResponseHelper::error('Driver not authenticated.', null, 401);
+        }
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $token = $firebaseService->createCustomToken("driver_{$driver->id}", ['role' => 'driver']);
+
+        if (!$token) {
+            return ApiResponseHelper::error('Failed to generate Firebase token.', null, 500);
+        }
+
+        return ApiResponseHelper::success('Firebase token generated.', ['token' => $token]);
     }
 }

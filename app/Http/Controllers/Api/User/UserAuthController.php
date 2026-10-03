@@ -254,4 +254,24 @@ class UserAuthController extends Controller
 
         return ApiResponseHelper::success('Logged out successfully.', null, 200);
     }
+
+    /**
+     * Get Firebase Custom Token
+     */
+    public function getFirebaseToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return ApiResponseHelper::error('User not authenticated.', null, 401);
+        }
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $token = $firebaseService->createCustomToken("user_{$user->id}", ['role' => 'user']);
+
+        if (!$token) {
+            return ApiResponseHelper::error('Failed to generate Firebase token.', null, 500);
+        }
+
+        return ApiResponseHelper::success('Firebase token generated.', ['token' => $token]);
+    }
 }
