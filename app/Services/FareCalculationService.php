@@ -63,14 +63,8 @@ class FareCalculationService
         switch ($pricingType) {
             case 'distance':
                 $unitRate       = (float) ($pricing->per_km_rate ?? 0);
-                $minDistance    = (float) ($pricing->minimum_distance_km ?? 0);
                 $usageAmount    = $distanceKm;
-                
-                if ($minDistance > 0 && $distanceKm <= $minDistance) {
-                    $distanceCharge = (float) ($pricing->minimum_fare ?? 0);
-                } else {
-                    $distanceCharge = $distanceKm * $unitRate;
-                }
+                $distanceCharge = round($distanceKm * $unitRate, 2);
                 break;
 
             case 'hourly':
@@ -111,10 +105,12 @@ class FareCalculationService
 
         // ── Night charge ───────────────────────────────────────────────────────
         $nightChargePercent = (float) ($pricing->night_charge_percentage ?? 0);
-        // (Night charge is informational; applied to subtotal if > 0)
         $dynamicAmount = $distanceCharge + $timeCharge + $waitingCharge;
+        $nightChargeBasis = $pricingType === 'distance'
+            ? $dynamicAmount
+            : $baseFare + $dynamicAmount;
         $nightSurge    = $nightChargePercent > 0
-            ? round(($baseFare + $dynamicAmount) * $nightChargePercent / 100, 2)
+            ? round($nightChargeBasis * $nightChargePercent / 100, 2)
             : 0.0;
 
         // ── Extra charge & discount ────────────────────────────────────────────
@@ -123,26 +119,13 @@ class FareCalculationService
         $discount    = 0.0;
 
         // ── Subtotal (before tax) ──────────────────────────────────────────────
-        // If distance-based pricing, use the higher of minimumFare or distanceCharge.
-        // Base fare is usually only applicable if not using distance-based logic,
-        // or as the minimum fare itself. We avoid adding base_fare to distance_charge.
-        if ($pricingType === 'distance') {
-            $baseSubtotal = $distanceCharge;
-        } else {
-            $baseSubtotal = $baseFare + $distanceCharge + $timeCharge;
-        }
+        // For distance pricing, base_fare is retained only as a pricing snapshot;
+        // it is not a charge. The minimum fare is applied as the final floor.
+        $subtotalBeforeMinimum = $pricingType === 'distance'
+            ? $distanceCharge + $timeCharge + $waitingCharge + $nightSurge + $extraCharge - $discount
+            : $baseFare + $distanceCharge + $timeCharge + $waitingCharge + $nightSurge + $extraCharge - $discount;
 
-        $subtotal = $baseSubtotal + $waitingCharge + $nightSurge + $extraCharge - $discount;
-
-        // Apply surge multiplier
-        $subtotal = $subtotal * $surgeMultiplier;
-
-        // Minimum fare floor
-        if ($minimumFare > 0 && $subtotal < $minimumFare) {
-            $subtotal = $minimumFare;
-        }
-
-        $subtotal = round($subtotal, 2);
+        $subtotal = round(max($subtotalBeforeMinimum * $surgeMultiplier, $minimumFare), 2);
 
         // ── Tax ────────────────────────────────────────────────────────────────
         $taxPercentage = (float) ($pricing->tax_percentage ?? 0);
@@ -225,6 +208,7 @@ class FareCalculationService
                 'rates' => [
                     'base_fare'              => round($baseFare, 2),
                     'minimum_fare'           => round($minimumFare, 2),
+                    'minimum_distance_km'    => (float) ($pricing->minimum_distance_km ?? 0),
                     'per_km_rate'            => (float) ($pricing->per_km_rate ?? 0),
                     'per_hour_rate'          => (float) ($pricing->per_hour_rate ?? 0),
                     'per_day_rate'           => (float) ($pricing->per_day_rate ?? 0),

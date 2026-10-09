@@ -44,8 +44,8 @@ class VehicleTypeService
                         $calculatedFare = null;
                         
                         if ($distanceKm !== null && $distanceKm > 0 && $subCategory->pricing) {
-                            $fareBreakdown = $this->fareCalculationService->calculateFare(
-                                $subCategory->pricing,
+                            $fareBreakdown = $this->fareCalculationService->calculate(
+                                $subCategory,
                                 ['distance_km' => $distanceKm]
                             );
                             if (isset($fareBreakdown['user_total'])) {

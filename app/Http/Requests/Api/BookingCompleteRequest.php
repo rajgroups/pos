@@ -15,7 +15,6 @@ class BookingCompleteRequest extends FormRequest
     {
         return [
             'end_otp' => ['required', 'string', 'size:6'],
-            'final_amount' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => ['nullable', 'string', 'max:30'],
             'payment_status' => ['nullable', 'string', 'max:30'],
             'usage' => ['nullable', 'array'],

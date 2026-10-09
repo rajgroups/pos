@@ -141,7 +141,15 @@ class BookingApiTest extends TestCase
 
         $summaryResponse->assertOk()
             ->assertJsonPath('status', true)
-            ->assertJsonPath('data.fare.total', 160);
+            ->assertJsonPath('data.fare.total', 120);
+
+        $nineKmSummaryResponse = $this->postJson('/api/user/bookings/fare-summary', [
+            'vehicle_category_id' => $category->id,
+            'usage' => ['distance_km' => 9],
+        ]);
+
+        $nineKmSummaryResponse->assertOk()
+            ->assertJsonPath('data.fare.total', 108);
 
         $storeResponse = $this->postJson('/api/user/bookings', [
             'vehicle_category_id' => $category->id,
@@ -164,7 +172,7 @@ class BookingApiTest extends TestCase
                 ],
             ],
             'usage' => [
-                'distance_km' => 10,
+                'distance_km' => 9.832,
             ],
         ]);
 
@@ -191,12 +199,20 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('data.status', 'started');
 
         $booking->refresh();
+        config(['services.google_maps.api_key' => 'test-key']);
+        Http::fake([
+            $this->socketUrl . '/*' => Http::response('success', 200),
+            'https://maps.googleapis.com/*' => Http::response(['status' => 'ZERO_RESULTS'], 200),
+        ]);
         $this->postJson("/api/driver/bookings/{$bookingNo}/complete", [
             'end_otp' => $booking->start_otp,
-            'final_amount' => 180,
+            'final_amount' => 80,
+            'actual_drop_lat' => 13.0674,
+            'actual_drop_lng' => 80.2376,
             'payment_status' => 'paid',
         ])->assertOk()
-            ->assertJsonPath('data.status', 'completed');
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.final_amount', '117.98');
     }
 
     public function test_user_cannot_perform_driver_booking_operations(): void

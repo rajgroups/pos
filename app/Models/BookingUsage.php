@@ -21,7 +21,7 @@ class BookingUsage extends Model
     ];
 
     protected $casts = [
-        'distance_km' => 'decimal:2',
+        'distance_km' => 'decimal:3',
         'hours_used' => 'decimal:2',
         'acre_used' => 'decimal:2',
         'weight_ton' => 'decimal:2',

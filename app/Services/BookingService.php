@@ -482,10 +482,6 @@ class BookingService
                 ]);
             }
 
-            if (! empty($payload['usage'])) {
-                $this->syncUsage($booking, $payload['usage']);
-            }
-
             if ($booking->status !== Booking::STATUS_COMPLETED) {
                 $finalAmount = 0;
                 $finalFareSnapshot = null;
@@ -493,7 +489,12 @@ class BookingService
                     ->find($booking->vehicle_category_id);
 
                 if ($category && $category->pricing) {
-                    $usage = $payload['usage'] ?? [];
+                    $usage = [
+                        'distance_km' => $booking->usage?->distance_km ?? 0,
+                        'hours_used' => $booking->usage?->hours_used ?? 0,
+                        'acre_used' => $booking->usage?->acre_used ?? 0,
+                        'weight_ton' => $booking->usage?->weight_ton ?? 0,
+                    ];
 
                     // Override distance if actual drop coordinates are provided
                     if (!empty($payload['actual_drop_lat']) && !empty($payload['actual_drop_lng'])) {
@@ -525,10 +526,6 @@ class BookingService
                     $finalAmount = (float) ($booking->fare?->user_total
                         ?? $booking->fare?->total_amount
                         ?? $booking->estimated_amount);
-                }
-
-                if (! empty($payload['final_amount'])) {
-                    $finalAmount = (float) $payload['final_amount'];
                 }
 
                 $booking->update([
